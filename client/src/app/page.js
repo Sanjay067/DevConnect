@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import "../styles/globals.css";
 
 export default function Home() {
   const router = useRouter();
@@ -30,7 +31,7 @@ export default function Home() {
             <button
               className="rounded-xl bg-fuchsia-600   text-lg font-semibold text-white transition hover:bg-fuchsia-700 px-10 h-10 mt-6 "
               onClick={() => {
-                router.push("/auth/login");
+                router.push("/auth");
               }}
             >
               Join Now
