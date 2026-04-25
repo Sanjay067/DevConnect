@@ -54,7 +54,7 @@ export const acceptConnection = async (req, res) => {
       {
         status: "accepted",
       },
-      { returnDocument: 'after' },
+      { new: true }
     );
 
     if (!findConnection)
@@ -84,7 +84,7 @@ export const rejectConnection = async (req, res) => {
       {
         status: "rejected",
       },
-      { returnDocument: 'after' },
+      { new: true }
     );
 
     if (!findConnection)

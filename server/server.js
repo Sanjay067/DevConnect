@@ -5,6 +5,10 @@ import helmet from "helmet";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
+import dns from "dns";
+
+// Fix for Node.js c-ares DNS resolver failing SRV lookups on certain networks
+dns.setServers(["8.8.8.8", "8.8.4.4"]);
 import { apiLimiter } from "./middlewares/rateLimits.js";
 import { verifyCsrfToken } from "./middlewares/csrf.middleware.js";
 
@@ -36,6 +40,7 @@ const strictOrigins = clientOrigins
   .filter((o) => !o.startsWith("*."))
   .map((o) => o.toLowerCase());
 
+
 const isAllowedOrigin = (origin) => {
   if (!origin) return true;
   const normalized = normalizeOrigin(origin).toLowerCase();
@@ -47,12 +52,9 @@ app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 app.use(cookieParser());
 app.use(
   cors({
-    origin(origin, callback) {
-      if (isAllowedOrigin(origin)) return callback(null, true);
-      return callback(new Error("CORS origin not allowed"));
-    },
+    origin: true,
     credentials: true,
-  }),
+  })
 );
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
@@ -75,6 +77,8 @@ app.use((req, res, next) => {
   });
   next();
 });
+
+
 app.use(verifyCsrfToken);
 app.use("/api", apiLimiter);
 app.get("/api", (req, res) => {
@@ -90,6 +94,7 @@ app.use("/api/messages", messageRoutes);
 const start = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URL);
+
     console.log("Connected to MongoDB");
     app.listen(process.env.PORT, () => {
       console.log(`Server is running on port ${process.env.PORT}`);

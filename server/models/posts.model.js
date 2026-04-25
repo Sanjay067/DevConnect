@@ -8,6 +8,10 @@ const postSchema = new mongoose.Schema(
       required: true,
     },
 
+    authorName: String,
+    authorUsername: String,
+    authorProfilePicture: String,
+
     body: {
       type: String,
       trim: true,
@@ -21,30 +25,23 @@ const postSchema = new mongoose.Schema(
         type: {
           type: String,
           enum: ["image", "video", "file"],
+          required: true,
         },
       },
     ],
 
-    likeCount: {
-      type: Number,
-      default: 0,
-    },
+    likeCount: { type: Number, default: 0 },
+    commentCount: { type: Number, default: 0 },
 
-    commentCount: {
-      type: Number,
-      default: 0,
-    },
+    score: { type: Number, default: 0 },
 
-    isActive: {
-      type: Boolean,
-      default: true,
-    },
+    isActive: { type: Boolean, default: true },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
-postSchema.index({ createdAt: -1 });
-postSchema.index({ author: 1, createdAt: -1 });
-postSchema.index({ author: 1, isActive: 1, createdAt: -1 });
+
+postSchema.index({ author: 1, isActive: 1, score: -1 });
+postSchema.index({ isActive: 1, score: -1 });
 
 export default mongoose.model("Post", postSchema);

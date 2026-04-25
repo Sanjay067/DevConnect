@@ -16,9 +16,11 @@ import { verifyAccessToken } from "../middlewares/verifyAccessToken.middleware.j
 const router = Router();
 
 // Search users
-router.get("/search", verifyAccessToken, searchUsers);
+
+// router.get("/search", verifyAccessToken, searchUsers);
 
 // Get current user's profile
+
 router.get("/profiles/me", verifyAccessToken, getMyProfile);
 
 // Another user's profile (for deep links)

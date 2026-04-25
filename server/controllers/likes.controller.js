@@ -1,144 +1,142 @@
 import Like from "../models/likes.model.js";
 import Post from "../models/posts.model.js";
-import Comment from "../models/comments.model.js";
 
-export const toggleLikePost = async (req, res) => {
-  const { postId } = req.params;
-  const userId = req.user._id;
-
-  try {
-    const post = await Post.findById(postId);
-    if (!post) return res.status(404).json({ message: "Post not found" });
-
-    const existing = await Like.findOne({
-      userId,
-      targetId: postId,
-      targetType: "Post",
-    });
-
-    if (existing) {
-      await Like.findByIdAndDelete(existing._id);
-      const updatedPost = await Post.findByIdAndUpdate(
-        postId,
-        { $inc: { likeCount: -1 } },
-        { returnDocument: "after" },
-      );
-      if (!updatedPost) return res.status(404).json({ message: "Post not found" });
-      return res.json({
-        liked: false,
-        likeCount: updatedPost.likeCount,
-      });
-    }
-
-    await Like.create({
-      userId,
-      targetId: postId,
-      targetType: "Post",
-    });
-    const updatedPost = await Post.findByIdAndUpdate(
-      postId,
-      { $inc: { likeCount: 1 } },
-      { returnDocument: "after" },
-    );
-    if (!updatedPost) return res.status(404).json({ message: "Post not found" });
-    return res.json({
-      liked: true,
-      likeCount: updatedPost.likeCount,
-    });
-  } catch (error) {
-    return res.status(500).json({ message: error.message });
-  }
-};
 
 export const getPostLikes = async (req, res) => {
   try {
-    const { postId } = req.params;
-    const post = await Post.findById(postId);
-    if (!post) return res.status(404).json({ message: "Post not found" });
+    const postId = req.params.postId;
 
-    const likes = await Like.find({
-      targetId: postId,
-      targetType: "Post",
-    }).populate("userId", "name username profilePicture");
+    const likes = await Like.find({ targetId: postId, targetType: "Post" }).populate("userId", "name username profilePicture");
 
-    return res.status(200).json({
-      count: likes.length,
-      likes,
-    });
+    return res.json({ message: "Likes fetched successfully", likes });
+
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
-};
+}
 
-export const toggleLikeComment = async (req, res) => {
+export const toggleLikePost = async (req, res) => {
   try {
-    const { commentId } = req.params;
+    const userId = req.user._id;
+    const postId = req.params.postId;
 
-    const comment = await Comment.findById(commentId);
-    if (!comment) {
-      return res.status(404).json({ message: "Comment not found" });
-    }
 
     const existingLike = await Like.findOne({
-      userId: req.user._id,
-      targetId: commentId,
-      targetType: "Comment",
+      userId,
+      targetId: postId,
+      targetType: "Post",
     });
+
+
+
 
     if (existingLike) {
-      await Like.findByIdAndDelete(existingLike._id);
-      comment.likeCount = Math.max(0, comment.likeCount - 1);
-      await comment.save();
+      await Like.deleteOne({ _id: existingLike._id });
 
-      return res.status(200).json({
-        message: "Comment unliked",
-        liked: false,
-        likeCount: comment.likeCount,
-      });
+      await Post.updateOne(
+        { _id: postId },
+        [
+          {
+            $set: {
+              likeCount: { $max: [{ $subtract: ["$likeCount", 1] }, 0] },
+            },
+          },
+          {
+            $set: {
+              score: {
+                $add: [
+                  { $multiply: [{ $ln: { $add: ["$likeCount", 1] } }, 2] },
+                  { $multiply: [{ $ln: { $add: ["$commentCount", 1] } }, 3] },
+                  {
+                    $divide: [
+                      1,
+                      {
+                        $add: [
+                          1,
+                          {
+                            $divide: [
+                              {
+                                $divide: [
+                                  { $subtract: ["$$NOW", "$createdAt"] },
+                                  1000 * 60 * 60,
+                                ],
+                              },
+                              6,
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+          },
+        ]
+      );
+
+      return res.json({ message: "Post unliked" });
     }
+
+
+
 
     await Like.create({
-      userId: req.user._id,
-      targetId: commentId,
-      targetType: "Comment",
+      userId,
+      targetId: postId,
+      targetType: "Post",
     });
 
-    comment.likeCount += 1;
-    await comment.save();
-
-    return res.status(201).json({
-      message: "Comment liked",
-      liked: true,
-      likeCount: comment.likeCount,
-    });
-  } catch (error) {
-    if (error.code === 11000) {
-      return res.status(400).json({ message: "Already liked" });
-    }
-    return res.status(500).json({ message: error.message });
-  }
-};
-
-export const getLikes = async (req, res) => {
-  try {
-    const { targetId, targetType } = req.query;
-
-    if (!targetId || !targetType) {
-      return res
-        .status(400)
-        .json({ message: "targetId and targetType query params are required" });
-    }
-
-    const likes = await Like.find({ targetId, targetType }).populate(
-      "userId",
-      "name username profilePicture",
+    await Post.updateOne(
+      { _id: postId },
+      [
+        {
+          $set: {
+            likeCount: { $add: ["$likeCount", 1] },
+          },
+        },
+        {
+          $set: {
+            score: {
+              $add: [
+                { $multiply: [{ $ln: { $add: ["$likeCount", 2] } }, 2] },
+                { $multiply: [{ $ln: { $add: ["$commentCount", 1] } }, 3] },
+                {
+                  $divide: [
+                    1,
+                    {
+                      $add: [
+                        1,
+                        {
+                          $divide: [
+                            {
+                              $divide: [
+                                { $subtract: [new Date(), "$createdAt"] },
+                                1000 * 60 * 60,
+                              ],
+                            },
+                            6,
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+      ]
     );
 
-    return res.status(200).json({
-      count: likes.length,
-      likes,
-    });
-  } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.json({ message: "Post liked" });
+
+  } catch (err) {
+
+    if (err.code === 11000) {
+      return res.json({ message: "Already liked" });
+    }
+
+    return res.status(500).json({ message: err.message });
   }
 };

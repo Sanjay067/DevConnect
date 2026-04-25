@@ -2,10 +2,6 @@ import Post from "../models/posts.model.js";
 import Like from "../models/likes.model.js";
 import { cloudinary } from "../config/cloudinary.js";
 
-export const activeCheck = async (req, res) => {
-  return res.status(200).json({ message: "Serving is active" });
-};
-
 export const getAllUserPosts = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -48,14 +44,14 @@ export const createPost = async (req, res) => {
 
     const media = req.files
       ? req.files.map((file) => ({
-          url: file.path,
-          publicId: file.filename,
-          type: file.mimetype.startsWith("image/")
-            ? "image"
-            : file.mimetype.startsWith("video/")
-              ? "video"
-              : "file",
-        }))
+        url: file.path,
+        publicId: file.filename,
+        type: file.mimetype.startsWith("image/")
+          ? "image"
+          : file.mimetype.startsWith("video/")
+            ? "video"
+            : "file",
+      }))
       : [];
 
     const newPost = new Post({
@@ -127,7 +123,7 @@ export const editPost = async (req, res) => {
     post.body = body.trim();
     post.media = finalMedia;
     await post.save();
-    
+
     // populate author for response
     await post.populate("author", "name username profilePicture");
 

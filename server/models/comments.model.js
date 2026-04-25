@@ -6,7 +6,6 @@ const commentSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Post",
       required: true,
-      index: true,
     },
 
     author: {
@@ -15,17 +14,29 @@ const commentSchema = new mongoose.Schema(
       required: true,
     },
 
+    authorName: String,
+    authorProfilePicture: String,
+
     body: {
       type: String,
-      required: function bodyRequiredWhenVisible() {
+      required: function () {
         return !this.isDeleted;
       },
+      trim: true,
+      maxlength: 1000,
     },
+
 
     parentComment: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Comment",
       default: null,
+    },
+
+
+    replyCount: {
+      type: Number,
+      default: 0,
     },
 
     likeCount: {
@@ -38,11 +49,11 @@ const commentSchema = new mongoose.Schema(
       default: false,
     },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
-commentSchema.index({ postId: 1, parentComment: 1 });
 
-const Comment = mongoose.model("Comment", commentSchema);
+commentSchema.index({ postId: 1, parentComment: 1, createdAt: -1 });
+commentSchema.index({ parentComment: 1, createdAt: -1 });
 
-export default Comment;
+export default mongoose.model("Comment", commentSchema);

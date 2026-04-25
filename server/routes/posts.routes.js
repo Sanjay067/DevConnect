@@ -1,7 +1,6 @@
 import { Router } from "express";
 
 import {
-  activeCheck,
   getAllUserPosts,
   createPost,
   deletePost,
@@ -10,22 +9,14 @@ import {
 import { toggleLikePost, getPostLikes } from "../controllers/likes.controller.js";
 import { verifyAccessToken } from "../middlewares/verifyAccessToken.middleware.js";
 import { isPostAuthor } from "../middlewares/isPostAuthor.middleware.js";
-import commentRoutes from "./comments.routes.js";
+// import commentRoutes from "./comments.routes.js";
 
 const router = Router();
 
-// const storage = multer.diskStorage({
-//   destination: (req, file, cb) => {
-//     cb(null, "uploads/");
-//   },
-//   filename: (req, file, cb) => {
-//     cb(null, `${Date.now()}-${file.originalname}`);
-//   },
-// });
-
-// const upload = multer({ storage });
 
 import { uploadPostMedia } from "../config/cloudinary.js";
+
+
 
 router
   .route("/")
@@ -37,10 +28,12 @@ router
   .delete(verifyAccessToken, isPostAuthor, deletePost);
 
 // Like/unlike a post
+
 router.post("/:postId/like", verifyAccessToken, toggleLikePost);
 router.get("/:postId/likes", verifyAccessToken, getPostLikes);
 
 // Mount comment routes under /:postId/comments
-router.use("/:postId/comments", commentRoutes);
+
+// router.use("/:postId/comments", commentRoutes);
 
 export default router;

@@ -22,9 +22,8 @@ export const addComment = async (req, res) => {
       parentComment: null,
     });
 
-    // Increment comment count on the post
-    post.commentCount += 1;
-    await post.save();
+    // Increment comment count on the post atomically
+    await Post.updateOne({ _id: postId }, { $inc: { commentCount: 1 } });
 
     await comment.populate("author", "name username profilePicture");
 
@@ -59,12 +58,8 @@ export const replyToComment = async (req, res) => {
       parentComment: commentId,
     });
 
-    // Increment comment count on the post
-    const post = await Post.findById(postId);
-    if (post) {
-      post.commentCount += 1;
-      await post.save();
-    }
+    // Increment comment count on the post atomically
+    await Post.updateOne({ _id: postId }, { $inc: { commentCount: 1 } });
 
     await reply.populate("author", "name username profilePicture");
 
@@ -116,12 +111,8 @@ export const deleteComment = async (req, res) => {
     comment.body = "";
     await comment.save();
 
-    // Decrement comment count on the post
-    const post = await Post.findById(postId);
-    if (post) {
-      post.commentCount = Math.max(0, post.commentCount - 1);
-      await post.save();
-    }
+    // Decrement comment count on the post atomically
+    await Post.updateOne({ _id: postId, commentCount: { $gt: 0 } }, { $inc: { commentCount: -1 } });
 
     return res.status(200).json({ message: "Comment deleted" });
   } catch (error) {
