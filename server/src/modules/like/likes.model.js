@@ -11,6 +11,7 @@ const likeSchema = new mongoose.Schema(
     targetId: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
+      refPath: "targetType",
     },
 
     targetType: {

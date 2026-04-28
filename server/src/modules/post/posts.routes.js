@@ -9,7 +9,7 @@ import {
 import { toggleLikePost, getPostLikes } from "../like/likes.controller.js";
 import { verifyAccessToken } from "../../middlewares/verifyAccessToken.middleware.js";
 import { isPostAuthor } from "../../middlewares/isPostAuthor.middleware.js";
-// import commentRoutes from "./comments.routes.js";
+import commentRoutes from "../comment/comments.routes.js";
 
 const router = Router();
 
@@ -29,11 +29,13 @@ router
 
 // Like/unlike a post
 
-router.post("/:postId/like", verifyAccessToken, toggleLikePost);
-router.get("/:postId/likes", verifyAccessToken, getPostLikes);
+router
+  .route("/:postId/like")
+  .get(verifyAccessToken, getPostLikes)
+  .post(verifyAccessToken, toggleLikePost)
 
 // Mount comment routes under /:postId/comments
 
-// router.use("/:postId/comments", commentRoutes);
+router.use("/:postId/comments", commentRoutes);
 
 export default router;

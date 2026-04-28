@@ -14,9 +14,6 @@ const commentSchema = new mongoose.Schema(
       required: true,
     },
 
-    authorName: String,
-    authorProfilePicture: String,
-
     body: {
       type: String,
       required: function () {

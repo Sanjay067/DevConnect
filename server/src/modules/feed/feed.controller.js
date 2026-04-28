@@ -12,19 +12,19 @@ function computeScore(post, user, followingSet) {
   // Recency
   const createdAt = post.createdAt ? new Date(post.createdAt).getTime() : Date.now();
   const ageHours = Math.max(0, (Date.now() - createdAt) / (1000 * 60 * 60));
-  const recencyScore = 1 / (1 + ageHours / 6); 
+  const recencyScore = 1 / (1 + ageHours / 6);
 
   // Project Relevance
   let skillMatch = 0;
   let interestMatch = 0;
-  
+
   if (post.techStack && post.techStack.length > 0) {
-     const postTags = post.techStack.map(t => t.toLowerCase());
-     const userSkills = (user.skills || []).map(s => s.toLowerCase());
-     const userInterests = (user.interests || []).map(s => s.toLowerCase());
-     
-     skillMatch = postTags.filter(t => userSkills.includes(t)).length * 5; 
-     interestMatch = postTags.filter(t => userInterests.includes(t)).length * 3; 
+    const postTags = post.techStack.map(t => t.toLowerCase());
+    const userSkills = (user.skills || []).map(s => s.toLowerCase());
+    const userInterests = (user.interests || []).map(s => s.toLowerCase());
+
+    skillMatch = postTags.filter(t => userSkills.includes(t)).length * 5;
+    interestMatch = postTags.filter(t => userInterests.includes(t)).length * 3;
   }
 
   // Network Relevance
