@@ -68,13 +68,13 @@ const postMediaStorage = new CloudinaryStorage({
   },
 });
 
-export const uploadAvatar = multer({ 
+export const uploadAvatar = multer({
   storage: avatarStorage,
   limits: { fileSize: 1024 * 1024 } // 1MB limit
 });
 
-export const uploadPostMedia = multer({ 
+export const uploadPostMedia = multer({
   storage: postMediaStorage,
-  limits: { fileSize: 1024 * 1024 } // 1MB limit
+  limits: { fileSize: 7000 * 7000 } // 1MB limit
 });
 export { cloudinary };

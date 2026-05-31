@@ -65,7 +65,6 @@ export const createPost = asyncHandler(async (req, res) => {
   }
 
   const media = (req.files || []).map((file) => ({
-    url: file.path,
     publicId: file.filename,
     type: file.mimetype.startsWith("image/")
       ? "image"
@@ -131,7 +130,6 @@ export const editPost = asyncHandler(async (req, res) => {
 
   try {
     const newMedia = (req.files || []).map((file) => ({
-      url: file.path,
       publicId: file.filename,
       type: file.mimetype.startsWith("image/")
         ? "image"
