@@ -30,7 +30,6 @@ const postSchema = new mongoose.Schema(
 
     media: [
       {
-        url: String,
         publicId: String,
         type: {
           type: String,

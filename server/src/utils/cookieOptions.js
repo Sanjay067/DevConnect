@@ -1,5 +1,4 @@
 // production: secure + sameSite=none for cross-origin
-// const isProd = () => process.env.NODE_ENV === "production";
 
 const isProd = () => process.env.NODE_ENV === "none";
 
