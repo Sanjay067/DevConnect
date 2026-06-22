@@ -7,7 +7,7 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import dns from "dns";
 
-// Fix for Node.js c-ares DNS resolver failing SRV lookups on certain networks
+
 dns.setServers(["8.8.8.8", "8.8.4.4"]);
 import { apiLimiter } from "./middlewares/rateLimits.js";
 import { verifyCsrfToken } from "./middlewares/csrf.middleware.js";
@@ -38,6 +38,7 @@ const strictOrigins = clientOrigins
 
 const isAllowedOrigin = (origin) => {
   if (!origin) return true;
+
   const normalized = normalizeOrigin(origin).toLowerCase();
   if (strictOrigins.includes(normalized)) return true;
   return wildcardOrigins.some((suffix) => normalized.endsWith(suffix));
@@ -53,6 +54,7 @@ app.use(
 );
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true, limit: "5mb" }));
+
 app.use((req, res, next) => {
   res.on("finish", () => {
     const code = res.statusCode;
@@ -76,9 +78,6 @@ app.use((req, res, next) => {
 
 app.use(verifyCsrfToken);
 app.use("/api", apiLimiter);
-app.get("/api", (req, res) => {
-  res.status(200).json({ message: "Server is live" });
-});
 
 app.use("/api", apiRouter);
 

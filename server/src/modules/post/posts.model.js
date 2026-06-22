@@ -20,7 +20,7 @@ const postSchema = new mongoose.Schema(
     shortDescription: {
       type: String,
       trim: true,
-      maxlength: 300,
+      maxlength: 500,
     },
 
     content: {

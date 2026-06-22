@@ -23,13 +23,15 @@ function Navbar() {
 
                 {/* Left Section */}
                 <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2">
-                        <i
-                            className="fa-regular fa-compass"
-                            style={{ color: "var(--accent)" }}
-                        ></i>
-                        <h2 className="text-lg font-semibold sm:text-xl">DevConnect</h2>
-                    </div>
+                    <Link href="/feed">
+                        <div className="flex items-center gap-2">
+                            <i
+                                className="fa-regular fa-compass"
+                                style={{ color: "var(--accent)" }}
+                            ></i>
+                            <h2 className="text-lg font-semibold sm:text-xl">DevConnect</h2>
+                        </div>
+                    </Link>
 
                     {/* Search */}
                     <div className="relative flex items-center">
@@ -65,26 +67,28 @@ function Navbar() {
 
                 {/* Center Navigation */}
                 <div className="hidden items-center justify-center gap-1 md:flex md:gap-3">
-                    <Link href="/dashboard/home">
+                    <Link href="/feed">
                         <div className="flex min-w-16 flex-col items-center px-2 py-2">
                             <i className="fa-solid fa-house"></i>
                             <h4 className="text-xs sm:text-sm">Home</h4>
                         </div>
                     </Link>
 
-                    <Link href="/dashboard/network">
+                    <Link href="/network">
                         <div className="flex min-w-16 flex-col items-center px-2 py-2">
                             <i className="fa-solid fa-network-wired"></i>
                             <h4 className="text-xs sm:text-sm">Network</h4>
                         </div>
                     </Link>
 
-                    <div className="flex min-w-16 flex-col items-center px-2 py-2">
-                        <i className="fa-regular fa-comment-dots"></i>
-                        <h4 className="text-xs sm:text-sm">Messages</h4>
-                    </div>
+                    <Link href="/messages">
+                        <div className="flex min-w-16 flex-col items-center px-2 py-2">
+                            <i className="fa-regular fa-comment-dots"></i>
+                            <h4 className="text-xs sm:text-sm">Messages</h4>
+                        </div>
+                    </Link>
 
-                    <Link href="/dashboard/profile">
+                    <Link href="/profile">
                         <div className="flex min-w-16 flex-col items-center px-2 py-2">
                             <i className="fa-solid fa-circle-user"></i>
                             <h4 className="text-xs sm:text-sm">Profile</h4>

@@ -1,4 +1,4 @@
-import { toggleLikePost } from "@/services/postService";
+import { toggleLike } from "../api/postApi";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 
 
@@ -6,7 +6,7 @@ export const useLikePost = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: toggleLikePost,
+        mutationFn: toggleLike,
 
         onMutate: async (postId) => {
             await queryClient.cancelQueries({ queryKey: ["feed"] });
@@ -39,10 +39,6 @@ export const useLikePost = () => {
             if (context?.previousFeed) {
                 queryClient.setQueryData(["feed"], context.previousFeed);
             }
-        },
-
-        onSettled: () => {
-            queryClient.invalidateQueries({ queryKey: ["feed"] });
-        },
+        }
     });
 };

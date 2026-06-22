@@ -52,7 +52,7 @@ class CloudinaryStorage {
 const avatarStorage = new CloudinaryStorage({
   cloudinary,
   params: {
-    folder: "linkedin/avatars",
+    folder: "devConnect/avatars",
     allowed_formats: ["jpg", "jpeg", "png", "webp"],
     transformation: [{ width: 400, height: 400, crop: "fill" }],
   },
@@ -62,7 +62,7 @@ const avatarStorage = new CloudinaryStorage({
 const postMediaStorage = new CloudinaryStorage({
   cloudinary,
   params: {
-    folder: "linkedin/posts",
+    folder: "devConnect/posts",
     allowed_formats: ["jpg", "jpeg", "png", "webp", "mp4"],
     resource_type: "auto",
   },
@@ -75,6 +75,6 @@ export const uploadAvatar = multer({
 
 export const uploadPostMedia = multer({
   storage: postMediaStorage,
-  limits: { fileSize: 7000 * 7000 } // 1MB limit
+  limits: { fileSize: 7000 * 7000 } // 49MB limit
 });
 export { cloudinary };

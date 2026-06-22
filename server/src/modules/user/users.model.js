@@ -23,7 +23,7 @@ const userSchema = mongoose.Schema(
     profilePicture: {
       type: String,
       default:
-        "https://res.cloudinary.com/dzxegwov1/image/upload/v1774022392/094779dd-b28a-4648-a099-05983749fbc4.png",
+        "https://res.cloudinary.com/dzxegwov1/image/upload/v1782120213/linkedin/avatars/d4qywptvrqbbkocidiz5.jpg",
     },
     refreshToken: {
       type: String,
