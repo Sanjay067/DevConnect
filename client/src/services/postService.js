@@ -36,4 +36,12 @@ export const createPost = (formData) => {
     });
 };
 
+export const uploadAsset = (fileData) => {
+    return apiClient.post("/posts/upload-asset", fileData, {
+        headers: {
+            "Content-Type": "multipart/form-data",
+        },
+    });
+};
+
 

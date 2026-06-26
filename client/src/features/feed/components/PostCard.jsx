@@ -7,10 +7,52 @@ import Comment from './Comment'
 import { resolveProfilePicture } from '@/shared/lib/imageHelpers'
 import { useLikePost } from '../hooks/useLikePost';
 import { useSelector } from 'react-redux';
+import { renderMarkdown } from '../utils/markdownParser';
+
+const getTechIconClass = (tech = "") => {
+    const key = tech.trim().toLowerCase().replace(/\s+/g, "");
+    switch (key) {
+        case "react":
+        case "reactjs":
+            return "fa-brands fa-react text-blue-400";
+        case "node":
+        case "nodejs":
+            return "fa-brands fa-node-js text-green-500";
+        case "js":
+        case "javascript":
+            return "fa-brands fa-js text-yellow-500";
+        case "python":
+            return "fa-brands fa-python text-blue-550";
+        case "html":
+        case "html5":
+            return "fa-brands fa-html5 text-orange-500";
+        case "css":
+        case "css3":
+            return "fa-brands fa-css3-alt text-blue-600";
+        case "docker":
+            return "fa-brands fa-docker text-blue-400";
+        case "git":
+        case "github":
+            return "fa-brands fa-github text-gray-800";
+        case "aws":
+            return "fa-brands fa-aws text-orange-400";
+        case "vue":
+        case "vuejs":
+            return "fa-brands fa-vuejs text-green-500";
+        case "angular":
+        case "angularjs":
+            return "fa-brands fa-angular text-red-650";
+        case "sass":
+            return "fa-brands fa-sass text-pink-400";
+        default:
+            return null;
+    }
+};
 
 function PostCard({ post }) {
     const { mutate: executeLikeMutation } = useLikePost();
     const [isCommentDialogOpen, setIsCommentDialogOpen] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(false);
     const currentUser = useSelector((state) => state.auth.user);
     const isOwnPost = post.author?._id === currentUser?._id;
 
@@ -67,12 +109,22 @@ function PostCard({ post }) {
 
                 {/* Attached Media Carousel */}
                 <MediaCarousel media={post.media} />
+
+                {isExpanded && post.content?.blocks?.[0]?.data?.text && (
+                    <div 
+                        className="mt-4 pt-4 border-t border-gray-150 text-sm text-gray-800 leading-relaxed overflow-x-auto select-text"
+                        dangerouslySetInnerHTML={{ __html: renderMarkdown(post.content.blocks[0].data.text) }}
+                    />
+                )}
             </div>
 
             {/* 3. Post Links (View more, GitHub, Live Demo) */}
             <div className="flex items-center justify-between mb-4 mt-3">
-                <button className="text-blue-500 hover:text-blue-600 font-medium text-sm flex items-center gap-1 transition-colors">
-                    View more <i className="fa-solid fa-arrow-right text-xs"></i>
+                <button 
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    className="text-blue-500 hover:text-blue-600 font-medium text-sm flex items-center gap-1 transition-colors"
+                >
+                    {isExpanded ? "Show less" : "View more"} <i className={`fa-solid ${isExpanded ? 'fa-arrow-up' : 'fa-arrow-right'} text-xs`}></i>
                 </button>
 
                 <div className="flex items-center gap-3">
@@ -94,11 +146,15 @@ function PostCard({ post }) {
             {/* 4. Tech Stack Badges */}
             {post.techStack && post.techStack.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-5">
-                    {post.techStack.map((tech, idx) => (
-                        <span key={idx} className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-xs font-semibold capitalize">
-                            {tech}
-                        </span>
-                    ))}
+                    {post.techStack.map((tech, idx) => {
+                        const iconClass = getTechIconClass(tech);
+                        return (
+                            <span key={idx} className="bg-gray-50 border border-gray-200/60 text-gray-700 px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 capitalize select-none">
+                                {iconClass && <i className={`${iconClass} text-sm`}></i>}
+                                {tech}
+                            </span>
+                        );
+                    })}
                 </div>
             )}
 
