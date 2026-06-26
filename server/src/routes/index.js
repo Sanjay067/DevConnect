@@ -12,7 +12,7 @@ router.use("/users", userRoutes);
 router.use("/auth", authRoutes);
 router.use("/posts", postRoutes);
 router.use("/feed", feedRoutes);
-router.use("/follows", followRoutes); // renamed from connections
+router.use("/follows", followRoutes);
 router.use("/messages", messageRoutes);
 
 

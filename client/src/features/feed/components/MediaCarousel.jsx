@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { resolveMediaSrc } from '@/shared/lib/imageHelpers';
 
 function MediaCarousel({ media }) {
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -18,54 +19,68 @@ function MediaCarousel({ media }) {
     const currentItem = media[currentIndex];
 
     return (
-        <div className="relative mt-4 w-full rounded-2xl overflow-hidden border border-white/10 group/carousel aspect-[4/3] bg-black/40">
+        <div className="relative mt-4 w-full rounded-2xl overflow-hidden aspect-[16/9] bg-gray-900 group/carousel shadow-sm">
             
-            {/* Media Rendering */}
-            {currentItem.type === 'image' ? (
-                <img 
-                    src={currentItem.url} 
-                    alt={`Slide ${currentIndex + 1}`} 
-                    className="w-full h-full object-contain"
-                />
-            ) : (
-                <video 
-                    src={currentItem.url} 
-                    controls 
-                    className="w-full h-full object-contain"
-                />
-            )}
-
-            {/* Navigation Arrows (Only show if multiple media items exist) */}
-            {media.length > 1 && (
-                <>
-                    {/* Left Arrow */}
-                    <button 
-                        onClick={prevSlide}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-slate-900/80 text-white ring-1 ring-white/20 backdrop-blur-md shadow-lg transition-colors hover:bg-sky-500 hover:ring-sky-400"
+            {/* Media Rendering (Mapping all items for seamless transition) */}
+            {media.map((item, i) => {
+                const isActive = i === currentIndex;
+                
+                return (
+                    <div 
+                        key={i} 
+                        className={`absolute inset-0 w-full h-full transition-opacity duration-500 ease-in-out ${
+                            isActive ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
+                        }`}
                     >
-                        <i className="fa-solid fa-chevron-left text-lg"></i>
+                        {item.type === 'image' ? (
+                            <img
+                                src={resolveMediaSrc(item)}
+                                alt={`Slide ${i + 1}`}
+                                className="w-full h-full object-cover"
+                                loading="lazy"
+                            />
+                        ) : (
+                            <video
+                                src={resolveMediaSrc(item)}
+                                controls
+                                className="w-full h-full object-cover bg-black"
+                            />
+                        )}
+                    </div>
+                );
+            })}
+
+            {/* Navigation Arrows (Z-index ensures they stay above images) */}
+            {media.length > 1 && (
+                <div className="z-20">
+                    {/* Left Arrow */}
+                    <button
+                        onClick={prevSlide}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-full bg-white/80 text-gray-800 shadow-sm transition-colors hover:bg-white"
+                    >
+                        <i className="fa-solid fa-chevron-left text-sm"></i>
                     </button>
 
                     {/* Right Arrow */}
-                    <button 
+                    <button
                         onClick={nextSlide}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-slate-900/80 text-white ring-1 ring-white/20 backdrop-blur-md shadow-lg transition-colors hover:bg-sky-500 hover:ring-sky-400"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-full bg-white/80 text-gray-800 shadow-sm transition-colors hover:bg-white"
                     >
-                        <i className="fa-solid fa-chevron-right text-lg"></i>
+                        <i className="fa-solid fa-chevron-right text-sm"></i>
                     </button>
 
                     {/* Dot Indicators */}
-                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
                         {media.map((_, idx) => (
-                            <div 
-                                key={idx} 
+                            <div
+                                key={idx}
                                 className={`h-1.5 rounded-full transition-all duration-300 ${
-                                    idx === currentIndex ? 'w-6 bg-sky-400' : 'w-1.5 bg-white/50'
+                                    idx === currentIndex ? 'w-4 bg-white' : 'w-1.5 bg-white/40'
                                 }`}
                             />
                         ))}
                     </div>
-                </>
+                </div>
             )}
         </div>
     );

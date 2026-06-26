@@ -1,4 +1,6 @@
 import axios from "axios";
+import { store } from "@/store";
+import { clearUser } from "@/store/authSlice";
 
 export const apiClient = axios.create({
   baseURL: "http://localhost:5000/api",
@@ -8,7 +10,6 @@ export const apiClient = axios.create({
 });
 
 
-// Track whether a token refresh is already in progress
 let isRefreshing = false;
 let failedQueue = [];
 
@@ -23,33 +24,26 @@ const processQueue = (error) => {
   failedQueue = [];
 };
 
-// Explicitly attach the CSRF token from cookies 
-apiClient.interceptors.request.use((config) => {
-  if (typeof document !== "undefined") {
-    const cookies = document.cookie.split("; ");
-    const csrfCookie = cookies.find((row) => row.startsWith("csrfToken="));
-    if (csrfCookie) {
-      const token = csrfCookie.split("=")[1];
-      config.headers["x-csrf-token"] = token;
-    }
-  }
-  return config;
-});
+
+// We rely on Axios's built-in xsrfCookieName and xsrfHeaderName behavior for CSRF tokens.
 
 apiClient.interceptors.response.use(
   (res) => res,
   async (error) => {
     const originalRequest = error.config;
 
-    // If 401 and we haven't already retried this request
+
     if (error.response?.status === 401 && !originalRequest._retry) {
-      // Don't try to refresh if the failing request IS the refresh endpoint
-      if (originalRequest.url?.includes("/auth/refresh-token")) {
+
+      if (
+        originalRequest.url?.includes("/auth/refresh-token") ||
+        originalRequest.url?.includes("/users/profiles/me")
+      ) {
         return Promise.reject(error);
       }
 
       if (isRefreshing) {
-        // Queue this request until the refresh completes
+
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         }).then(() => apiClient(originalRequest));
@@ -64,10 +58,10 @@ apiClient.interceptors.response.use(
         return apiClient(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError);
-        // Redirect to login if refresh also fails
-        if (typeof window !== "undefined") {
-          window.location.href = "/auth";
-        }
+        
+        // Ensure Redux state correctly clears so protected routes can redirect naturally
+        store.dispatch(clearUser());
+
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;

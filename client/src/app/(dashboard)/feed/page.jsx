@@ -1,11 +1,11 @@
 "use client";
 
-import PostCard from "@/features/feed/components/PostCard";
-import { useFeed } from "@/features/feed/hooks/useFeed";
+
+import FeedWrapper from "@/features/feed/components/FeedWrapper";
+import { useFeed } from '../../../features/feed/hooks/useFeed';
 
 function Feed() {
     const { data: feed, isLoading, isError, error } = useFeed();
-
     if (isLoading) {
         return (
             <div className="flex justify-center p-10">
@@ -22,12 +22,9 @@ function Feed() {
         );
     }
     return (
-        <main>
-            {
-                feed?.posts?.map((post) => (
-                    <PostCard key={post._id} post={post} />
-                ))
-            }
+        <main className="min-h-screen bg-gray-50 py-5 ">
+            <FeedWrapper feed={feed} />
+
         </main>
     )
 }
