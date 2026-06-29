@@ -1,52 +1,19 @@
-"use client"
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
+import Link from "next/link";
 import Like from './Like'
-import MediaCarousel from './MediaCarousel'
 import Comment from './Comment'
-import { resolveProfilePicture } from '@/shared/lib/imageHelpers'
+import { resolveProfilePicture, resolveMediaSrc } from '@/shared/lib/imageHelpers'
 import { useLikePost } from '../hooks/useLikePost';
 import { useSelector } from 'react-redux';
 import { renderMarkdown } from '../utils/markdownParser';
+import { getTechIconClass } from '@/shared/lib/techIcons';
 
-const getTechIconClass = (tech = "") => {
-    const key = tech.trim().toLowerCase().replace(/\s+/g, "");
-    switch (key) {
-        case "react":
-        case "reactjs":
-            return "fa-brands fa-react text-blue-400";
-        case "node":
-        case "nodejs":
-            return "fa-brands fa-node-js text-green-500";
-        case "js":
-        case "javascript":
-            return "fa-brands fa-js text-yellow-500";
-        case "python":
-            return "fa-brands fa-python text-blue-550";
-        case "html":
-        case "html5":
-            return "fa-brands fa-html5 text-orange-500";
-        case "css":
-        case "css3":
-            return "fa-brands fa-css3-alt text-blue-600";
-        case "docker":
-            return "fa-brands fa-docker text-blue-400";
-        case "git":
-        case "github":
-            return "fa-brands fa-github text-gray-800";
-        case "aws":
-            return "fa-brands fa-aws text-orange-400";
-        case "vue":
-        case "vuejs":
-            return "fa-brands fa-vuejs text-green-500";
-        case "angular":
-        case "angularjs":
-            return "fa-brands fa-angular text-red-650";
-        case "sass":
-            return "fa-brands fa-sass text-pink-400";
-        default:
-            return null;
-    }
+const getFirstMarkdownImage = (text) => {
+    if (!text) return null;
+    const match = text.match(/!\[.*?\]\((https?:\/\/[^\s)]+)\)/);
+    return match ? match[1] : null;
 };
 
 function PostCard({ post }) {
@@ -55,6 +22,16 @@ function PostCard({ post }) {
     const [isExpanded, setIsExpanded] = useState(false);
     const currentUser = useSelector((state) => state.auth.user);
     const isOwnPost = post.author?._id === currentUser?._id;
+
+    const markdownText = post.content?.blocks?.[0]?.data?.text || "";
+    let firstImage = getFirstMarkdownImage(markdownText);
+
+    if (!firstImage && post.media && post.media.length > 0) {
+        const firstMediaItem = post.media.find(item => item.type === 'image');
+        if (firstMediaItem) {
+            firstImage = resolveMediaSrc(firstMediaItem);
+        }
+    }
 
 
     const handleCommentBtn = () => {
@@ -92,6 +69,14 @@ function PostCard({ post }) {
                         Follow
                     </button>
                 )}
+                {isOwnPost && (
+                    <Link
+                        href={`/posts/${post._id}/edit`}
+                        className="border border-gray-200 text-gray-600 rounded-full px-4 py-1.5 font-semibold text-sm hover:bg-gray-50 transition-colors"
+                    >
+                        Edit
+                    </Link>
+                )}
             </div>
 
 
@@ -107,8 +92,17 @@ function PostCard({ post }) {
                     </p>
                 )}
 
-                {/* Attached Media Carousel */}
-                <MediaCarousel media={post.media} />
+                {/* First Pasted Image - shown only when collapsed */}
+                {!isExpanded && firstImage && (
+                    <div className="my-3 max-w-full rounded-2xl overflow-hidden border border-gray-150 shadow-sm bg-gray-50/50">
+                        <img
+                            src={firstImage}
+                            alt={post.title}
+                            className="w-full h-auto mx-auto object-cover max-h-[380px]"
+                            loading="lazy"
+                        />
+                    </div>
+                )}
 
                 {isExpanded && post.content?.blocks?.[0]?.data?.text && (
                     <div 
@@ -136,15 +130,15 @@ function PostCard({ post }) {
                             rel="noopener noreferrer"
                             className="flex items-center gap-2 border border-gray-200 text-gray-700 bg-white hover:bg-gray-50 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors"
                         >
-                            <i className={link.label === 'Github' ? "fa-brands fa-github text-sm" : "fa-solid fa-triangle-exclamation text-sm"}></i>
+                            <i className={link.label === 'Github' ? "fa-brands fa-github text-sm" : "fa-solid fa-globe text-sm"}></i>
                             {link.label === 'Github' ? 'GitHub' : 'Live Demo'}
                         </a>
                     ))}
                 </div>
             </div>
 
-            {/* 4. Tech Stack Badges */}
-            {post.techStack && post.techStack.length > 0 && (
+            {/* 4. Tech Stack Badges - shown only when collapsed */}
+            {!isExpanded && post.techStack && post.techStack.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-5">
                     {post.techStack.map((tech, idx) => {
                         const iconClass = getTechIconClass(tech);

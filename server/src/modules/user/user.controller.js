@@ -53,14 +53,19 @@ export const updateUser = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id);
   if (!user) return res.status(400).json({ message: "User doesn't exist" });
 
-  const { email, username, name } = newUserData;
+  const { email, username, name, skills, interests } = newUserData;
 
-  const existingUser = await User.findOne({ $or: [{ username }, { email }] });
+  if (username || email) {
+    const orConditions = [];
+    if (username) orConditions.push({ username });
+    if (email) orConditions.push({ email });
+    const existingUser = await User.findOne({ $or: orConditions });
 
-  if (existingUser && String(existingUser._id) !== String(user._id)) {
-    return res
-      .status(400)
-      .json({ message: "Username or email already exists" });
+    if (existingUser && String(existingUser._id) !== String(user._id)) {
+      return res
+        .status(400)
+        .json({ message: "Username or email already exists" });
+    }
   }
 
   if (name) user.name = name;
@@ -68,6 +73,24 @@ export const updateUser = asyncHandler(async (req, res) => {
   if (email) user.email = email;
 
   if (username) user.username = username;
+
+  if (skills !== undefined) {
+    user.skills = Array.isArray(skills)
+      ? skills
+      : String(skills)
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
+  }
+
+  if (interests !== undefined) {
+    user.interests = Array.isArray(interests)
+      ? interests
+      : String(interests)
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
+  }
 
   await user.save();
 
@@ -80,7 +103,7 @@ export const getMyProfile = asyncHandler(async (req, res) => {
 
   const userProfile = await Profile.findOne({ userId: user._id }).populate(
     "userId",
-    "name email username profilePicture",
+    "name email username profilePicture skills interests",
   );
 
   return res.json(userProfile);

@@ -1,10 +1,6 @@
-import React, { useRef, useState } from "react";
-import { uploadAsset } from "@/services/postService";
+import React from "react";
 
-function EditorToolbar({ textareaRef, value, onChange }) {
-    const fileInputRef = useRef(null);
-    const [isUploading, setIsUploading] = useState(false);
-
+function EditorToolbar({ textareaRef, onChange, onImageUploadClick, isUploading }) {
     const insertMarkdown = (syntaxBefore, syntaxAfter = "") => {
         const textarea = textareaRef.current;
         if (!textarea) return;
@@ -59,33 +55,11 @@ function EditorToolbar({ textareaRef, value, onChange }) {
             case "link":
                 insertMarkdown("[", "](url)");
                 break;
+            case "image-link":
+                insertMarkdown("![alt text](", ")");
+                break;
             default:
                 break;
-        }
-    };
-
-    const handleImageUploadClick = () => {
-        fileInputRef.current?.click();
-    };
-
-    const handleFileChange = async (e) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        setIsUploading(true);
-
-        const formData = new FormData();
-        formData.append("file", file);
-
-        try {
-            const res = await uploadAsset(formData);
-            const imageUrl = res.data.url;
-            insertMarkdown(`\n![${file.name}](${imageUrl})\n`);
-        } catch (err) {
-            alert(err.response?.data?.message || "Failed to upload image.");
-        } finally {
-            setIsUploading(false);
-            if (fileInputRef.current) fileInputRef.current.value = "";
         }
     };
 
@@ -149,6 +123,23 @@ function EditorToolbar({ textareaRef, value, onChange }) {
                 <i className="fa-solid fa-quote-left text-xs"></i>
             </button>
 
+            <button
+                type="button"
+                onClick={() => handleFormat("code")}
+                title="Inline Code"
+                className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-200 font-mono text-[10px]"
+            >
+                {"</>"}
+            </button>
+            <button
+                type="button"
+                onClick={() => handleFormat("codeblock")}
+                title="Code Block"
+                className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-200"
+            >
+                <i className="fa-solid fa-code text-xs"></i>
+            </button>
+
             <div className="w-[1px] h-4 bg-gray-300 mx-1"></div>
 
             {/* Links & Elements */}
@@ -159,6 +150,14 @@ function EditorToolbar({ textareaRef, value, onChange }) {
                 className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-200"
             >
                 <i className="fa-solid fa-link text-xs"></i>
+            </button>
+            <button
+                type="button"
+                onClick={() => handleFormat("image-link")}
+                title="Insert Image Link"
+                className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-200"
+            >
+                <i className="fa-regular fa-image text-xs"></i>
             </button>
             <button
                 type="button"
@@ -173,23 +172,16 @@ function EditorToolbar({ textareaRef, value, onChange }) {
             <button
                 type="button"
                 disabled={isUploading}
-                onClick={handleImageUploadClick}
+                onClick={onImageUploadClick}
                 title="Upload image"
                 className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-200 disabled:opacity-50 ml-auto"
             >
                 {isUploading ? (
                     <i className="fa-solid fa-circle-notch fa-spin text-xs"></i>
                 ) : (
-                    <i className="fa-regular fa-image text-xs"></i>
+                    <i className="fa-solid fa-upload text-xs"></i>
                 )}
             </button>
-            <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                className="hidden"
-            />
         </div>
     );
 }

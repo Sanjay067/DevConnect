@@ -6,6 +6,11 @@ import Comment from "../comment/comments.model.js";
 
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { cloudinary } from "../../config/cloudinary.js";
+import {
+  extractCloudinaryPublicIdsFromPost,
+  extractCloudinaryPublicIdsFromText,
+  destroyCloudinaryAssets,
+} from "../../utils/cloudinaryMarkdown.js";
 
 const parseJSON = (data, fallback = []) => {
   if (typeof data === "string") {
@@ -18,6 +23,65 @@ const parseJSON = (data, fallback = []) => {
   return data || fallback;
 };
 
+const promoteTempAssets = async (markdownText) => {
+  if (!markdownText) return markdownText;
+
+  let updatedText = markdownText;
+  const tempUrlRegex = /https:\/\/res\.cloudinary\.com\/[^\/]+\/image\/upload\/(?:v\d+\/)?(devConnect\/temp\/[^\.]+)\.[a-zA-Z0-9]+/g;
+
+  const matches = [...markdownText.matchAll(tempUrlRegex)];
+
+  for (const match of matches) {
+    const fullUrl = match[0];
+    const oldPublicId = match[1];
+    const newPublicId = oldPublicId.replace("devConnect/temp/", "devConnect/posts/");
+
+    try {
+      console.log(`Promoting asset: ${oldPublicId} -> ${newPublicId}`);
+      const renameResult = await cloudinary.uploader.rename(oldPublicId, newPublicId);
+      updatedText = updatedText.replace(fullUrl, renameResult.secure_url);
+    } catch (error) {
+      console.error(`Failed to promote asset ${oldPublicId}:`, error.message);
+      const fallbackUrl = fullUrl.replace("/devConnect/temp/", "/devConnect/posts/");
+      updatedText = updatedText.replace(fullUrl, fallbackUrl);
+    }
+  }
+
+  return updatedText;
+};
+
+
+export const getPostById = asyncHandler(async (req, res) => {
+  const post = await Post.findById(req.params.postId).populate(
+    "author",
+    "name username profilePicture"
+  );
+
+  if (!post) {
+    return res.status(404).json({ message: "Post not found" });
+  }
+
+  const userId = req.user._id;
+  const isAuthor = post.author._id.toString() === userId.toString();
+
+  if (!isAuthor) {
+    return res.status(403).json({ message: "Unauthorized" });
+  }
+
+  const userLike = await Like.findOne({
+    userId,
+    targetId: post._id,
+    targetType: "Post",
+  }).select("_id");
+
+  return res.status(200).json({
+    message: "Post fetched successfully",
+    post: {
+      ...post.toObject(),
+      isLiked: !!userLike,
+    },
+  });
+});
 
 export const getAllUserPosts = asyncHandler(async (req, res) => {
   const userId = req.user._id;
@@ -62,6 +126,12 @@ export const createPost = asyncHandler(async (req, res) => {
   const parsedContent = parseJSON(content, null);
   if (!parsedContent || !parsedContent.blocks || parsedContent.blocks.length === 0) {
     return res.status(400).json({ message: "Valid content is required" });
+  }
+
+  if (parsedContent?.blocks?.[0]?.data?.text) {
+    parsedContent.blocks[0].data.text = await promoteTempAssets(
+      parsedContent.blocks[0].data.text
+    );
   }
 
   const media = (req.files || []).map((file) => ({
@@ -125,6 +195,8 @@ export const editPost = asyncHandler(async (req, res) => {
     (om) => !keepMedia.find((km) => km.publicId === om.publicId)
   );
 
+  const oldMarkdown = post.content?.blocks?.[0]?.data?.text || "";
+
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -142,7 +214,14 @@ export const editPost = asyncHandler(async (req, res) => {
 
     if (title !== undefined) post.title = title.trim();
     if (shortDescription !== undefined) post.shortDescription = shortDescription?.trim();
-    if (parsedContent !== undefined) post.content = parsedContent;
+    if (parsedContent !== undefined) {
+      if (parsedContent?.blocks?.[0]?.data?.text) {
+        parsedContent.blocks[0].data.text = await promoteTempAssets(
+          parsedContent.blocks[0].data.text
+        );
+      }
+      post.content = parsedContent;
+    }
     post.media = finalMedia;
 
     if (links !== undefined) post.links = parseJSON(links, []);
@@ -157,11 +236,18 @@ export const editPost = asyncHandler(async (req, res) => {
     await session.commitTransaction();
     session.endSession();
 
+    const newMarkdown = parsedContent?.blocks?.[0]?.data?.text ?? oldMarkdown;
+    const removedInlineIds = extractCloudinaryPublicIdsFromText(oldMarkdown).filter(
+      (id) => !extractCloudinaryPublicIdsFromText(newMarkdown).includes(id)
+    );
+
     for (const file of deletedMedia) {
       try {
         await cloudinary.uploader.destroy(file.publicId);
       } catch (_) { }
     }
+
+    await destroyCloudinaryAssets(cloudinary, removedInlineIds);
 
     await post.populate("author", "username profilePicture");
 
@@ -195,6 +281,7 @@ export const deletePost = asyncHandler(async (req, res) => {
     }
 
     const mediaToDelete = post.media || [];
+    const inlineAssetIds = extractCloudinaryPublicIdsFromPost(post);
 
     await Like.deleteMany({
       targetId: post._id,
@@ -210,11 +297,11 @@ export const deletePost = asyncHandler(async (req, res) => {
     await session.commitTransaction();
     session.endSession();
 
-    for (const file of mediaToDelete) {
-      try {
-        await cloudinary.uploader.destroy(file.publicId);
-      } catch (_) { }
-    }
+    const allPublicIds = [
+      ...mediaToDelete.map((f) => f.publicId).filter(Boolean),
+      ...inlineAssetIds,
+    ];
+    await destroyCloudinaryAssets(cloudinary, [...new Set(allPublicIds)]);
 
     return res.status(200).json({ message: "Post deleted!" });
   } catch (err) {

@@ -36,6 +36,22 @@ export const createPost = (formData) => {
     });
 };
 
+export const getPostById = (postId) => {
+    return apiClient.get(`/posts/${postId}`);
+};
+
+export const updatePost = (postId, formData) => {
+    return apiClient.patch(`/posts/${postId}`, formData, {
+        headers: {
+            "Content-Type": "multipart/form-data",
+        },
+    });
+};
+
+export const deletePost = (postId) => {
+    return apiClient.delete(`/posts/${postId}`);
+};
+
 export const uploadAsset = (fileData) => {
     return apiClient.post("/posts/upload-asset", fileData, {
         headers: {

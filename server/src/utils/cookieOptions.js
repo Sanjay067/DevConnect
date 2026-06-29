@@ -1,6 +1,6 @@
 // production: secure + sameSite=none for cross-origin
 
-const isProd = () => process.env.NODE_ENV === "none";
+const isProd = () => process.env.NODE_ENV === "production";
 
 export function accessCookieOptions() {
     return {

@@ -17,3 +17,12 @@ export const authLimiter = rateLimit({
   legacyHeaders: false,
   message: { message: "Too many auth attempts, please try again later." },
 });
+
+/** Stricter limit for media uploads */
+export const uploadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: Number(process.env.UPLOAD_RATE_LIMIT_MAX || 30),
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many uploads, please try again later." },
+});

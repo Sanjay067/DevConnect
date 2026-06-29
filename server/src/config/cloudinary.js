@@ -58,6 +58,16 @@ const avatarStorage = new CloudinaryStorage({
   },
 });
 
+// Storage for temporary media
+const tempMediaStorage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "devConnect/temp",
+    allowed_formats: ["jpg", "jpeg", "png", "webp"],
+    resource_type: "auto",
+  },
+});
+
 // Storage for post media
 const postMediaStorage = new CloudinaryStorage({
   cloudinary,
@@ -77,4 +87,10 @@ export const uploadPostMedia = multer({
   storage: postMediaStorage,
   limits: { fileSize: 7000 * 7000 } // 49MB limit
 });
+
+export const uploadTempMedia = multer({
+  storage: tempMediaStorage,
+  limits: { fileSize: 7000 * 7000 } // 49MB limit
+});
+
 export { cloudinary };

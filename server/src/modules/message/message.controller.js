@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import Message from "./messages.model.js";
 import User from "../user/users.model.js";
-import Connection from "../follow/follow.model.js";
+import Follow from "../follow/follow.model.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 
 function toId(v) {
@@ -9,16 +9,15 @@ function toId(v) {
 }
 
 async function areConnected(userA, userB) {
-  const conn = await Connection.findOne({
-    status: "accepted",
+  const follow = await Follow.findOne({
     $or: [
-      { senderId: userA, receiverId: userB },
-      { senderId: userB, receiverId: userA },
+      { followerId: userA, followingId: userB },
+      { followerId: userB, followingId: userA },
     ],
   })
     .select("_id")
     .lean();
-  return !!conn;
+  return !!follow;
 }
 
 export const getConversations = asyncHandler(async (req, res) => {

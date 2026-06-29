@@ -6,7 +6,8 @@
     "dev": "next dev --webpack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:smoke": "node tests/markdownParser.smoke.js"
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.11.2",

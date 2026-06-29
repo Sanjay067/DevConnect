@@ -32,7 +32,7 @@ function CreatePostCard() {
                         onClick={handleNavigate}
                         className="flex-1 text-left bg-gray-50 hover:bg-gray-100/70 border border-gray-200 rounded-full px-5 py-2.5 text-gray-500 text-sm font-medium transition-colors"
                     >
-                        Showcase a new project...
+                        What's on your mind, {currentUser?.name}?
                     </button>
                 </div>
 

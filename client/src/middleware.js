@@ -8,8 +8,14 @@ export const middleware = (request) => {
     const { pathname } = request.nextUrl;
 
     const isAuthPage = pathname.startsWith("/auth");
+    const isPublicPage = pathname === "/";
+    const isPublicAsset = PUBLIC_ASSETS.test(pathname);
 
-    if (!accessToken && !isAuthPage) {
+    if (isPublicAsset) {
+        return NextResponse.next();
+    }
+
+    if (!accessToken && !isAuthPage && !isPublicPage) {
         return NextResponse.redirect(new URL("/auth", request.url));
     }
 
