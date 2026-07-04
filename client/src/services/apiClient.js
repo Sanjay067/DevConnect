@@ -95,6 +95,9 @@ apiClient.interceptors.response.use(
       } catch (refreshError) {
         processQueue(refreshError);
         store.dispatch(clearUser());
+        if (typeof window !== "undefined") {
+          window.location.href = "/auth";
+        }
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;

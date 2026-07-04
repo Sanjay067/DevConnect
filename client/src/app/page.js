@@ -11,9 +11,9 @@ export default function Home() {
       <div className="flex w-full max-w-6xl flex-col items-center gap-8 rounded-2xl bg-white p-6 shadow-sm md:flex-row md:gap-10 md:p-10">
         <div className="flex w-full justify-center md:w-1/2 md:justify-end">
           <img
-            src="/login-hero.svg"
-            alt="login-hero.svg"
-            className="h-56 w-auto max-w-full sm:h-72 md:h-[28rem]"
+            src="/devConnect-logo.png"
+            alt="devConnect-logo.png"
+            className="rounded-xl h-56 w-auto max-w-full sm:h-72 md:h-[28rem] object-contain"
           />
         </div>
         <div className="flex w-full flex-col items-center justify-center gap-4 md:w-1/2">
@@ -29,7 +29,7 @@ export default function Home() {
               opportunities.
             </p>
             <button
-              className="rounded-xl bg-fuchsia-600   text-lg font-semibold text-white transition hover:bg-fuchsia-700 px-10 h-10 mt-6 "
+              className="rounded-xl bg-blue-500 text-lg font-semibold text-white transition hover:bg-blue-600 px-10 h-10 mt-6"
               onClick={() => {
                 router.push("/auth");
               }}

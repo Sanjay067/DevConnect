@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { uploadAsset } from "@/services/postService";
@@ -18,12 +18,13 @@ Enter your project overview here...
 
 # Tech Stack & Libraries
 <!-- Detail the key tools and libraries you used in your stack. -->
-- **Frontend**: @[React], @[Next.js], @[Redux], @[TailwindCSS]
-- **Backend**: @[Node.js], @[Express], @[MongoDB]
-- **APIs & Tools**: @[Cloudinary], @[Multer]
+- **Frontend**: @[React] @[Next.js]  @[Redux] @[TailwindCSS]
+- **Backend**: @[Node.js] @[Express]  @[MongoDB]
+- **APIs & Tools**: @[Cloudinary] @[Multer]
 
 # Challenges & Learnings
 <!-- Share your development journey. What challenges did you face, and how did you overcome them? -->
+![alt text](https://imgs.search.brave.com/Thjx23AhKgZNff_w5KvRn_8d9-HtARJuydkgSK1ByRY/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly93d3cu/c21hcnRzaGVldC5j/b20vc2l0ZXMvZGVm/YXVsdC9maWxlcy8y/MDI0LTEwL0lDLU1p/bmQtTWFwLVByb2pl/Y3QtUGxhbi1FeGFt/cGxlLnBuZw)
 `;
 
 function PostEditor({
@@ -58,14 +59,43 @@ function PostEditor({
   const [isUploading, setIsUploading] = useState(false);
   const [activeUploads, setActiveUploads] = useState(0);
 
-  const clearError = () => {
-    if (errorMsg) setErrorMsg("");
-  };
+  // ── Resizer logic ───────────────────────────────────────────
+  const [editorWidth, setEditorWidth] = useState(70);
+  const [isDragging, setIsDragging] = useState(false);
 
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!isDragging) return;
+      const newWidth = (e.clientX / window.innerWidth) * 100;
+      if (newWidth > 20 && newWidth < 80) setEditorWidth(newWidth);
+    };
+
+    const handleMouseUp = () => setIsDragging(false);
+
+    if (isDragging) {
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
+    } else {
+      document.body.style.cursor = "default";
+      document.body.style.userSelect = "auto";
+    }
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "default";
+      document.body.style.userSelect = "auto";
+    };
+  }, [isDragging]);
+
+  const clearError = () => { if (errorMsg) setErrorMsg(""); };
+
+  // ── Mention popup logic (unchanged) ─────────────────────────
   const handleTextScan = (text, cursorIndex) => {
     const textBeforeCursor = text.substring(0, cursorIndex);
     const match = textBeforeCursor.match(/@([\w.-]*)$/);
-
     if (match) {
       const query = match[1].toLowerCase();
       setMentionQuery(match[1]);
@@ -97,22 +127,17 @@ function PostEditor({
   const handleSelectMention = (tech) => {
     const textarea = editorRef.current;
     if (!textarea) return;
-
     const cursorIndex = textarea.selectionEnd;
     const text = markdownText;
     const textBeforeCursor = text.substring(0, cursorIndex);
     const textAfterCursor = text.substring(cursorIndex);
-
     const atIndex = textBeforeCursor.lastIndexOf("@" + mentionQuery);
     if (atIndex === -1) return;
-
     const replacement = `@[${tech.name}] `;
     const newValue = text.substring(0, atIndex) + replacement + textAfterCursor;
-
     setMarkdownText(newValue);
     setShowMentionPopup(false);
     setFilteredSuggestions([]);
-
     setTimeout(() => {
       textarea.focus({ preventScroll: true });
       const newCursor = atIndex + replacement.length;
@@ -122,24 +147,14 @@ function PostEditor({
 
   const handleKeyDown = (e) => {
     if (showMentionPopup && filteredSuggestions.length > 0) {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        setShowMentionPopup(false);
-      } else if (e.key === "ArrowDown") {
-        e.preventDefault();
-        setMentionIndex((prev) => (prev + 1) % filteredSuggestions.length);
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        setMentionIndex((prev) =>
-          prev === 0 ? filteredSuggestions.length - 1 : prev - 1
-        );
-      } else if (e.key === "Enter" || e.key === "Tab") {
-        e.preventDefault();
-        handleSelectMention(filteredSuggestions[mentionIndex]);
-      }
+      if (e.key === "Escape") { e.preventDefault(); setShowMentionPopup(false); }
+      else if (e.key === "ArrowDown") { e.preventDefault(); setMentionIndex((p) => (p + 1) % filteredSuggestions.length); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); setMentionIndex((p) => p === 0 ? filteredSuggestions.length - 1 : p - 1); }
+      else if (e.key === "Enter" || e.key === "Tab") { e.preventDefault(); handleSelectMention(filteredSuggestions[mentionIndex]); }
     }
   };
 
+  // ── Image upload logic (unchanged) ──────────────────────────
   const replacePlaceholder = (placeholder, replacement) => {
     setMarkdownText((prev) => {
       if (!prev.includes(placeholder)) return prev;
@@ -149,39 +164,26 @@ function PostEditor({
 
   const handleImageUpload = async (file) => {
     if (!file) return;
-
     const textarea = editorRef.current;
     if (!textarea) return;
-
     const uploadId = crypto.randomUUID();
     const placeholder = `\n![__UPLOAD_${uploadId}__]()\n`;
-
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
-
-    setMarkdownText((prev) => {
-      const text = prev;
-      return text.substring(0, start) + placeholder + text.substring(end);
-    });
-
+    setMarkdownText((prev) => prev.substring(0, start) + placeholder + prev.substring(end));
     const placeholderEnd = start + placeholder.length;
     setTimeout(() => {
       textarea.focus({ preventScroll: true });
       textarea.setSelectionRange(placeholderEnd, placeholderEnd);
     }, 0);
-
     setActiveUploads((n) => n + 1);
     setIsUploading(true);
-
     try {
       const compressed = await compressImage(file);
       const formData = new FormData();
       formData.append("file", compressed);
-
       const res = await uploadAsset(formData);
-      const imageUrl = res.data.url;
-      const finalReplacement = `\n![${file.name}](${imageUrl})\n`;
-      replacePlaceholder(placeholder, finalReplacement);
+      replacePlaceholder(placeholder, `\n![${file.name}](${res.data.url})\n`);
     } catch (err) {
       replacePlaceholder(placeholder, "");
       setErrorMsg(err.response?.data?.message || "Failed to upload image.");
@@ -195,14 +197,10 @@ function PostEditor({
   };
 
   const queueImageUpload = (file) => {
-    uploadQueueRef.current = uploadQueueRef.current
-      .then(() => handleImageUpload(file))
-      .catch(() => { });
+    uploadQueueRef.current = uploadQueueRef.current.then(() => handleImageUpload(file)).catch(() => { });
   };
 
-  const handleImageUploadClick = () => {
-    fileInputRef.current?.click();
-  };
+  const handleImageUploadClick = () => fileInputRef.current?.click();
 
   const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
@@ -214,7 +212,6 @@ function PostEditor({
   const handlePaste = async (e) => {
     const items = e.clipboardData?.items;
     if (!items) return;
-
     for (let i = 0; i < items.length; i++) {
       if (items[i].type.indexOf("image") !== -1) {
         e.preventDefault();
@@ -228,7 +225,6 @@ function PostEditor({
   const handleDrop = async (e) => {
     const files = e.dataTransfer?.files;
     if (!files || files.length === 0) return;
-
     for (let i = 0; i < files.length; i++) {
       if (files[i].type.startsWith("image/")) {
         e.preventDefault();
@@ -243,188 +239,145 @@ function PostEditor({
     if (hasImage) e.preventDefault();
   };
 
+  // ── Validation & submit (unchanged) ─────────────────────────
   const formatUrl = (url) => {
     if (!url) return "";
     const trimmed = url.trim();
-    if (trimmed && !/^https?:\/\//i.test(trimmed)) {
-      return `https://${trimmed}`;
-    }
+    if (trimmed && !/^https?:\/\//i.test(trimmed)) return `https://${trimmed}`;
     return trimmed;
   };
 
   const isValidUrl = (url) => {
     if (!url) return true;
-    try {
-      new URL(url);
-      return true;
-    } catch {
-      return false;
-    }
+    try { new URL(url); return true; } catch { return false; }
   };
 
   const buildFormData = () => {
     const formattedGithub = formatUrl(githubUrl);
     const formattedLive = formatUrl(liveUrl);
-
     const formData = new FormData();
     formData.append("title", title.trim());
     formData.append("shortDescription", shortDescription.trim());
     formData.append("lookingForContributors", lookingForContributors);
-
-    const contentObj = {
-      blocks: [
-        {
-          type: "paragraph",
-          data: { text: markdownText.trim() },
-        },
-      ],
-    };
-    formData.append("content", JSON.stringify(contentObj));
-
+    formData.append("content", JSON.stringify({
+      blocks: [{ type: "paragraph", data: { text: markdownText.trim() } }],
+    }));
     const linksArray = [];
     if (formattedGithub) linksArray.push({ url: formattedGithub, label: "Github" });
     if (formattedLive) linksArray.push({ url: formattedLive, label: "Live Demo" });
     formData.append("links", JSON.stringify(linksArray));
-
     const extractedTechStack = [];
     const mentionRegex = /@\[([^\]]+)\]/g;
     let match;
     while ((match = mentionRegex.exec(markdownText)) !== null) {
       const techName = match[1].trim();
-      if (techName && !extractedTechStack.includes(techName)) {
-        extractedTechStack.push(techName);
-      }
+      if (techName && !extractedTechStack.includes(techName)) extractedTechStack.push(techName);
     }
     formData.append("techStack", JSON.stringify(extractedTechStack));
-
     return { formData, formattedGithub, formattedLive };
   };
 
   const handlePublish = () => {
-    if (!title.trim()) {
-      setErrorMsg("Post title is required.");
-      return;
-    }
-    if (!markdownText.trim()) {
-      setErrorMsg("Project details write-up is required.");
-      return;
-    }
-
+    if (!title.trim()) { setErrorMsg("Post title is required."); return; }
+    if (!markdownText.trim()) { setErrorMsg("Project details write-up is required."); return; }
     const { formData, formattedGithub, formattedLive } = buildFormData();
-
-    if (githubUrl.trim() && !isValidUrl(formattedGithub)) {
-      setErrorMsg("Please enter a valid GitHub URL.");
-      return;
-    }
-    if (liveUrl.trim() && !isValidUrl(formattedLive)) {
-      setErrorMsg("Please enter a valid Live Demo URL.");
-      return;
-    }
-
+    if (githubUrl.trim() && !isValidUrl(formattedGithub)) { setErrorMsg("Please enter a valid GitHub URL."); return; }
+    if (liveUrl.trim() && !isValidUrl(formattedLive)) { setErrorMsg("Please enter a valid Live Demo URL."); return; }
     onSubmit(formData, {
-      onError: (err) => {
-        setErrorMsg(err.response?.data?.message || "Failed to publish project post.");
-      },
+      onError: (err) => setErrorMsg(err.response?.data?.message || "Failed to publish project post."),
     });
   };
 
-  const pageTitle = mode === "edit" ? "Edit Project" : "Showcase Project";
-  const submitLabel = mode === "edit" ? "Save Changes" : "Publish Post";
+  const submitLabel = mode === "edit" ? "Save Changes" : "Publish";
   const pendingLabel = mode === "edit" ? "Saving..." : "Publishing...";
 
+  // ── Render ───────────────────────────────────────────────────
   return (
-    <div className="flex flex-col h-[calc(100vh-64px)] bg-gray-50 text-sm text-gray-700 pb-6">
-      <div className="bg-white border-b border-gray-200 px-6 py-4 flex flex-col gap-4 shrink-0">
-        <div className="flex items-center justify-between">
-          <h1 className="text-base font-bold text-gray-900">{pageTitle}</h1>
-          <div className="flex items-center gap-3">
-            {errorMsg && (
-              <div className="bg-red-50 border border-red-100 text-red-600 rounded-xl px-4 py-1.5 text-xs font-semibold leading-snug">
-                {errorMsg}
-              </div>
-            )}
-            <button
-              type="button"
-              onClick={() => router.back()}
-              disabled={isPending}
-              className="px-4 py-1.5 border border-gray-200 rounded-full font-semibold text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50 text-xs"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={handlePublish}
-              disabled={isPending || isUploading}
-              className="px-5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-full flex items-center gap-2 transition-colors disabled:opacity-50 text-xs shadow-sm shadow-blue-500/10"
-            >
-              {isPending ? (
-                <>
-                  <i className="fa-solid fa-circle-notch fa-spin text-xs"></i>
-                  {pendingLabel}
-                </>
-              ) : (
-                <>
-                  <i className="fa-solid fa-paper-plane text-xs"></i>
-                  {submitLabel}
-                </>
-              )}
-            </button>
-          </div>
+    <div className="flex flex-col h-screen text-sm" style={{ background: "var(--bg)" }}>
+
+      {/* ── Slim topbar ───────────────────────────────────────── */}
+      <div
+        className="flex items-center justify-between px-6 py-3 border-b border-zinc-800 shrink-0"
+        style={{ background: "var(--surface)" }}
+      >
+        {/* Left: logo + mode label */}
+        <div className="flex items-center gap-2">
+          <i className="fa-regular fa-compass text-sm text-emerald-500"></i>
+          <span className="text-xs font-bold text-zinc-400 tracking-tight">
+            {mode === "edit" ? "Editing project" : "New project"}
+          </span>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-center">
-          <input
-            type="text"
-            placeholder="Give your project a title..."
-            value={title}
-            onChange={(e) => { clearError(); setTitle(e.target.value); }}
-            className="flex-1 border border-gray-250 rounded-xl px-4 py-2 text-sm outline-none focus:border-blue-500 font-semibold bg-gray-50/50"
-          />
-
-          <div className="flex items-center gap-4 flex-wrap md:justify-end shrink-0">
-            <div className="flex items-center gap-1.5 border border-gray-250 rounded-xl px-3 py-1.5 bg-gray-50 focus-within:border-blue-500 transition-all">
-              <i className="fa-brands fa-github text-gray-400"></i>
-              <input
-                type="url"
-                placeholder="GitHub URL"
-                value={githubUrl}
-                onChange={(e) => { clearError(); setGithubUrl(e.target.value); }}
-                className="bg-transparent outline-none w-28 text-[11px] text-gray-700"
-              />
+        {/* Right: actions */}
+        <div className="flex items-center gap-3">
+          {errorMsg && (
+            <div className="flex items-center gap-1.5 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl px-3 py-1.5 text-xs font-semibold">
+              <i className="fa-solid fa-circle-exclamation text-[10px]"></i>
+              {errorMsg}
             </div>
-            <div className="flex items-center gap-1.5 border border-gray-250 rounded-xl px-3 py-1.5 bg-gray-50 focus-within:border-blue-500 transition-all">
-              <i className="fa-solid fa-globe text-gray-400"></i>
-              <input
-                type="url"
-                placeholder="Live Demo URL"
-                value={liveUrl}
-                onChange={(e) => { clearError(); setLiveUrl(e.target.value); }}
-                className="bg-transparent outline-none w-28 text-[11px] text-gray-700"
-              />
-            </div>
-            <label className="flex items-center gap-2 cursor-pointer select-none">
-              <span className="text-xs text-gray-500 font-semibold">Collab open</span>
-              <input
-                type="checkbox"
-                checked={lookingForContributors}
-                onChange={(e) => setLookingForContributors(e.target.checked)}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500/20"
-              />
-            </label>
-          </div>
+          )}
+          <button
+            type="button"
+            onClick={() => router.back()}
+            disabled={isPending}
+            className="px-3.5 py-1.5 border border-zinc-800 rounded-xl text-zinc-400 hover:text-zinc-100 hover:border-zinc-700 transition-all text-xs font-semibold disabled:opacity-50 cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handlePublish}
+            disabled={isPending || isUploading}
+            className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl flex items-center gap-2 transition-all text-xs disabled:opacity-50 cursor-pointer"
+            style={{ boxShadow: "0 0 12px rgba(16,185,129,0.25)" }}
+          >
+            {isPending ? (
+              <><i className="fa-solid fa-circle-notch fa-spin text-[10px]"></i>{pendingLabel}</>
+            ) : (
+              <><i className="fa-solid fa-paper-plane text-[10px]"></i>{submitLabel}</>
+            )}
+          </button>
         </div>
       </div>
 
-      <div className="flex-1 flex overflow-hidden min-h-0">
-        <div className="w-1/2 flex flex-col h-full pr-3">
-          <div className="flex-1 flex flex-col border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/10 transition-all relative">
-            <EditorToolbar
-              textareaRef={editorRef}
-              onChange={setMarkdownText}
-              onImageUploadClick={handleImageUploadClick}
-              isUploading={isUploading}
-            />
+      {/* ── Document title zone ───────────────────────────────── */}
+      <div
+        className="px-8 py-6 border-b border-zinc-800 shrink-0"
+        style={{ background: "var(--surface)" }}
+      >
+        {/* Giant project title */}
+        <input
+          type="text"
+          placeholder="Project title..."
+          value={title}
+          onChange={(e) => { clearError(); setTitle(e.target.value); }}
+          className="w-full bg-transparent outline-none text-zinc-50 placeholder-zinc-700 font-extrabold tracking-tight leading-tight"
+          style={{ fontSize: "2.25rem", lineHeight: 1.15 }}
+        />
+        {/* Short description */}
+        <input
+          type="text"
+          placeholder="Short description (optional)"
+          value={shortDescription}
+          onChange={(e) => { clearError(); setShortDescription(e.target.value); }}
+          className="w-full bg-transparent outline-none text-zinc-500 placeholder-zinc-700 mt-2 text-sm font-normal"
+        />
+      </div>
 
+      {/* ── Split editor / preview ────────────────────────────── */}
+      <div className="flex-1 flex overflow-hidden min-h-0">
+
+        {/* Editor panel */}
+        <div className="flex flex-col h-full border-r border-zinc-800 shrink-0" style={{ background: "#111113", width: `${editorWidth}%` }}>
+
+          <EditorToolbar
+            textareaRef={editorRef}
+            onChange={setMarkdownText}
+            onImageUploadClick={handleImageUploadClick}
+            isUploading={isUploading}
+          />
+
+          <div className="relative flex-1 flex flex-col min-h-0">
             <textarea
               ref={editorRef}
               value={markdownText}
@@ -435,46 +388,40 @@ function PostEditor({
               onDragOver={handleDragOver}
               onSelect={handleSelectionChange}
               onKeyUp={handleSelectionChange}
-              placeholder="Compose your project documentation using Markdown..."
-              className="flex-1 p-6 pb-24 font-mono text-xs text-gray-800 bg-transparent outline-none resize-none leading-relaxed overflow-y-auto"
+              placeholder="Write your project documentation in Markdown...&#10;&#10;Tip: Use @[React] to add tech badges automatically."
+              className="flex-1 p-6 font-mono text-xs text-zinc-200 bg-transparent outline-none resize-none leading-relaxed overflow-y-auto placeholder-zinc-700"
             />
 
-            <div className="flex justify-between items-center px-5 py-3 border-t border-gray-150 bg-gray-50/50 text-[11px] text-gray-500 rounded-b-2xl select-none shrink-0">
-              <div className="flex items-center gap-1.5 font-semibold text-gray-400">
-                <i className="fa-brands fa-markdown text-sm"></i>
-                <span>Markdown is supported</span>
+            {/* Bottom status bar */}
+            <div
+              className="flex justify-between items-center px-5 py-2.5 border-t border-zinc-800 text-[10px] shrink-0"
+              style={{ background: "var(--bg)" }}
+            >
+              <div className="flex items-center gap-1.5 text-zinc-600">
+                <i className="fa-brands fa-markdown text-xs"></i>
+                <span>Markdown • type @[tech] for badges</span>
               </div>
               <button
                 type="button"
                 disabled={isUploading}
                 onClick={handleImageUploadClick}
-                className="flex items-center gap-1.5 font-bold hover:text-blue-600 transition-colors cursor-pointer text-gray-500 disabled:opacity-50"
+                className="flex items-center gap-1.5 text-zinc-600 hover:text-zinc-300 transition-colors cursor-pointer disabled:opacity-40"
               >
                 {isUploading ? (
-                  <>
-                    <i className="fa-solid fa-circle-notch fa-spin text-xs"></i>
-                    <span>Uploading{activeUploads > 1 ? ` (${activeUploads})` : ""}...</span>
-                  </>
+                  <><i className="fa-solid fa-circle-notch fa-spin text-xs"></i>
+                    <span>Uploading{activeUploads > 1 ? ` (${activeUploads})` : ""}...</span></>
                 ) : (
-                  <>
-                    <i className="fa-regular fa-image text-sm text-gray-400"></i>
-                    <span>Paste or drop to add images </span>
-                  </>
+                  <><i className="fa-regular fa-image text-xs"></i>
+                    <span>Paste or drop image</span></>
                 )}
               </button>
             </div>
 
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              className="hidden"
-            />
-
+            {/* @mention popup — unchanged behavior */}
             {showMentionPopup && filteredSuggestions.length > 0 && (
-              <div className="absolute bottom-16 left-4 z-40 w-48 bg-white border border-gray-200 rounded-xl shadow-xl flex flex-col max-h-48 overflow-y-auto divide-y divide-gray-100 scale-in select-none">
-                <div className="px-3 py-1.5 bg-gray-50 text-[10px] text-gray-400 font-semibold tracking-wider uppercase shrink-0">
+              <div className="absolute bottom-12 left-4 z-40 w-52 rounded-xl border border-zinc-800 shadow-2xl flex flex-col max-h-52 overflow-y-auto divide-y divide-zinc-800 select-none"
+                style={{ background: "var(--surface)" }}>
+                <div className="px-3 py-1.5 text-[10px] text-zinc-600 font-semibold tracking-wider uppercase shrink-0">
                   Tech Stack Badges
                 </div>
                 {filteredSuggestions.map((tech, idx) => (
@@ -482,13 +429,12 @@ function PostEditor({
                     key={tech.name}
                     type="button"
                     onClick={() => handleSelectMention(tech)}
-                    className={`w-full text-left px-3 py-2.5 flex items-center gap-2 transition-colors text-xs font-semibold ${idx === mentionIndex ? "bg-blue-50/80" : "hover:bg-blue-50/50"
-                      }`}
+                    className={`w-full text-left px-3 py-2.5 flex items-center gap-2 transition-colors text-xs font-semibold cursor-pointer ${idx === mentionIndex ? "bg-emerald-500/10 text-emerald-300" : "text-zinc-300 hover:bg-zinc-800"}`}
                   >
                     <div className="w-5 h-5 flex items-center justify-center text-sm shrink-0">
                       <i className={tech.icon}></i>
                     </div>
-                    <span className="text-gray-800">{tech.name}</span>
+                    <span>{tech.name}</span>
                   </button>
                 ))}
               </div>
@@ -496,12 +442,75 @@ function PostEditor({
           </div>
         </div>
 
-        <div className="w-1/2 h-full pl-3">
-          <div className="h-full border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-sm">
-            <MarkdownPreview markdown={markdownText} />
-          </div>
+        {/* Resizer Handle */}
+        <div
+          className={`w-1.5 cursor-col-resize shrink-0 transition-colors z-10 ${isDragging ? "bg-emerald-500/50" : "hover:bg-zinc-700 bg-zinc-900"}`}
+          onMouseDown={(e) => { e.preventDefault(); setIsDragging(true); }}
+        />
+
+        {/* Preview panel */}
+        <div className="flex-1 h-full overflow-hidden">
+          <MarkdownPreview
+            markdown={markdownText}
+            title={title}
+            shortDescription={shortDescription}
+            githubUrl={githubUrl}
+            liveUrl={liveUrl}
+          />
         </div>
       </div>
+
+      {/* ── Metadata bar — below editor ───────────────────────── */}
+      <div
+        className="flex items-center gap-4 flex-wrap px-6 py-3 border-t border-zinc-800 shrink-0"
+        style={{ background: "#0c0c0f" }}
+      >
+        <span className="text-[10px] font-semibold text-zinc-600 uppercase tracking-widest shrink-0">
+          Project Links
+        </span>
+
+        {/* GitHub */}
+        <div className="flex items-center gap-2 border border-zinc-800 rounded-xl px-3 py-1.5 focus-within:border-emerald-500/40 transition-all"
+          style={{ background: "var(--surface)" }}>
+          <i className="fa-brands fa-github text-zinc-500 text-sm shrink-0"></i>
+          <input
+            type="url"
+            placeholder="GitHub URL"
+            value={githubUrl}
+            onChange={(e) => { clearError(); setGithubUrl(e.target.value); }}
+            className="bg-transparent outline-none text-xs text-zinc-300 placeholder-zinc-600 w-36"
+          />
+        </div>
+
+        {/* Live Demo */}
+        <div className="flex items-center gap-2 border border-zinc-800 rounded-xl px-3 py-1.5 focus-within:border-emerald-500/40 transition-all"
+          style={{ background: "var(--surface)" }}>
+          <i className="fa-solid fa-globe text-zinc-500 text-sm shrink-0"></i>
+          <input
+            type="url"
+            placeholder="Live Demo URL"
+            value={liveUrl}
+            onChange={(e) => { clearError(); setLiveUrl(e.target.value); }}
+            className="bg-transparent outline-none text-xs text-zinc-300 placeholder-zinc-600 w-36"
+          />
+        </div>
+
+        {/* Collaboration toggle */}
+        <label className="flex items-center gap-2 cursor-pointer select-none ml-auto">
+          <span className="text-[10px] font-semibold text-zinc-600 uppercase tracking-widest">
+            Open to collaborators
+          </span>
+          <div
+            onClick={() => setLookingForContributors((p) => !p)}
+            className={`relative w-9 h-5 rounded-full border transition-all cursor-pointer ${lookingForContributors ? "bg-emerald-600/30 border-emerald-500/50" : "bg-zinc-900 border-zinc-700"}`}
+          >
+            <div className={`absolute top-0.5 h-4 w-4 rounded-full transition-all duration-200 ${lookingForContributors ? "left-4 bg-emerald-500" : "left-0.5 bg-zinc-600"}`} />
+          </div>
+        </label>
+      </div>
+
+      {/* Hidden file input */}
+      <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
     </div>
   );
 }

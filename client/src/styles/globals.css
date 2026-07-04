@@ -2,25 +2,74 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #f6f7fb;
-  --surface: #ffffff;
-  --surface-soft: #f2f4f8;
-  --text: #101828;
-  --text-muted: #667085;
-  --border: #e4e7ec;
-  --accent: #6d5efc;
-  --accent-2: #0ea5e9;
+  --bg: #09090b; /* Zinc 950 */
+  --surface: #18181b; /* Zinc 900 */
+  --surface-soft: #27272a; /* Zinc 800 */
+  --text: #f4f4f5; /* Zinc 100 */
+  --text-muted: #a1a1aa; /* Zinc 400 */
+  --border: #27272a; /* Zinc 800 */
+  --accent: #10b981; /* Emerald 500 */
+  --accent-hover: #059669; /* Emerald 600 */
+  --accent-soft: #064e3b; /* Emerald 950 */
 }
 
-.dark {
-  --bg: #f6f7fb;
-  --surface: #111827;
-  --surface-soft: #1f2937;
-  --text: #e5e7eb;
-  --text-muted: #9ca3af;
-  --border: #374151;
-  --accent: #8b7cff;
-  --accent-2: #38bdf8;
+/* Force dark theme overrides on standard Tailwind colors */
+body {
+  background-color: var(--bg) !important;
+  color: var(--text) !important;
+}
+
+.bg-white, .bg-orange-50 {
+  background-color: var(--surface) !important;
+}
+
+.bg-gray-50 {
+  background-color: var(--bg) !important;
+}
+
+.bg-gray-100, .bg-gray-50\/50, .bg-surface-soft {
+  background-color: var(--surface-soft) !important;
+}
+
+.bg-blue-50, .bg-sky-50 {
+  background-color: var(--accent-soft) !important;
+}
+
+.bg-blue-500, .bg-blue-600, .bg-sky-500, .bg-sky-600, .bg-black {
+  background-color: var(--accent) !important;
+  color: #ffffff !important;
+}
+
+.bg-blue-500:hover, .bg-blue-600:hover, .bg-sky-500:hover, .bg-sky-600:hover, .bg-black:hover {
+  background-color: var(--accent-hover) !important;
+}
+
+.text-gray-900, .text-black {
+  color: var(--text) !important;
+}
+
+.text-gray-850, .text-gray-800, .text-gray-700, .text-gray-600, .text-gray-500 {
+  color: var(--text-muted) !important;
+}
+
+.text-blue-500, .text-blue-600, .text-sky-500, .text-sky-600, .text-blue-400 {
+  color: var(--accent) !important;
+}
+
+.text-blue-500:hover, .text-blue-600:hover, .text-sky-500:hover, .text-sky-600:hover {
+  color: var(--accent-hover) !important;
+}
+
+.border-gray-100, .border-gray-200, .border-gray-300 {
+  border-color: var(--border) !important;
+}
+
+.focus\:border-sky-500:focus, .focus\:border-blue-500:focus {
+  border-color: var(--accent) !important;
+}
+
+.focus\:ring-sky-100:focus, .focus\:ring-blue-100:focus {
+  --tw-ring-color: rgba(16, 185, 129, 0.2) !important;
 }
 
 
@@ -29,3 +78,40 @@
   font-family: "Poppins", sans-serif;
   box-sizing: border-box;
 }
+
+/* Premium Inset Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--surface-soft);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}
+
+/* Premium shadows & focus rings */
+:root {
+  --shadow-premium: 0 0 0 1px rgba(255, 255, 255, 0.03), 0 8px 16px -4px rgba(0, 0, 0, 0.4), 0 4px 8px -2px rgba(0, 0, 0, 0.3);
+}
+
+/* ─── Autofill Override ───────────────────────────────────────
+   Browsers paint autofilled inputs with their own background
+   (white / light-blue) that overrides CSS backgrounds.
+   The only reliable counter is an inset box-shadow + text color. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 9999px var(--surface) inset !important;
+  box-shadow: 0 0 0 9999px var(--surface) inset !important;
+  -webkit-text-fill-color: var(--text) !important;
+  caret-color: var(--text) !important;
+  transition: background-color 9999s ease-in-out 0s;
+}
+

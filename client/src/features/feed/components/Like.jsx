@@ -27,10 +27,10 @@ function Like({ initialLiked, initialLikeCount, onToggle }) {
     return (
         <button
             onClick={handleLikeClick}
-            className={`flex items-center gap-1.5 hover:bg-gray-100 px-2 py-1 rounded transition-all duration-300 ${isLiked ? 'text-yellow-500' : 'text-gray-500 hover:text-gray-800'}`}
+            className={`flex items-center gap-1.5 hover:bg-zinc-800/40 px-2.5 py-1.5 rounded-lg transition-all duration-200 cursor-pointer ${isLiked ? 'text-amber-500' : 'text-zinc-500 hover:text-zinc-300'}`}
         >
             <div className="flex items-center justify-center">
-                <i className={`${isLiked ? 'fa-solid text-yellow-500' : 'fa-regular'} fa-star text-sm transition-transform duration-200 ${isLiked ? 'scale-110' : ''}`}>
+                <i className={`${isLiked ? 'fa-solid text-amber-500' : 'fa-regular'} fa-star text-sm transition-transform duration-300 ${isLiked ? 'scale-110' : ''}`}>
                 </i>
             </div>
             <span className="font-semibold text-xs leading-none">{likeCount}</span>

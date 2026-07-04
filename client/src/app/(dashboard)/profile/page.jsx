@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -31,12 +31,15 @@ function ProfilePage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
+  const hasInitializedRef = useRef(false);
+
   useEffect(() => {
-    if (profileData) {
+    if (profileData && !hasInitializedRef.current) {
       setHeadline(profileData.headline || "");
       setBio(profileData.bio || "");
       setCurrentPosition(profileData.currentPosition || "");
       setSkills((currentUser?.skills || []).join(", "));
+      hasInitializedRef.current = true;
     }
   }, [profileData, currentUser?.skills]);
 
@@ -52,6 +55,7 @@ function ProfilePage() {
     onSuccess: () => {
       setMessage("Profile updated successfully.");
       setError("");
+      hasInitializedRef.current = false;
       queryClient.invalidateQueries({ queryKey: ["myProfile"] });
       dispatch(checkAuth());
     },

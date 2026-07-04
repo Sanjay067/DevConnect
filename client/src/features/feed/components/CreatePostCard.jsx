@@ -15,9 +15,16 @@ function CreatePostCard() {
 
     return (
         <div className="w-full max-w-2xl mx-auto my-4 shrink-0">
-            <div className="w-full rounded-2xl p-5 bg-white border border-gray-100 shadow-sm transition-shadow hover:shadow-md">
-                <div className="flex items-center gap-3">
-                    <div className="relative w-10 h-10 rounded-full overflow-hidden border border-gray-200 shrink-0">
+            <div
+                className="w-full rounded-2xl p-5 border border-zinc-800 border-t-2 "
+                style={{
+                    background: "var(--surface)",
+
+                }}
+            >
+                <div className="flex items-center gap-3.5">
+                    {/* Avatar */}
+                    <div className="relative w-10 h-10 rounded-full overflow-hidden shrink-0 ring-1 ring-zinc-800">
                         {currentUser?.profilePicture ? (
                             <img
                                 src={resolveProfilePicture(currentUser.profilePicture)}
@@ -25,32 +32,36 @@ function CreatePostCard() {
                                 className="w-full h-full object-cover"
                             />
                         ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-blue-400 to-yellow-500"></div>
+                            <div className="w-full h-full bg-gradient-to-br from-emerald-900/60 to-zinc-900"></div>
                         )}
                     </div>
+
+                    {/* Input trigger */}
                     <button
                         onClick={handleNavigate}
-                        className="flex-1 text-left bg-gray-50 hover:bg-gray-100/70 border border-gray-200 rounded-full px-5 py-2.5 text-gray-500 text-sm font-medium transition-colors"
+                        className="flex-1 text-left border border-zinc-800 rounded-xl px-4 py-2.5 text-zinc-400 text-xs font-normal transition-all outline-none hover:border-zinc-700 hover:text-zinc-300 focus:ring-1 focus:ring-emerald-500/20 cursor-pointer"
+                        style={{ background: "#0c0c0e" }}
                     >
-                        What's on your mind, {currentUser?.name}?
+                        What's on your mind{currentUser?.name ? `, ${currentUser.name}` : ''}?
                     </button>
                 </div>
 
-                <div className="flex items-center gap-6 pt-3 mt-3 border-t border-gray-50 text-gray-500 text-xs font-semibold">
-                    <button onClick={handleNavigate} className="flex items-center gap-2 hover:text-blue-600 transition-colors">
-                        <i className="fa-regular fa-image text-blue-500 text-sm"></i>
+                {/* Action strip */}
+                <div className="flex items-center gap-6 pt-3.5 mt-3.5 border-t border-zinc-800/70 text-zinc-500 text-[11px] font-medium">
+                    <button onClick={handleNavigate} className="flex items-center gap-2 hover:text-zinc-200 transition-colors cursor-pointer">
+                        <i className="fa-regular fa-image text-emerald-500 text-xs"></i>
                         Media
                     </button>
-                    <button onClick={handleNavigate} className="flex items-center gap-2 hover:text-green-600 transition-colors">
-                        <i className="fa-solid fa-code text-green-500 text-sm"></i>
+                    <button onClick={handleNavigate} className="flex items-center gap-2 hover:text-zinc-200 transition-colors cursor-pointer">
+                        <i className="fa-solid fa-code text-emerald-500 text-xs"></i>
                         Tech Stack
                     </button>
-                    <button onClick={handleNavigate} className="flex items-center gap-2 hover:text-indigo-600 transition-colors">
-                        <i className="fa-solid fa-link text-indigo-500 text-sm"></i>
+                    <button onClick={handleNavigate} className="flex items-center gap-2 hover:text-zinc-200 transition-colors cursor-pointer">
+                        <i className="fa-solid fa-link text-emerald-500 text-xs"></i>
                         Links
                     </button>
-                    <button onClick={handleNavigate} className="flex items-center gap-2 hover:text-yellow-600 transition-colors ml-auto">
-                        <i className="fa-regular fa-handshake text-yellow-500 text-sm"></i>
+                    <button onClick={handleNavigate} className="flex items-center gap-2 hover:text-zinc-200 transition-colors ml-auto cursor-pointer">
+                        <i className="fa-regular fa-handshake text-emerald-500 text-xs"></i>
                         Looking for Contributors
                     </button>
                 </div>

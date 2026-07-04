@@ -75,16 +75,15 @@ function Comment({ postId }) {
     < div className="flex flex-col h-full" >
 
 
-      <div className="flex justify-between items-center px-5 py-3 border-b border-gray-100 bg-white z-10 shrink-0">
-        <h2 className="font-bold text-gray-900 text-[1.1rem]">Comments</h2>
+      <div className="flex justify-between items-center px-5 py-3 border-b border-zinc-800 bg-zinc-900 z-10 shrink-0">
+        <h2 className="font-semibold text-zinc-100 text-sm">Comments</h2>
       </div>
 
-
-      <div className="flex-1 p-4 overflow-y-auto bg-white flex flex-col gap-5">
-        {isLoading && <div className="text-gray-500 text-center mt-10">Loading comments...</div>}
-        {isError && <div className="text-red-500 text-center mt-10">Failed to load comments.</div>}
+      <div className="flex-1 p-4 overflow-y-auto bg-zinc-900 flex flex-col gap-5">
+        {isLoading && <div className="text-zinc-500 text-center mt-10 text-xs font-medium">Loading comments...</div>}
+        {isError && <div className="text-red-500/80 text-center mt-10 text-xs font-medium">Failed to load comments.</div>}
         {!isLoading && commentsData?.comments?.length === 0 && (
-          <div className="text-gray-500 text-center mt-10">No comments yet. Be the first!</div>
+          <div className="text-zinc-500 text-center mt-10 text-xs font-medium">No comments yet. Be the first!</div>
         )}
 
 
@@ -95,27 +94,27 @@ function Comment({ postId }) {
       </div>
 
 
-      <div className="p-4 border-t border-gray-100 bg-white shrink-0">
+      <div className="p-4 border-t border-zinc-800 bg-zinc-900 shrink-0">
         <div className="flex gap-2">
 
           <input
             type="text"
             placeholder="Add a comment..."
-            className="flex-1 bg-gray-50 border border-gray-200 rounded-full px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+            className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-sm text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/10 transition-all"
             name='comment'
             value={commentInput}
             onChange={handleChange}
             onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
           />
           <button
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold w-10 h-10 flex items-center justify-center rounded-full transition-colors shrink-0 disabled:opacity-50"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold w-9 h-9 flex items-center justify-center rounded-xl transition-colors shrink-0 disabled:opacity-40 cursor-pointer"
             onClick={handleSubmit}
             disabled={isPending || !commentInput.trim()}
           >
             {isPending ? (
-              <i className="fa-solid fa-circle-notch fa-spin text-sm"></i>
+              <i className="fa-solid fa-circle-notch fa-spin text-xs"></i>
             ) : (
-              <i className="fa-solid fa-paper-plane text-sm translate-y-[1px] -translate-x-[1px]"></i>
+              <i className="fa-solid fa-paper-plane text-xs"></i>
             )}
           </button>
         </div>
@@ -166,38 +165,38 @@ function CommentItem({ comment, postId, isReply = false }) {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex gap-2 group">
-        <div className={`rounded-full overflow-hidden shrink-0 mt-1 border border-gray-100 ${isReply ? 'w-8 h-8' : 'w-10 h-10'}`}>
+        <div className={`rounded-full overflow-hidden shrink-0 mt-1 border border-zinc-800 ${isReply ? 'w-8 h-8' : 'w-10 h-10'}`}>
           {comment.author?.profilePicture ? (
             <img src={resolveProfilePicture(comment.author.profilePicture)} alt="" className="w-full h-full object-cover" loading="lazy" />
           ) : (
-            <div className="w-full h-full bg-gray-200"></div>
+            <div className="w-full h-full bg-zinc-850"></div>
           )}
         </div>
 
         <div className="flex flex-col flex-1 max-w-[85%]">
-          <div className={`rounded-r-2xl rounded-bl-2xl rounded-tl-sm px-4 py-2.5 ${isReply ? 'bg-[#f9f9f9]' : 'bg-[#f2f2f2]'}`}>
+          <div className={`rounded-r-2xl rounded-bl-2xl rounded-tl-sm px-4 py-2.5 ${isReply ? 'bg-zinc-950/60' : 'bg-zinc-950'}`}>
             <div className="flex items-center gap-2">
-              <span className={`font-semibold text-gray-900 hover:text-blue-600 cursor-pointer ${isReply ? 'text-xs' : 'text-sm'}`}>
+              <span className={`font-semibold text-zinc-100 hover:text-emerald-400 cursor-pointer transition-colors ${isReply ? 'text-xs' : 'text-sm'}`}>
                 {comment.author?.name}
               </span>
-              <span className="text-[10px] text-gray-400 font-normal translate-y-[1px]">
+              <span className="text-[10px] text-zinc-500 font-normal translate-y-[1px]">
                 {formatTimeAgo(comment.createdAt)}
               </span>
               {!isOwnComment && (
                 <>
-                  <span className="text-gray-300 text-[10px] translate-y-[1px]">•</span>
-                  <button className="text-blue-600 hover:text-blue-800 hover:underline font-bold transition-all text-xs translate-y-[1px]">
+                  <span className="text-zinc-600 text-[10px] translate-y-[1px]">•</span>
+                  <button className="text-emerald-500 hover:text-emerald-400 font-bold transition-all text-xs translate-y-[1px] cursor-pointer">
                     Follow
                   </button>
                 </>
               )}
             </div>
-            <p className={`text-gray-800 mt-1 leading-snug whitespace-pre-wrap ${isReply ? 'text-xs' : 'text-sm'}`}>
+            <p className={`text-zinc-300 mt-1 leading-snug whitespace-pre-wrap ${isReply ? 'text-xs' : 'text-sm'}`}>
               {comment.body}
             </p>
           </div>
 
-          <div className="flex items-center gap-3 mt-1 ml-2 text-xs font-semibold text-gray-500">
+          <div className="flex items-center gap-3 mt-1 ml-2 text-[11px] font-semibold text-zinc-500">
             <Like
               initialLiked={comment.isLiked}
               initialLikeCount={comment.likeCount || 0}
@@ -206,10 +205,10 @@ function CommentItem({ comment, postId, isReply = false }) {
 
             {!isReply && (
               <>
-                <div className="w-[1px] h-3 bg-gray-300"></div>
+                <div className="w-[1px] h-3 bg-zinc-800"></div>
                 <button
                   onClick={() => setIsRepliesExpanded(!isRepliesExpanded)}
-                  className="hover:bg-gray-100 px-2 py-1 rounded transition-colors text-gray-500 hover:text-gray-800 font-semibold"
+                  className="hover:bg-zinc-800/40 px-2 py-1 rounded-md transition-colors text-zinc-500 hover:text-zinc-300 font-semibold cursor-pointer"
                 >
                   Reply {comment.replyCount > 0 && `(${comment.replyCount})`}
                 </button>
@@ -221,8 +220,8 @@ function CommentItem({ comment, postId, isReply = false }) {
       </div>
 
       {isRepliesExpanded && !isReply && (
-        <div className="ml-5 pl-6 border-l-2 border-gray-100 flex flex-col gap-4 mt-2 mb-2">
-          {isRepliesLoading && <div className="text-xs text-gray-500">Loading replies...</div>}
+        <div className="ml-5 pl-6 border-l-2 border-zinc-800 flex flex-col gap-4 mt-2 mb-2">
+          {isRepliesLoading && <div className="text-xs text-zinc-500">Loading replies...</div>}
 
           {!isRepliesLoading && repliesData?.replies?.map((reply) => (
             <CommentItem key={reply._id} comment={reply} postId={postId} isReply={true} />
@@ -232,20 +231,20 @@ function CommentItem({ comment, postId, isReply = false }) {
             <input
               type="text"
               placeholder="Reply to this comment..."
-              className="flex-1 bg-gray-50 border border-gray-200 rounded-full px-3.5 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+              className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-1.5 text-xs text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/10 transition-all"
               value={replyInput}
               onChange={(e) => setReplyInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleReplySubmit()}
             />
             <button
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold w-8 h-8 flex items-center justify-center rounded-full transition-colors shrink-0 disabled:opacity-50"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold w-7 h-7 flex items-center justify-center rounded-xl transition-colors shrink-0 disabled:opacity-40 cursor-pointer"
               onClick={handleReplySubmit}
               disabled={isReplySubmitting || !replyInput.trim()}
             >
               {isReplySubmitting ? (
-                <i className="fa-solid fa-circle-notch fa-spin text-xs"></i>
+                <i className="fa-solid fa-circle-notch fa-spin text-[10px]"></i>
               ) : (
-                <i className="fa-solid fa-paper-plane text-xs translate-y-[0.5px]"></i>
+                <i className="fa-solid fa-paper-plane text-[10px]"></i>
               )}
             </button>
           </div>

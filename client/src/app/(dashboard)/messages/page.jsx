@@ -40,9 +40,21 @@ function MessagesPage() {
     },
   });
 
+  const prevPeerIdRef = useRef(null);
+  const prevMessagesLengthRef = useRef(0);
+
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messagesData?.messages]);
+    const messagesList = messagesData?.messages || [];
+    const hasPeerChanged = selectedPeerId !== prevPeerIdRef.current;
+    const hasNewMessages = messagesList.length > prevMessagesLengthRef.current;
+
+    if (hasPeerChanged || hasNewMessages) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+
+    prevPeerIdRef.current = selectedPeerId;
+    prevMessagesLengthRef.current = messagesList.length;
+  }, [messagesData?.messages, selectedPeerId]);
 
   const conversations = conversationsData?.conversations || [];
   const messages = messagesData?.messages || [];
