@@ -41,7 +41,10 @@ function Navbar() {
 
     const logoutHandler = () => {
         logoutMutation.mutate(null, {
-            onSuccess: () => router.push("/")
+            onSuccess: () => {
+                document.cookie = "is_authenticated=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+                router.push("/");
+            }
         });
     };
 

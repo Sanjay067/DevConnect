@@ -100,6 +100,7 @@ apiClient.interceptors.response.use(
       } catch (refreshError) {
         processQueue(refreshError);
         store.dispatch(clearUser());
+        document.cookie = "is_authenticated=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
         if (typeof window !== "undefined") {
           window.location.href = "/auth";
         }

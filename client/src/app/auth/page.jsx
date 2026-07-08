@@ -29,11 +29,19 @@ export default function AuthPage() {
     if (isLogin) {
       loginMutation.mutate(
         { email: form.email, password: form.password },
-        { onSuccess: () => router.push("/feed") }
+        { 
+          onSuccess: () => {
+            document.cookie = "is_authenticated=true; path=/; max-age=3600; SameSite=Lax";
+            router.push("/feed");
+          } 
+        }
       );
     } else {
       registerMutation.mutate(form, {
-        onSuccess: () => router.push("/feed"),
+        onSuccess: () => {
+          document.cookie = "is_authenticated=true; path=/; max-age=3600; SameSite=Lax";
+          router.push("/feed");
+        },
       });
     }
   };
