@@ -28,6 +28,14 @@ export const addCommentReply = ({ postId, commentId, body }) => {
     return apiClient.post(`/posts/${postId}/comments/${commentId}/replies`, { body });
 }
 
+export const editComment = ({ postId, commentId, body }) => {
+    return apiClient.patch(`/posts/${postId}/comments/${commentId}`, { body });
+}
+
+export const deleteComment = ({ postId, commentId }) => {
+    return apiClient.delete(`/posts/${postId}/comments/${commentId}`);
+}
+
 export const createPost = (formData) => {
     return apiClient.post("/posts", formData, {
         headers: {
@@ -38,6 +46,14 @@ export const createPost = (formData) => {
 
 export const getPostById = (postId) => {
     return apiClient.get(`/posts/${postId}`);
+};
+
+export const getPublicUserPosts = (userId) => {
+    return apiClient.get(`/posts/user/${userId}`);
+};
+
+export const getUserPosts = () => {
+    return apiClient.get("/posts");
 };
 
 export const updatePost = (postId, formData) => {

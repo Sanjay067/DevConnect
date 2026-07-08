@@ -1,6 +1,6 @@
 
 //Like
-import { toggleLikePost, addComment, getComments, toggleLikeComment, getCommentReplies, addCommentReply } from "@/services/postService";
+import { toggleLikePost, addComment, getComments, toggleLikeComment, getCommentReplies, addCommentReply, editComment, deleteComment } from "@/services/postService";
 
 
 export const toggleLike = async (postId) => {
@@ -31,6 +31,16 @@ export const fetchReplies = async ({ postId, commentId }) => {
 
 export const createReply = async ({ postId, commentId, body }) => {
     const res = await addCommentReply({ postId, commentId, body });
+    return res.data;
+}
+
+export const updateComment = async ({ postId, commentId, body }) => {
+    const res = await editComment({ postId, commentId, body });
+    return res.data;
+}
+
+export const removeComment = async ({ postId, commentId }) => {
+    const res = await deleteComment({ postId, commentId });
     return res.data;
 }
 

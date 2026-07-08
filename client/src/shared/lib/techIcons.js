@@ -49,6 +49,8 @@ export const getTechIconClass = (tech = "") => {
       return "fa-solid fa-atom text-purple-500";
     case "tailwindcss":
       return "fa-solid fa-wind text-blue-400";
+    case "firebase":
+      return "fa-solid fa-fire text-orange-500";
     case "cloudinary":
       return "fa-solid fa-cloud text-blue-500";
     case "multer":
@@ -78,6 +80,7 @@ export const TECH_SUGGESTIONS = [
   { name: "Express", icon: "fa-solid fa-server text-gray-500" },
   { name: "Redux", icon: "fa-solid fa-atom text-purple-500" },
   { name: "TailwindCSS", icon: "fa-solid fa-wind text-blue-400" },
+  { name: "Firebase", icon: "fa-solid fa-fire text-orange-500" },
   { name: "Cloudinary", icon: "fa-solid fa-cloud text-blue-500" },
   { name: "Multer", icon: "fa-solid fa-file-arrow-up text-gray-600" },
 ];

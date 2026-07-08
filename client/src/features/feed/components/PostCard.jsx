@@ -2,13 +2,27 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import Like from './Like'
-import Comment from './Comment'
-import { resolveProfilePicture, resolveMediaSrc } from '@/shared/lib/imageHelpers'
+import Like from './Like';
+import Comment from './Comment';
+import { resolveProfilePicture, resolveMediaSrc } from '@/shared/lib/imageHelpers';
 import { useLikePost } from '../hooks/useLikePost';
 import { useSelector } from 'react-redux';
-import { renderMarkdown } from '../utils/markdownParser';
 import { getTechIconClass } from '@/shared/lib/techIcons';
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { followUser, unfollowUser } from "@/services/followService";
+
+import { deletePost } from "@/services/postService";
+
+// ── Time formatter ───────────────────────────────────────────────────────────
+const formatTimeAgo = (dateString) => {
+    if (!dateString) return "";
+    const diff = Math.floor((Date.now() - new Date(dateString)) / 1000);
+    if (diff < 60) return "Just now";
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+    return new Date(dateString).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+};
 
 const getFirstMarkdownImage = (text) => {
     if (!text) return null;
@@ -17,9 +31,10 @@ const getFirstMarkdownImage = (text) => {
 };
 
 function PostCard({ post }) {
+    const queryClient = useQueryClient();
     const { mutate: executeLikeMutation } = useLikePost();
     const [isCommentDialogOpen, setIsCommentDialogOpen] = useState(false);
-    const [isExpanded, setIsExpanded] = useState(false);
+    const [isFollowing, setIsFollowing] = useState(false);
     const currentUser = useSelector((state) => state.auth.user);
     const isOwnPost = post.author?._id === currentUser?._id;
 
@@ -33,14 +48,35 @@ function PostCard({ post }) {
         return img;
     }, [markdownText, post.media]);
 
-    const renderedMarkdown = useMemo(
-        () => markdownText ? renderMarkdown(markdownText) : "",
-        [markdownText]
-    );
+    const followMutation = useMutation({
+        mutationFn: () => isFollowing ? unfollowUser(post.author?._id) : followUser(post.author?._id),
+        onMutate: () => setIsFollowing(prev => !prev),
+        onError: () => setIsFollowing(prev => !prev),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["following"] });
+        },
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: deletePost,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["feed"] });
+            queryClient.invalidateQueries({ queryKey: ["myPosts"] });
+            queryClient.invalidateQueries({ queryKey: ["userPosts", post.author?._id] });
+        },
+    });
+
+    const handleDelete = () => {
+        if (window.confirm("Are you sure you want to delete this project?")) {
+            deleteMutation.mutate(post._id);
+        }
+    };
 
     const handleCommentBtn = () => {
         setIsCommentDialogOpen(!isCommentDialogOpen);
-    }
+    };
+
+    const authorId = post.author?._id;
 
     return (
         <div
@@ -52,8 +88,8 @@ function PostCard({ post }) {
         >
             {/* 1. Header: Author Info & Follow/Edit Button */}
             <div className="flex items-center justify-between mb-5">
-                <div className="flex items-center gap-3.5">
-                    {/* Avatar — slightly larger with ring for micro-separation */}
+                <Link href={authorId ? `/profile/${authorId}` : "#"} className="flex items-center gap-3.5 group">
+                    {/* Avatar */}
                     <div className="relative w-11 h-11 rounded-full overflow-hidden ring-1 ring-zinc-800 shrink-0">
                         {(post.author?.profilePicture || post.authorProfilePicture) ? (
                             <img
@@ -69,30 +105,54 @@ function PostCard({ post }) {
 
                     {/* Name + username */}
                     <div>
-                        <h3 className="font-semibold text-zinc-100 hover:text-emerald-400 tracking-tight leading-snug cursor-pointer transition-colors text-sm sm:text-base">
+                        <h3 className="font-semibold text-zinc-100 group-hover:text-emerald-400 tracking-tight leading-snug transition-colors text-sm sm:text-base">
                             {post.author?.name || post.authorName}
                         </h3>
                         <p className="text-xs text-zinc-500 mt-0.5">
                             @{post.author?.username || post.authorUsername}
                             <span className="mx-1.5 text-[10px] text-zinc-700">•</span>
-                            2h ago
+                            {formatTimeAgo(post.createdAt)}
                         </p>
                     </div>
-                </div>
+                </Link>
 
-                {/* Follow button — now matches design language */}
+                {/* Follow / Edit button */}
                 {!isOwnPost && (
-                    <button className="border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-500/70 transition-all font-semibold text-xs px-3.5 py-1.5 rounded-lg cursor-pointer">
-                        Follow
+                    <button
+                        onClick={() => followMutation.mutate()}
+                        disabled={followMutation.isPending}
+                        className={`border font-semibold text-xs px-3.5 py-1.5 rounded-lg cursor-pointer transition-all disabled:opacity-60 ${
+                            isFollowing
+                                ? "border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+                                : "border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-500/70"
+                        }`}
+                    >
+                        {followMutation.isPending ? (
+                            <i className="fa-solid fa-circle-notch fa-spin text-xs" />
+                        ) : isFollowing ? "Following" : "Follow"}
                     </button>
                 )}
                 {isOwnPost && (
-                    <Link
-                        href={`/posts/${post._id}/edit`}
-                        className="border border-zinc-800 text-zinc-400 bg-zinc-950/50 hover:bg-zinc-900 hover:text-zinc-100 rounded-lg px-3.5 py-1.5 font-medium text-xs transition-all cursor-pointer"
-                    >
-                        Edit
-                    </Link>
+                    <div className="flex items-center gap-2">
+                        <Link
+                            href={`/posts/${post._id}/edit`}
+                            className="border border-zinc-800 text-zinc-400 bg-zinc-950/50 hover:bg-zinc-900 hover:text-zinc-100 rounded-lg px-3.5 py-1.5 font-medium text-xs transition-all cursor-pointer"
+                        >
+                            Edit
+                        </Link>
+                        <button
+                            onClick={handleDelete}
+                            disabled={deleteMutation.isPending}
+                            className="border border-red-950/40 text-red-400 bg-red-950/10 hover:bg-red-950/20 hover:text-red-300 rounded-lg px-3 py-1.5 font-medium text-xs transition-all cursor-pointer"
+                            title="Delete project"
+                        >
+                            {deleteMutation.isPending ? (
+                                <i className="fa-solid fa-circle-notch fa-spin text-xs" />
+                            ) : (
+                                <i className="fa-solid fa-trash-can"></i>
+                            )}
+                        </button>
+                    </div>
                 )}
             </div>
 
@@ -107,15 +167,23 @@ function PostCard({ post }) {
                         {post.shortDescription}
                     </p>
                 )}
+
+                {/* Looking for Contributors badge */}
+                {post.lookingForContributors && (
+                    <div className="inline-flex items-center gap-1.5 self-start mt-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold border border-emerald-500/30 bg-emerald-500/10 text-emerald-400">
+                        <i className="fa-solid fa-handshake text-[10px]"></i>
+                        Looking for Contributors
+                    </div>
+                )}
             </div>
 
             {/* Subtle divider before image when image exists */}
-            {!isExpanded && firstImage && (
+            {firstImage && (
                 <div className="border-t border-zinc-800/40 mb-3" />
             )}
 
-            {/* 3. Preview Image (collapsed) */}
-            {!isExpanded && firstImage && (
+            {/* 3. Preview Image */}
+            {firstImage && (
                 <div className="mb-4 max-w-full rounded-xl overflow-hidden group cursor-pointer"
                     style={{ boxShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>
                     <img
@@ -127,23 +195,15 @@ function PostCard({ post }) {
                 </div>
             )}
 
-            {/* 4. Expanded Markdown body */}
-            {isExpanded && renderedMarkdown && (
-                <div
-                    className="mt-4 mb-4 text-sm text-zinc-300 leading-relaxed overflow-x-auto select-text"
-                    dangerouslySetInnerHTML={{ __html: renderedMarkdown }}
-                />
-            )}
-
-            {/* 5. View More / Links row */}
+            {/* 5. View More link → navigates to detail page */}
             <div className="flex items-center justify-between mb-4 mt-1">
-                <button
-                    onClick={() => setIsExpanded(!isExpanded)}
-                    className="text-zinc-500 hover:text-emerald-400 font-medium text-xs flex items-center gap-1.5 transition-all duration-200 cursor-pointer"
+                <Link
+                    href={`/posts/${post._id}`}
+                    className="text-zinc-500 hover:text-emerald-400 font-medium text-xs flex items-center gap-1.5 transition-all duration-200"
                 >
-                    {isExpanded ? "Show less" : "View more"}
-                    <i className={`fa-solid ${isExpanded ? 'fa-chevron-up' : 'fa-chevron-right'} text-[9px]`}></i>
-                </button>
+                    View more
+                    <i className="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+                </Link>
 
                 <div className="flex items-center gap-2.5">
                     {post.links?.map((link, idx) => (
@@ -162,7 +222,7 @@ function PostCard({ post }) {
             </div>
 
             {/* 6. Tech Stack Badges */}
-            {!isExpanded && post.techStack && post.techStack.length > 0 && (
+            {post.techStack && post.techStack.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-5">
                     {post.techStack.map((tech, idx) => {
                         const iconClass = getTechIconClass(tech);
@@ -176,9 +236,8 @@ function PostCard({ post }) {
                 </div>
             )}
 
-            {/* 7. Footer: Actions — with labels and Share */}
+            {/* 7. Footer: Actions */}
             <div className="flex items-center gap-5 pt-4 border-t border-zinc-800 text-zinc-500">
-
                 <Like
                     initialLiked={post.isLiked}
                     initialLikeCount={post.likeCount || 0}
@@ -194,17 +253,6 @@ function PostCard({ post }) {
                     <span className="font-medium text-xs leading-none">{post.commentCount || 0}</span>
                     <span className="text-xs font-medium hidden sm:inline">Discuss</span>
                 </button>
-
-                {/* Share */}
-                <button className="flex items-center gap-1.5 transition-colors hover:text-zinc-300 cursor-pointer">
-                    <i className="fa-solid fa-arrow-up-from-bracket text-xs"></i>
-                    <span className="text-xs font-medium hidden sm:inline">Share</span>
-                </button>
-
-                {/* Bookmark — pushed to right */}
-                <button className="flex items-center gap-1.5 ml-auto transition-colors hover:text-zinc-300 cursor-pointer">
-                    <i className="fa-regular fa-bookmark text-sm"></i>
-                </button>
             </div>
 
             {/* Comment section */}
@@ -214,7 +262,7 @@ function PostCard({ post }) {
                 </div>
             )}
         </div>
-    )
+    );
 }
 
 export default PostCard;

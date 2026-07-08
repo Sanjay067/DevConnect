@@ -6,8 +6,12 @@ import { getAvatarUrl, getOptimizedImageUrl, getVideoUrl } from './cloudinary';
  * If it's a publicId, build an optimized URL.
  */
 export const resolveProfilePicture = (value, size = 200) => {
-  if (!value) return "https://res.cloudinary.com/dzxegwov1/image/upload/v1783014905/userPlaceholder_jd6cqx.jpg";
-  if (value.startsWith('http')) return value; // legacy full URL
+  if (!value) {
+    return "https://res.cloudinary.com/dzxegwov1/image/upload/v1783014905/userPlaceholder_jd6cqx.jpg";
+  }
+  if (value.startsWith('http')) {
+    return value; // legacy full URL
+  }
   return getAvatarUrl(value, size);
 };
 

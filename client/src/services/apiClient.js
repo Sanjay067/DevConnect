@@ -4,9 +4,14 @@ import { clearUser } from "@/store/authSlice";
 
 const isProduction = process.env.NODE_ENV === "production";
 
-const baseURL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  (!isProduction ? "http://localhost:5000/api" : "http://localhost:5000/api");
+let rawBaseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+
+// Auto-append '/api' if missing from the Vercel env settings
+if (rawBaseURL && !rawBaseURL.endsWith("/api") && !rawBaseURL.endsWith("/api/")) {
+  rawBaseURL = rawBaseURL.replace(/\/+$/, "") + "/api";
+}
+
+const baseURL = rawBaseURL;
 
 export const apiClient = axios.create({
   baseURL,

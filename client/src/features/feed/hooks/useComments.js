@@ -1,4 +1,4 @@
-import { fetchComments, createComment, commentLike, fetchReplies, createReply } from "../api/postApi";
+import { fetchComments, createComment, commentLike, fetchReplies, createReply, updateComment, removeComment } from "../api/postApi";
 import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
 
 export const useComments = (postId) => {
@@ -130,4 +130,24 @@ export const useAddReply = () => {
     });
 };
 
+export const useEditComment = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: updateComment,
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: ["comments", variables.postId] });
+            queryClient.invalidateQueries({ queryKey: ["replies", variables.commentId] });
+        },
+    });
+};
 
+export const useDeleteComment = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: removeComment,
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: ["comments", variables.postId] });
+            queryClient.invalidateQueries({ queryKey: ["feed"] });
+        },
+    });
+};

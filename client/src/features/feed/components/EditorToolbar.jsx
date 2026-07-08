@@ -8,6 +8,7 @@ function EditorToolbar({ textareaRef, onChange, onImageUploadClick, isUploading 
         const start = textarea.selectionStart;
         const end = textarea.selectionEnd;
         const text = textarea.value;
+        const scrollTop = textarea.scrollTop; // ← save scroll position
 
         const selection = text.substring(start, end);
         const replacement = syntaxBefore + (selection || "") + syntaxAfter;
@@ -17,6 +18,7 @@ function EditorToolbar({ textareaRef, onChange, onImageUploadClick, isUploading 
 
         setTimeout(() => {
             textarea.focus();
+            textarea.scrollTop = scrollTop; // ← restore scroll position
             const newCursor = start + syntaxBefore.length + (selection ? selection.length : 0);
             textarea.setSelectionRange(newCursor, newCursor + syntaxAfter.length);
         }, 0);

@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useEffect, useState, useRef } from 'react';
-import { useComments, useAddComment, useLikeComment, useReplies, useAddReply } from '../hooks/useComments';
+import { useComments, useAddComment, useLikeComment, useReplies, useAddReply, useEditComment, useDeleteComment } from '../hooks/useComments';
 import { resolveProfilePicture } from '@/shared/lib/imageHelpers';
 import Like from './Like';
 import { useSelector } from 'react-redux';
@@ -127,14 +127,47 @@ function Comment({ postId }) {
 function CommentItem({ comment, postId, isReply = false }) {
   const [isRepliesExpanded, setIsRepliesExpanded] = useState(false);
   const [replyInput, setReplyInput] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [editBody, setEditBody] = useState(comment.body);
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef(null);
   const { data: repliesData, isLoading: isRepliesLoading } = useReplies(postId, comment._id, isRepliesExpanded);
   const { mutate: submitReply, isPending: isReplySubmitting } = useAddReply();
   const { mutate: executeLikeComment } = useLikeComment();
+  const { mutate: executeEditComment, isPending: isEditPending } = useEditComment();
+  const { mutate: executeDeleteComment, isPending: isDeletePending } = useDeleteComment();
 
   const currentUser = useSelector((state) => state.auth.user);
-  const isOwnComment = comment.author?._id === currentUser?._id;
+  const isOwnComment = String(comment.author?._id) === String(currentUser?._id);
 
   const replyInputContainerRef = useRef(null);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setShowMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleEditSubmit = () => {
+    if (!editBody.trim() || editBody.trim() === comment.body) {
+      setIsEditing(false);
+      return;
+    }
+    executeEditComment(
+      { postId, commentId: comment._id, body: editBody.trim() },
+      { onSuccess: () => setIsEditing(false) }
+    );
+  };
+
+  const handleDelete = () => {
+    setShowMenu(false);
+    executeDeleteComment({ postId, commentId: comment._id });
+  };
 
   useEffect(() => {
     if (isRepliesExpanded) {
@@ -190,10 +223,71 @@ function CommentItem({ comment, postId, isReply = false }) {
                   </button>
                 </>
               )}
+              {/* Three-dot menu for own comments */}
+              {isOwnComment && (
+                <div className="relative ml-auto" ref={menuRef}>
+                  <button
+                    onClick={() => setShowMenu((p) => !p)}
+                    className="w-6 h-6 flex items-center justify-center rounded-md text-zinc-600 hover:text-zinc-300 hover:bg-zinc-800 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
+                  >
+                    <i className="fa-solid fa-ellipsis text-[10px]"></i>
+                  </button>
+                  {showMenu && (
+                    <div className="absolute right-0 top-7 z-50 w-36 rounded-xl border border-zinc-800 shadow-xl overflow-hidden"
+                      style={{ background: "var(--surface)" }}>
+                      <button
+                        onClick={() => { setIsEditing(true); setEditBody(comment.body); setShowMenu(false); }}
+                        className="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100 transition-colors cursor-pointer"
+                      >
+                        <i className="fa-solid fa-pen text-[10px] text-zinc-500"></i>
+                        Edit comment
+                      </button>
+                      <button
+                        onClick={handleDelete}
+                        disabled={isDeletePending}
+                        className="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer disabled:opacity-50"
+                      >
+                        <i className="fa-solid fa-trash text-[10px]"></i>
+                        {isDeletePending ? "Deleting..." : "Delete"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-            <p className={`text-zinc-300 mt-1 leading-snug whitespace-pre-wrap ${isReply ? 'text-xs' : 'text-sm'}`}>
-              {comment.body}
-            </p>
+
+            {/* Comment body / edit input */}
+            {isEditing ? (
+              <div className="mt-2 flex gap-2">
+                <input
+                  autoFocus
+                  value={editBody}
+                  onChange={(e) => setEditBody(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleEditSubmit();
+                    if (e.key === 'Escape') setIsEditing(false);
+                  }}
+                  className="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-zinc-100 outline-none focus:border-emerald-500/50"
+                />
+                <button
+                  onClick={handleEditSubmit}
+                  disabled={isEditPending}
+                  className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-semibold transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  {isEditPending ? <i className="fa-solid fa-circle-notch fa-spin"></i> : 'Save'}
+                </button>
+                <button
+                  onClick={() => setIsEditing(false)}
+                  className="px-2.5 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 text-[10px] font-semibold transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <p className={`text-zinc-300 mt-1 leading-snug whitespace-pre-wrap ${isReply ? 'text-xs' : 'text-sm'}`}>
+                {comment.isDeleted ? <span className="italic text-zinc-600">This comment was deleted.</span> : comment.body}
+              </p>
+            )}
           </div>
 
           <div className="flex items-center gap-3 mt-1 ml-2 text-[11px] font-semibold text-zinc-500">

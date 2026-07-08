@@ -1,7 +1,6 @@
 import React, { useMemo } from "react";
 import { useSelector } from "react-redux";
 import { renderMarkdown } from "../utils/markdownParser";
-import { getTechIconClass } from "@/shared/lib/techIcons";
 import { resolveProfilePicture } from "@/shared/lib/imageHelpers";
 
 function MarkdownPreview({ markdown, title, shortDescription, githubUrl, liveUrl }) {
@@ -101,21 +100,7 @@ function MarkdownPreview({ markdown, title, shortDescription, githubUrl, liveUrl
                     />
                 )}
 
-                {/* Tech stack badges */}
-                {techStack.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 px-5 py-3">
-                        {techStack.map((tech) => {
-                            const iconClass = getTechIconClass(tech);
-                            return (
-                                <span key={tech}
-                                    className="bg-zinc-950 border border-zinc-800 text-zinc-400 px-2.5 py-1 rounded-lg text-xs font-medium flex items-center gap-1.5 capitalize">
-                                    {iconClass && <i className={`${iconClass} text-xs`}></i>}
-                                    {tech}
-                                </span>
-                            );
-                        })}
-                    </div>
-                )}
+
 
                 {/* Links */}
                 {(githubUrl || liveUrl) && (
@@ -140,9 +125,6 @@ function MarkdownPreview({ markdown, title, shortDescription, githubUrl, liveUrl
                     </span>
                     <span className="flex items-center gap-1.5 text-xs">
                         <i className="fa-regular fa-comment text-sm"></i> 0
-                    </span>
-                    <span className="flex items-center gap-1.5 text-xs ml-auto">
-                        <i className="fa-regular fa-bookmark text-sm"></i>
                     </span>
                 </div>
             </div>

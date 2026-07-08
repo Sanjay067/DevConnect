@@ -59,6 +59,19 @@ function PostEditor({
   const [isUploading, setIsUploading] = useState(false);
   const [activeUploads, setActiveUploads] = useState(0);
 
+  // ── Mobile layout & active tab state ──────────────────────────
+  const [activeTab, setActiveTab] = useState("edit"); // "edit" | "preview"
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   // ── Resizer logic ───────────────────────────────────────────
   const [editorWidth, setEditorWidth] = useState(70);
   const [isDragging, setIsDragging] = useState(false);
@@ -364,11 +377,40 @@ function PostEditor({
         />
       </div>
 
+      {/* ── Edit / Preview Tabs switcher for Mobile layouts ── */}
+      <div className="flex md:hidden border-b border-zinc-850 bg-zinc-950 px-6 py-2.5 shrink-0 justify-start">
+        <div className="flex bg-zinc-900 p-0.5 rounded-lg border border-zinc-850">
+          <button
+            type="button"
+            onClick={() => setActiveTab("edit")}
+            className={`px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${activeTab === "edit"
+                ? "bg-zinc-800 text-zinc-50 shadow-sm"
+                : "text-zinc-400 hover:text-zinc-200"
+              }`}
+          >
+            Edit
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("preview")}
+            className={`px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${activeTab === "preview"
+                ? "bg-zinc-800 text-zinc-50 shadow-sm"
+                : "text-zinc-400 hover:text-zinc-200"
+              }`}
+          >
+            Preview
+          </button>
+        </div>
+      </div>
+
       {/* ── Split editor / preview ────────────────────────────── */}
       <div className="flex-1 flex overflow-hidden min-h-0">
 
         {/* Editor panel */}
-        <div className="flex flex-col h-full border-r border-zinc-800 shrink-0" style={{ background: "#111113", width: `${editorWidth}%` }}>
+        <div
+          className={`flex flex-col h-full border-r border-zinc-800 shrink-0 ${activeTab === 'edit' ? 'flex w-full' : 'hidden md:flex'}`}
+          style={{ background: "#111113", width: isMobile ? "100%" : `${editorWidth}%` }}
+        >
 
           <EditorToolbar
             textareaRef={editorRef}
@@ -442,14 +484,14 @@ function PostEditor({
           </div>
         </div>
 
-        {/* Resizer Handle */}
+        {/* Resizer Handle (Hidden on Mobile) */}
         <div
-          className={`w-1.5 cursor-col-resize shrink-0 transition-colors z-10 ${isDragging ? "bg-emerald-500/50" : "hover:bg-zinc-700 bg-zinc-900"}`}
+          className={`hidden md:block w-1.5 cursor-col-resize shrink-0 transition-colors z-10 ${isDragging ? "bg-emerald-500/50" : "hover:bg-zinc-700 bg-zinc-900"}`}
           onMouseDown={(e) => { e.preventDefault(); setIsDragging(true); }}
         />
 
         {/* Preview panel */}
-        <div className="flex-1 h-full overflow-hidden">
+        <div className={`flex-1 h-full overflow-hidden ${activeTab === 'preview' ? 'block' : 'hidden md:block'}`}>
           <MarkdownPreview
             markdown={markdownText}
             title={title}
