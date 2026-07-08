@@ -10,11 +10,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-/**
- * Custom Multer storage engine for Cloudinary.
- * Replaces multer-storage-cloudinary which is incompatible with
- * cloudinary@2.x + multer@2.x on Node v24.
- */
+
 class CloudinaryStorage {
   constructor({ cloudinary: cld, params = {} }) {
     this._cloudinary = cld;
@@ -48,7 +44,7 @@ class CloudinaryStorage {
   }
 }
 
-// Storage for profile pictures
+// profile pictures
 const avatarStorage = new CloudinaryStorage({
   cloudinary,
   params: {
@@ -58,7 +54,7 @@ const avatarStorage = new CloudinaryStorage({
   },
 });
 
-// Storage for temporary media
+//temporary media
 const tempMediaStorage = new CloudinaryStorage({
   cloudinary,
   params: {
@@ -68,7 +64,7 @@ const tempMediaStorage = new CloudinaryStorage({
   },
 });
 
-// Storage for post media
+// post media
 const postMediaStorage = new CloudinaryStorage({
   cloudinary,
   params: {
@@ -78,9 +74,23 @@ const postMediaStorage = new CloudinaryStorage({
   },
 });
 
+const bannerStorage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "devConnect/banners",
+    allowed_formats: ["jpg", "jpeg", "png", "webp"],
+    transformation: [{ width: 1200, height: 400, crop: "fill" }],
+  },
+});
+
 export const uploadAvatar = multer({
   storage: avatarStorage,
   limits: { fileSize: 1024 * 1024 } // 1MB limit
+});
+
+export const uploadBanner = multer({
+  storage: bannerStorage,
+  limits: { fileSize: 2 * 1024 * 1024 } // 2MB limit
 });
 
 export const uploadPostMedia = multer({

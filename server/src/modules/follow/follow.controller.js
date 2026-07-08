@@ -1,10 +1,15 @@
 import Follow from "./follow.model.js";
 import User from "../user/users.model.js";
+import mongoose from "mongoose";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 
 export const followUser = asyncHandler(async (req, res) => {
   const followerId = req.user._id;
   const { followingId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(followingId)) {
+    return res.status(400).json({ message: "Invalid user ID format" });
+  }
 
   if (followerId.toString() === followingId) {
     return res.status(400).json({ message: "You cannot follow yourself" });
@@ -31,6 +36,10 @@ export const followUser = asyncHandler(async (req, res) => {
 export const unfollowUser = asyncHandler(async (req, res) => {
   const followerId = req.user._id;
   const { followingId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(followingId)) {
+    return res.status(400).json({ message: "Invalid user ID format" });
+  }
 
   const follow = await Follow.findOneAndDelete({ followerId, followingId });
   if (!follow) return res.status(400).json({ message: "Not following this user" });

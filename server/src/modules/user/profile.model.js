@@ -35,6 +35,10 @@ const profileSchema = mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
   },
+  bannerPicture: {
+    type: String,
+    default: "",
+  },
   headline: {
     type: String,
     default: "",
@@ -42,6 +46,19 @@ const profileSchema = mongoose.Schema({
   bio: {
     type: String,
     default: "",
+  },
+  location: {
+    type: String,
+    default: "",
+  },
+  socialLinks: {
+    github: { type: String, default: "" },
+    linkedin: { type: String, default: "" },
+    portfolio: { type: String, default: "" },
+  },
+  skills: {
+    type: [String],
+    default: [],
   },
   currentPosition: {
     type: String,

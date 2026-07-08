@@ -5,10 +5,11 @@ import {
   getAllProfiles,
   updateMyProfile,
   updateUser,
-  userProfileDownload,
   getPublicUserProfile,
+  searchUsers,
+  updateBanner,
 } from "./user.controller.js";
-import { uploadAvatar } from "../../config/cloudinary.js";
+import { uploadAvatar, uploadBanner } from "../../config/cloudinary.js";
 import { verifyAccessToken } from "../../middlewares/verifyAccessToken.middleware.js";
 
 const router = Router();
@@ -21,12 +22,10 @@ router.get("/profile/:userId", verifyAccessToken, getPublicUserProfile);
 // Get all profiles
 router.get("/profiles", verifyAccessToken, getAllProfiles);
 
-// Download user profile
-router.get(
-  "/profiles/download/:userId",
-  verifyAccessToken,
-  userProfileDownload,
-);
+// Search users
+router.get("/search", verifyAccessToken, searchUsers);
+
+
 
 // Update profile (bio, pastWork, education)
 router.patch("/profiles/me", verifyAccessToken, updateMyProfile);
@@ -40,6 +39,14 @@ router.patch(
   verifyAccessToken,
   uploadAvatar.single("avatar"),
   updateAvatar,
+);
+
+// Update banner
+router.patch(
+  "/profiles/me/banner",
+  verifyAccessToken,
+  uploadBanner.single("banner"),
+  updateBanner,
 );
 
 

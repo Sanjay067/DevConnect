@@ -30,8 +30,18 @@ const promoteTempAssets = async (markdownText) => {
   const tempUrlRegex = /https:\/\/res\.cloudinary\.com\/[^\/]+\/image\/upload\/(?:v\d+\/)?(devConnect\/temp\/[^\.]+)\.[a-zA-Z0-9]+/g;
 
   const matches = [...markdownText.matchAll(tempUrlRegex)];
+  const seen = new Set();
+  const uniqueMatches = [];
 
   for (const match of matches) {
+    const oldPublicId = match[1];
+    if (!seen.has(oldPublicId)) {
+      seen.add(oldPublicId);
+      uniqueMatches.push(match);
+    }
+  }
+
+  for (const match of uniqueMatches) {
     const fullUrl = match[0];
     const oldPublicId = match[1];
     const newPublicId = oldPublicId.replace("devConnect/temp/", "devConnect/posts/");
@@ -39,11 +49,11 @@ const promoteTempAssets = async (markdownText) => {
     try {
       console.log(`Promoting asset: ${oldPublicId} -> ${newPublicId}`);
       const renameResult = await cloudinary.uploader.rename(oldPublicId, newPublicId);
-      updatedText = updatedText.replace(fullUrl, renameResult.secure_url);
+      updatedText = updatedText.replaceAll(fullUrl, renameResult.secure_url);
     } catch (error) {
       console.error(`Failed to promote asset ${oldPublicId}:`, error.message);
       const fallbackUrl = fullUrl.replace("/devConnect/temp/", "/devConnect/posts/");
-      updatedText = updatedText.replace(fullUrl, fallbackUrl);
+      updatedText = updatedText.replaceAll(fullUrl, fallbackUrl);
     }
   }
 
@@ -64,10 +74,6 @@ export const getPostById = asyncHandler(async (req, res) => {
   const userId = req.user._id;
   const isAuthor = post.author._id.toString() === userId.toString();
 
-  if (!isAuthor) {
-    return res.status(403).json({ message: "Unauthorized" });
-  }
-
   const userLike = await Like.findOne({
     userId,
     targetId: post._id,
@@ -79,6 +85,7 @@ export const getPostById = asyncHandler(async (req, res) => {
     post: {
       ...post.toObject(),
       isLiked: !!userLike,
+      isAuthor,
     },
   });
 });
@@ -107,6 +114,38 @@ export const getAllUserPosts = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json({ message: "Posts fetched successfully", posts: finalPosts });
+});
+
+export const getPublicUserPosts = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+  const currentUserId = req.user?._id;
+
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    return res.status(400).json({ message: "Invalid user ID" });
+  }
+
+  const posts = await Post.find({ author: userId })
+    .populate("author", "name username profilePicture")
+    .sort({ createdAt: -1 });
+
+  const postIds = posts.map((p) => p._id);
+  let likedSet = new Set();
+  
+  if (currentUserId) {
+    const userLikes = await Like.find({
+      userId: currentUserId,
+      targetId: { $in: postIds },
+      targetType: "Post",
+    }).select("targetId");
+    likedSet = new Set(userLikes.map((l) => String(l.targetId)));
+  }
+
+  const finalPosts = posts.map((p) => ({
+    ...p.toObject(),
+    isLiked: likedSet.has(String(p._id)),
+  }));
+
+  return res.status(200).json({ posts: finalPosts });
 });
 
 export const createPost = asyncHandler(async (req, res) => {
@@ -287,6 +326,17 @@ export const deletePost = asyncHandler(async (req, res) => {
       targetId: post._id,
       targetType: "Post",
     }).session(session);
+
+    const commentIds = await Comment.find({ postId: post._id })
+      .session(session)
+      .distinct("_id");
+
+    if (commentIds.length > 0) {
+      await Like.deleteMany({
+        targetId: { $in: commentIds },
+        targetType: "Comment",
+      }).session(session);
+    }
 
     await Comment.deleteMany({
       postId: post._id,

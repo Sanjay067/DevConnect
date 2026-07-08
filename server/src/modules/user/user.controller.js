@@ -1,31 +1,10 @@
 import User from "./users.model.js";
 import Profile from "./profile.model.js";
-import PDFDocument from "pdfkit";
+import Follow from "../follow/follow.model.js";
+import Post from "../post/posts.model.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 
-const convertToPdfBuffer = (userData) =>
-  new Promise((resolve, reject) => {
-    const doc = new PDFDocument();
-    const chunks = [];
-    doc.on("data", (c) => chunks.push(c));
-    doc.on("end", () => resolve(Buffer.concat(chunks)));
-    doc.on("error", reject);
 
-    doc.fontSize(14).text(`Name: ${userData.userId.name}`);
-    doc.fontSize(14).text(`Email: ${userData.userId.email}`);
-    doc.fontSize(14).text(`Username: ${userData.userId.username}`);
-    doc.fontSize(14).text(`Bio: ${userData.bio || ""}`);
-    doc.fontSize(14).text(`Current Position: ${userData.currentPosition || ""}`);
-
-    doc.moveDown().fontSize(16).text("Past Work:");
-    (userData.pastWork || []).forEach((work) => {
-      doc.fontSize(14).text(`Company: ${work.companyName || work.company || ""}`);
-      doc.text(`Position: ${work.position || ""}`);
-      doc.text(`Years: ${work.years || ""}`);
-      doc.moveDown();
-    });
-    doc.end();
-  });
 
 const escapeRegex = (value) =>
   String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -43,6 +22,29 @@ export const updateAvatar = asyncHandler(async (req, res) => {
   return res.status(200).json({
     message: "Profile picture updated",
     profilePicture: user.profilePicture,
+  });
+});
+
+export const updateBanner = asyncHandler(async (req, res) => {
+  let profile = await Profile.findOne({ userId: req.user._id });
+
+  if (!profile) {
+    profile = new Profile({
+      userId: req.user._id,
+      headline: "",
+      bio: "",
+      currentPosition: "",
+    });
+  }
+
+  if (!req.file) return res.status(400).json({ message: "No file uploaded" });
+
+  profile.bannerPicture = req.file.path;
+  await profile.save();
+
+  return res.status(200).json({
+    message: "Banner picture updated",
+    bannerPicture: profile.bannerPicture,
   });
 });
 
@@ -101,12 +103,33 @@ export const getMyProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id);
   if (!user) return res.status(400).json({ message: "user doesn't exist" });
 
-  const userProfile = await Profile.findOne({ userId: user._id }).populate(
+  let userProfile = await Profile.findOne({ userId: user._id }).populate(
     "userId",
     "name email username profilePicture skills interests",
   );
 
-  return res.json(userProfile);
+  if (!userProfile) {
+    userProfile = new Profile({
+      userId: user._id,
+      headline: "",
+      bio: "",
+      currentPosition: "",
+    });
+    await userProfile.save();
+    await userProfile.populate(
+      "userId",
+      "name email username profilePicture skills interests"
+    );
+  }
+
+  const followersCount = await Follow.countDocuments({ followingId: user._id });
+  const followingCount = await Follow.countDocuments({ followerId: user._id });
+
+  return res.json({
+    ...userProfile.toObject(),
+    followersCount,
+    followingCount,
+  });
 });
 
 
@@ -116,13 +139,13 @@ export const getPublicUserProfile = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: "User ID is required" });
 
   const user = await User.findById(userId).select(
-    "name username profilePicture",
+    "name username profilePicture interests",
   );
   if (!user) return res.status(404).json({ message: "User not found" });
 
   const userProfile = await Profile.findOne({ userId: user._id }).populate(
     "userId",
-    "name username profilePicture",
+    "name username profilePicture interests",
   );
 
   if (!userProfile) {
@@ -133,12 +156,30 @@ export const getPublicUserProfile = asyncHandler(async (req, res) => {
         name: user.name,
         username: user.username,
         profilePicture: user.profilePicture,
+        interests: user.interests || [],
       },
     });
   }
 
-  await userProfile.populate("userId", "name username profilePicture");
-  return res.status(200).json({ profile: userProfile });
+  await userProfile.populate("userId", "name username profilePicture interests");
+
+  const followersCount = await Follow.countDocuments({ followingId: user._id });
+  const followingCount = await Follow.countDocuments({ followerId: user._id });
+  
+  let isFollowing = false;
+  if (req.user) {
+    const follow = await Follow.findOne({ followerId: req.user._id, followingId: user._id });
+    isFollowing = !!follow;
+  }
+
+  return res.status(200).json({ 
+    profile: {
+      ...userProfile.toObject(),
+      followersCount,
+      followingCount,
+      isFollowing
+    }
+  });
 });
 
 export const getAllProfiles = asyncHandler(async (req, res) => {
@@ -146,29 +187,45 @@ export const getAllProfiles = asyncHandler(async (req, res) => {
   const limit = Math.min(50, Math.max(1, Number(req.query.limit || 24)));
   const skip = (page - 1) * limit;
 
-  const filter = { _id: { $ne: req.user._id } };
-  const total = await User.countDocuments(filter);
+  // Query Profiles excluding the current user's profile
+  const filter = { userId: { $ne: req.user._id } };
+  const total = await Profile.countDocuments(filter);
 
-  const rows = await User.find(filter)
-    .select("name username profilePicture")
-    .sort({ name: 1 })
+  const rows = await Profile.find(filter)
+    .populate("userId", "name username profilePicture")
     .skip(skip)
     .limit(limit)
     .lean();
 
-  const profiles = rows.map((u) => ({
-    _id: u._id,
-    username: u.username,
-    name: u.name,
-    profilePicture: u.profilePicture,
-  }));
+  const profiles = await Promise.all(
+    rows.map(async (p) => {
+      if (!p.userId) return null;
+
+      const followersCount = await Follow.countDocuments({ followingId: p.userId._id });
+      const projectsCount = await Post.countDocuments({ author: p.userId._id });
+
+      return {
+        _id: p.userId._id,
+        username: p.userId.username,
+        name: p.userId.name,
+        profilePicture: p.userId.profilePicture,
+        headline: p.headline,
+        bio: p.bio,
+        skills: p.skills || [],
+        followersCount,
+        projectsCount,
+      };
+    })
+  );
+
+  const filteredProfiles = profiles.filter(Boolean);
 
   return res.status(200).json({
-    profiles,
+    profiles: filteredProfiles,
     page,
     limit,
     total,
-    hasMore: skip + profiles.length < total,
+    hasMore: skip + filteredProfiles.length < total,
   });
 });
 
@@ -186,8 +243,11 @@ export const updateMyProfile = asyncHandler(async (req, res) => {
     "pastWork",
     "education",
     "currentPosition",
-    "currentPost",
-    "headline"
+    "headline",
+    "location",
+    "socialLinks",
+    "skills",
+    "bannerPicture"
   ];
 
   allowedFields.forEach((field) => {
@@ -205,29 +265,6 @@ export const updateMyProfile = asyncHandler(async (req, res) => {
   });
 });
 
-export const userProfileDownload = asyncHandler(async (req, res) => {
-  const { userId } = req.params;
-  if (!userId)
-    return res.status(400).json({ message: "User ID is required" });
-
-  const user = await User.findById(userId);
-  if (!user) return res.status(400).json({ message: "User doesn't exist" });
-
-  const userProfile = await Profile.findOne({ userId: user._id }).populate(
-    "userId",
-    "name email username profilePicture",
-  );
-
-  if (!userProfile)
-    return res.status(400).json({ message: "Profile not found" });
-
-  const pdfBuffer = await convertToPdfBuffer(userProfile);
-  return res
-    .status(200)
-    .setHeader("Content-Type", "application/pdf")
-    .setHeader("Content-Disposition", `attachment; filename=\"${user.username}-profile.pdf\"`)
-    .send(pdfBuffer);
-});
 
 export const searchUsers = asyncHandler(async (req, res) => {
   const { q } = req.query;

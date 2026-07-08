@@ -6,6 +6,7 @@ import {
   createPost,
   deletePost,
   editPost,
+  getPublicUserPosts,
 } from "./posts.controller.js";
 import { toggleLikePost, getPostLikes } from "../like/likes.controller.js";
 import { verifyAccessToken } from "../../middlewares/verifyAccessToken.middleware.js";
@@ -22,6 +23,8 @@ router.post("/upload-asset", verifyAccessToken, uploadLimiter, uploadTempMedia.s
   if (!req.file) return res.status(400).json({ message: "No file uploaded" });
   return res.status(200).json({ url: req.file.path, publicId: req.file.filename });
 });
+
+router.get("/user/:userId", verifyAccessToken, getPublicUserPosts);
 
 router
   .route("/")

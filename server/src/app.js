@@ -6,8 +6,6 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import dns from "dns";
-
-
 dns.setServers(["8.8.8.8", "8.8.4.4"]);
 import { apiLimiter } from "./middlewares/rateLimits.js";
 import { verifyCsrfToken } from "./middlewares/csrf.middleware.js";
@@ -48,7 +46,13 @@ app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 app.use(cookieParser());
 app.use(
   cors({
-    origin: true,
+    origin: (origin, callback) => {
+      if (isAllowedOrigin(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
