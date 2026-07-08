@@ -38,8 +38,24 @@ const isAllowedOrigin = (origin) => {
   if (!origin) return true;
 
   const normalized = normalizeOrigin(origin).toLowerCase();
+  
+  // Allow localhost for local development
+  if (normalized.startsWith("http://localhost:") || normalized.startsWith("http://127.0.0.1:")) {
+    return true;
+  }
+
+  // Allow strict matches
   if (strictOrigins.includes(normalized)) return true;
-  return wildcardOrigins.some((suffix) => normalized.endsWith(suffix));
+
+  // Allow wildcard subdomains
+  if (wildcardOrigins.some((suffix) => normalized.endsWith(suffix))) return true;
+
+  // Allow any vercel.app subdomains starting with 'dev-connect-' (dynamic vercel deployments)
+  if (/^https:\/\/dev-connect-[a-zA-Z0-9-]+\.vercel\.app$/.test(normalized)) {
+    return true;
+  }
+
+  return false;
 };
 
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
@@ -50,7 +66,8 @@ app.use(
       if (isAllowedOrigin(origin)) {
         callback(null, true);
       } else {
-        callback(new Error("Not allowed by CORS"));
+        console.warn(`Blocked CORS request from origin: ${origin}`);
+        callback(null, false);
       }
     },
     credentials: true,
