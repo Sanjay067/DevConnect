@@ -1,6 +1,4 @@
 import axios from "axios";
-import { store } from "@/store";
-import { clearUser } from "@/store/authSlice";
 
 let rawBaseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
@@ -98,7 +96,18 @@ apiClient.interceptors.response.use(
       } catch (refreshError) {
         isRefreshing = false;
         processQueue(refreshError);
-        store.dispatch(clearUser());
+        
+        // Dynamically import store/clearUser to break circular dependency:
+        // apiClient -> store -> authSlice -> authService -> apiClient
+        Promise.all([
+          import("@/store"),
+          import("@/store/authSlice")
+        ]).then(([{ store }, { clearUser }]) => {
+          store.dispatch(clearUser());
+        }).catch((err) => {
+          console.error("Failed to clear auth state dynamically:", err);
+        });
+
         document.cookie = "is_authenticated=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
         if (typeof window !== "undefined" && window.location.pathname !== "/auth") {
           window.location.href = "/auth";
