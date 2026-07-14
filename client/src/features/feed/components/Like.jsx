@@ -1,14 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 
 function Like({ initialLiked, initialLikeCount, onToggle }) {
     const [isLiked, setIsLiked] = useState(initialLiked);
     const [likeCount, setLikeCount] = useState(initialLikeCount || 0);
     const debounceTimer = useRef(null);
-
-    useEffect(() => {
-        setIsLiked(initialLiked);
-        setLikeCount(initialLikeCount || 0);
-    }, [initialLiked, initialLikeCount]);
 
     const handleLikeClick = () => {
         const newIsLiked = !isLiked;

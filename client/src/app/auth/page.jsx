@@ -2,11 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useDispatch } from "react-redux";
+import { checkAuth } from "@/store/authSlice";
 import { useLogin } from "@/features/auth/hooks/useLogin";
 import { useRegister } from "@/features/auth/hooks/useRegister";
 
 export default function AuthPage() {
   const router = useRouter();
+  const dispatch = useDispatch();
   const loginMutation = useLogin();
   const registerMutation = useRegister();
 
@@ -29,18 +32,22 @@ export default function AuthPage() {
     if (isLogin) {
       loginMutation.mutate(
         { email: form.email, password: form.password },
-        { 
+        {
           onSuccess: () => {
             document.cookie = "is_authenticated=true; path=/; max-age=3600; SameSite=Lax";
-            router.push("/feed");
-          } 
+            dispatch(checkAuth()).then(() => {
+              router.push("/feed");
+            });
+          }
         }
       );
     } else {
       registerMutation.mutate(form, {
         onSuccess: () => {
           document.cookie = "is_authenticated=true; path=/; max-age=3600; SameSite=Lax";
-          router.push("/feed");
+          dispatch(checkAuth()).then(() => {
+            router.push("/feed");
+          });
         },
       });
     }
@@ -187,7 +194,7 @@ export default function AuthPage() {
           </p>
         </div>
 
-        {/* ── RIGHT: Brand Panel ──────────────────────────────── */}
+
         <div
           className="hidden md:flex md:w-[45%] flex-col items-center justify-center border-l border-zinc-800 px-12 py-14 text-center"
           style={{

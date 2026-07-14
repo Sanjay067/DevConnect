@@ -1,4 +1,5 @@
 "use client";
+import React from "react";
 
 import FeedWrapper from "@/features/feed/components/FeedWrapper";
 import { useFeed } from '../../../features/feed/hooks/useFeed';
@@ -77,7 +78,32 @@ function FeedSkeleton() {
 }
 
 function Feed() {
-    const { data: feed, isLoading, isError, error } = useFeed();
+    const { 
+        data: feed, 
+        isLoading, 
+        isError, 
+        error, 
+        hasNextPage, 
+        fetchNextPage, 
+        isFetchingNextPage 
+    } = useFeed();
+
+    React.useEffect(() => {
+        const handleScroll = () => {
+            const scrollHeight = document.documentElement.scrollHeight;
+            const scrollTop = window.scrollY || document.documentElement.scrollTop;
+            const clientHeight = window.innerHeight || document.documentElement.clientHeight;
+
+            if (scrollHeight - scrollTop - clientHeight < 100) {
+                if (hasNextPage && !isFetchingNextPage) {
+                    fetchNextPage();
+                }
+            }
+        };
+
+        window.addEventListener("scroll", handleScroll);
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
     if (isLoading) {
         return (
@@ -96,9 +122,11 @@ function Feed() {
         );
     }
 
+    const posts = feed?.pages ? feed.pages.flatMap((page) => page.posts || []) : [];
+
     return (
         <main className="min-h-screen bg-gray-50 py-5">
-            <FeedWrapper feed={feed} />
+            <FeedWrapper posts={posts} isFetchingNextPage={isFetchingNextPage} />
         </main>
     );
 }

@@ -1,11 +1,15 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import { getFeed } from "@/features/feed/api/feedApi";
 import { createPost, getPostById, updatePost, deletePost } from "@/services/postService";
 
 export const useFeed = () => {
-    return useQuery({
+    return useInfiniteQuery({
         queryKey: ["feed"],
         queryFn: getFeed,
+        initialPageParam: 1,
+        getNextPageParam: (lastPage) => {
+            return lastPage.hasMore ? lastPage.page + 1 : undefined;
+        },
     });
 };
 

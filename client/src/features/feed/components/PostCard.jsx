@@ -11,7 +11,7 @@ import { getTechIconClass } from '@/shared/lib/techIcons';
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { followUser, unfollowUser } from "@/services/followService";
 
-import { deletePost } from "@/services/postService";
+import { deletePost, toggleFeaturePost } from "@/services/postService";
 
 // ── Time formatter ───────────────────────────────────────────────────────────
 const formatTimeAgo = (dateString) => {
@@ -30,13 +30,24 @@ const getFirstMarkdownImage = (text) => {
     return match ? match[1] : null;
 };
 
-function PostCard({ post }) {
+function PostCard({ post, showMenu }) {
     const queryClient = useQueryClient();
     const { mutate: executeLikeMutation } = useLikePost();
     const [isCommentDialogOpen, setIsCommentDialogOpen] = useState(false);
     const [isFollowing, setIsFollowing] = useState(false);
+    const [showDropdown, setShowDropdown] = useState(false);
     const currentUser = useSelector((state) => state.auth.user);
     const isOwnPost = post.author?._id === currentUser?._id;
+
+    const featureMutation = useMutation({
+        mutationFn: () => toggleFeaturePost(post._id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["feed"] });
+            queryClient.invalidateQueries({ queryKey: ["myPosts"] });
+            queryClient.invalidateQueries({ queryKey: ["userPosts", post.author?._id] });
+            queryClient.invalidateQueries({ queryKey: ["profile", post.author?._id] });
+        },
+    });
 
     const markdownText = post.content?.blocks?.[0]?.data?.text || "";
     const firstImage = useMemo(() => {
@@ -132,26 +143,61 @@ function PostCard({ post }) {
                         ) : isFollowing ? "Following" : "Follow"}
                     </button>
                 )}
-                {isOwnPost && (
-                    <div className="flex items-center gap-2">
-                        <Link
-                            href={`/posts/${post._id}/edit`}
-                            className="border border-zinc-800 text-zinc-400 bg-zinc-950/50 hover:bg-zinc-900 hover:text-zinc-100 rounded-lg px-3.5 py-1.5 font-medium text-xs transition-all cursor-pointer"
-                        >
-                            Edit
-                        </Link>
+                {isOwnPost && showMenu && (
+                    <div className="relative">
                         <button
-                            onClick={handleDelete}
-                            disabled={deleteMutation.isPending}
-                            className="border border-red-950/40 text-red-400 bg-red-950/10 hover:bg-red-950/20 hover:text-red-300 rounded-lg px-3 py-1.5 font-medium text-xs transition-all cursor-pointer"
-                            title="Delete project"
+                            type="button"
+                            onClick={() => setShowDropdown(prev => !prev)}
+                            className="w-8 h-8 rounded-lg hover:bg-zinc-850 border border-transparent hover:border-zinc-800 text-zinc-400 hover:text-zinc-200 flex items-center justify-center cursor-pointer transition-all"
                         >
-                            {deleteMutation.isPending ? (
-                                <i className="fa-solid fa-circle-notch fa-spin text-xs" />
-                            ) : (
-                                <i className="fa-solid fa-trash-can"></i>
-                            )}
+                            <i className="fa-solid fa-ellipsis-vertical"></i>
                         </button>
+
+                        {showDropdown && (
+                            <>
+                                <div 
+                                    className="fixed inset-0 z-30 cursor-default" 
+                                    onClick={() => setShowDropdown(false)}
+                                />
+                                <div className="absolute right-0 mt-1.5 z-45 min-w-[150px] bg-zinc-950 border border-zinc-800 rounded-xl shadow-2xl p-1.5 animate-in fade-in slide-in-from-top-2 duration-150">
+                                    <Link
+                                        href={`/posts/${post._id}/edit`}
+                                        className="w-full text-left px-3 py-2 text-xs font-bold text-zinc-300 hover:text-zinc-100 hover:bg-zinc-900 rounded-lg flex items-center gap-2 cursor-pointer transition-all"
+                                    >
+                                        <i className="fa-regular fa-pen-to-square"></i>
+                                        Edit Project
+                                    </Link>
+                                    
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setShowDropdown(false);
+                                            featureMutation.mutate();
+                                        }}
+                                        disabled={featureMutation.isPending}
+                                        className="w-full text-left px-3 py-2 text-xs font-bold text-zinc-300 hover:text-zinc-100 hover:bg-zinc-900 rounded-lg flex items-center gap-2 cursor-pointer transition-all disabled:opacity-50"
+                                    >
+                                        <i className="fa-regular fa-star"></i>
+                                        {post.isFeatured ? "Unfeature" : "Feature to top"}
+                                    </button>
+
+                                    <div className="h-px bg-zinc-900 my-1" />
+
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setShowDropdown(false);
+                                            handleDelete();
+                                        }}
+                                        disabled={deleteMutation.isPending}
+                                        className="w-full text-left px-3 py-2 text-xs font-bold text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg flex items-center gap-2 cursor-pointer transition-all disabled:opacity-50"
+                                    >
+                                        <i className="fa-regular fa-trash-can"></i>
+                                        Delete
+                                    </button>
+                                </div>
+                            </>
+                        )}
                     </div>
                 )}
             </div>
@@ -239,6 +285,7 @@ function PostCard({ post }) {
             {/* 7. Footer: Actions */}
             <div className="flex items-center gap-5 pt-4 border-t border-zinc-800 text-zinc-500">
                 <Like
+                    key={`${post._id}-${post.isLiked}-${post.likeCount}`}
                     initialLiked={post.isLiked}
                     initialLikeCount={post.likeCount || 0}
                     onToggle={() => executeLikeMutation(post._id)}

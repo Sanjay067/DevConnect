@@ -5,12 +5,11 @@ import { toggleLikePost, addComment, getComments, toggleLikeComment, getCommentR
 
 export const toggleLike = async (postId) => {
     const res = await toggleLikePost(postId);
-    console.log("called to like");
     return res.data;
 };
 
-export const fetchComments = async (postId) => {
-    const res = await getComments(postId);
+export const fetchComments = async ({ postId, pageParam = 1 }) => {
+    const res = await getComments(postId, pageParam, 5);
     return res.data;
 }
 
@@ -24,8 +23,8 @@ export const commentLike = async ({ postId, commentId }) => {
     return res.data;
 }
 
-export const fetchReplies = async ({ postId, commentId }) => {
-    const res = await getCommentReplies(postId, commentId);
+export const fetchReplies = async ({ postId, commentId, pageParam = 1 }) => {
+    const res = await getCommentReplies(postId, commentId, pageParam, 5);
     return res.data;
 }
 

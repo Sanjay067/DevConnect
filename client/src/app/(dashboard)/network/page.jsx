@@ -1,45 +1,29 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useEffect, useMemo } from "react";
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
+import { useMemo, Suspense } from "react";
 import { useSelector } from "react-redux";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { getAllProfiles } from "@/services/userService";
 import { followUser, unfollowUser, getFollowing } from "@/services/followService";
 import { resolveProfilePicture } from "@/shared/lib/imageHelpers";
 import { getTechIconClass } from "@/shared/lib/techIcons";
-import Loader from "@/shared/components/Loader";
 
-function NetworkPage() {
+function NetworkPageContent() {
   const queryClient = useQueryClient();
   const currentUser = useSelector((state) => state.auth.user);
-  const [search, setSearch] = useState("");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const search = searchParams.get("q") || "";
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const updateSearchFromUrl = () => {
-        const params = new URLSearchParams(window.location.search);
-        setSearch(params.get("q") || "");
-      };
-      updateSearchFromUrl();
-      window.addEventListener("popstate", updateSearchFromUrl);
-      return () => window.removeEventListener("popstate", updateSearchFromUrl);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const queryInUrl = params.get("q") || "";
-      if (queryInUrl !== search) {
-        setSearch(queryInUrl);
-      }
-    }
-  });
-
-  const { data: profilesData, isLoading } = useQuery({
+  const { data: profilesData, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = useInfiniteQuery({
     queryKey: ["profiles"],
-    queryFn: () => getAllProfiles().then((res) => res.data),
+    queryFn: ({ pageParam = 1 }) => getAllProfiles(pageParam).then((res) => res.data),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      return lastPage.hasMore ? lastPage.page + 1 : undefined;
+    },
   });
 
   const { data: followingData } = useQuery({
@@ -79,13 +63,10 @@ function NetworkPage() {
   };
 
   const handleResetSearch = () => {
-    if (typeof window !== "undefined") {
-      window.history.replaceState(null, "", "/network");
-      setSearch("");
-    }
+    router.replace("/network");
   };
 
-  const allProfiles = profilesData?.profiles || [];
+  const allProfiles = useMemo(() => profilesData?.pages ? profilesData.pages.flatMap((page) => page.profiles || []) : [], [profilesData]);
 
   // Filter profiles based on Navbar query
   const filteredProfiles = useMemo(() => {
@@ -107,8 +88,111 @@ function NetworkPage() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center py-20" style={{ background: "var(--bg)" }}>
-        <Loader />
+      <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6 lg:px-8 space-y-10" style={{ background: "var(--bg)" }}>
+
+        {/* ── Hero Skeleton ── */}
+        <div
+          className="relative rounded-3xl border border-zinc-800 p-6 md:p-8 overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 animate-pulse"
+          style={{ background: "linear-gradient(135deg, rgba(24,24,27,0.9) 0%, rgba(9,9,11,0.95) 100%)" }}
+        >
+          <div className="flex-1 space-y-3 z-10">
+            <div className="h-9 w-40 rounded-xl bg-zinc-800" />
+            <div className="h-4 w-80 rounded-lg bg-zinc-800" />
+            <div className="h-4 w-56 rounded-lg bg-zinc-800" />
+          </div>
+          <div className="hidden md:block w-1/2 h-44 rounded-2xl bg-zinc-800/60 shrink-0" />
+        </div>
+
+        {/* ── Recommended Developers Skeleton ── */}
+        <div className="space-y-4">
+          {/* Section label */}
+          <div className="flex items-center justify-between animate-pulse">
+            <div className="h-3 w-44 rounded bg-zinc-800" />
+            <div className="h-3 w-14 rounded bg-zinc-800" />
+          </div>
+
+          {/* 3 mini-cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                className="rounded-2xl border border-zinc-800 bg-zinc-900/20 p-5 flex flex-col gap-4 animate-pulse"
+              >
+                {/* Avatar + name */}
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-zinc-800 shrink-0" />
+                  <div className="space-y-2 flex-1 min-w-0">
+                    <div className="h-3.5 w-28 rounded-md bg-zinc-800" />
+                    <div className="h-2.5 w-20 rounded-md bg-zinc-800" />
+                  </div>
+                </div>
+                {/* Headline */}
+                <div className="h-3 w-36 rounded bg-zinc-800" />
+                {/* Follow button */}
+                <div className="h-8 w-full rounded-xl bg-zinc-800 mt-auto" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Discover Developers Grid Skeleton ── */}
+        <div className="space-y-4">
+          {/* Section label */}
+          <div className="flex items-center gap-2 animate-pulse">
+            <div className="h-3 w-36 rounded bg-zinc-800" />
+          </div>
+
+          {/* 3×2 full cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[0, 1, 2, 3, 4, 5].map((i) => (
+              <div
+                key={i}
+                className="rounded-2xl border border-zinc-800 bg-zinc-900/20 p-6 flex flex-col justify-between min-h-[350px] animate-pulse"
+                style={{ animationDelay: `${i * 60}ms` }}
+              >
+                {/* Top: avatar + name + headline */}
+                <div className="space-y-4">
+                  <div className="flex items-start gap-4">
+                    <div className="w-14 h-14 rounded-full bg-zinc-800 shrink-0" />
+                    <div className="space-y-2 flex-1 min-w-0 pt-1">
+                      <div className="h-4 w-32 rounded-md bg-zinc-800" />
+                      <div className="h-3 w-20 rounded-md bg-zinc-800" />
+                      <div className="h-3 w-28 rounded-md bg-zinc-800" />
+                    </div>
+                  </div>
+
+                  {/* Bio lines */}
+                  <div className="space-y-2">
+                    <div className="h-3 w-full rounded bg-zinc-800" />
+                    <div className="h-3 w-4/5 rounded bg-zinc-800" />
+                  </div>
+
+                  {/* Skill badges */}
+                  <div className="flex flex-wrap gap-1.5">
+                    {[52, 64, 48, 56].map((w, j) => (
+                      <div key={j} className="h-6 rounded-md bg-zinc-800" style={{ width: `${w}px` }} />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Bottom: stats + buttons */}
+                <div className="pt-4 border-t border-zinc-800 mt-6 space-y-4">
+                  {/* Stats row */}
+                  <div className="flex items-center gap-4">
+                    <div className="h-3 w-24 rounded bg-zinc-800" />
+                    <div className="h-3 w-24 rounded bg-zinc-800" />
+                  </div>
+                  {/* Action buttons */}
+                  <div className="flex gap-2.5">
+                    <div className="flex-1 h-9 rounded-xl bg-zinc-800" />
+                    <div className="flex-1 h-9 rounded-xl bg-zinc-800" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
       </div>
     );
   }
@@ -358,10 +442,34 @@ function NetworkPage() {
             );
           })}
         </div>
+        {hasNextPage && (
+          <div className="flex justify-center pt-8">
+            <button
+              onClick={() => fetchNextPage()}
+              disabled={isFetchingNextPage}
+              className="bg-emerald-500 hover:bg-emerald-400 text-zinc-950 px-6 py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-50 cursor-pointer shadow-md hover:shadow-lg flex items-center gap-2"
+            >
+              {isFetchingNextPage ? (
+                <>
+                  <i className="fa-solid fa-circle-notch fa-spin"></i>
+                  Loading...
+                </>
+              ) : (
+                "Load More Developers"
+              )}
+            </button>
+          </div>
+        )}
       </section>
 
     </div>
   );
 }
 
-export default NetworkPage;
+export default function NetworkPage() {
+  return (
+    <Suspense fallback={null}>
+      <NetworkPageContent />
+    </Suspense>
+  );
+}

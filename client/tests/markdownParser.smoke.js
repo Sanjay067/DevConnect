@@ -17,6 +17,7 @@ const checks = [
   { name: "wraps list items in ul", pass: source.includes("<ul class=") },
   { name: "handles upload placeholders", pass: source.includes("UPLOAD_PLACEHOLDER_REGEX") },
   { name: "uses shared tech icons", pass: source.includes("getTechIconClass") },
+  { name: "does not decode escaped code block HTML", pass: !source.includes('.replace(/&lt;/g, "<")') },
 ];
 
 let failed = 0;

@@ -1,5 +1,13 @@
 import React from "react";
 
+function ToolbarButton({ onClick, title, children, className = "" }) {
+    return <button type="button" onClick={onClick} title={title} className={`w-8 h-8 flex items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-800 hover:text-zinc-100 transition-colors text-xs font-bold cursor-pointer ${className}`}>{children}</button>;
+}
+
+function ToolbarSeparator() {
+    return <div className="w-px h-4 bg-zinc-800 mx-0.5 shrink-0" />;
+}
+
 function EditorToolbar({ textareaRef, onChange, onImageUploadClick, isUploading }) {
     const insertMarkdown = (syntaxBefore, syntaxAfter = "") => {
         const textarea = textareaRef.current;
@@ -42,81 +50,66 @@ function EditorToolbar({ textareaRef, onChange, onImageUploadClick, isUploading 
         }
     };
 
-    const Btn = ({ onClick, title, children, className = "" }) => (
-        <button
-            type="button"
-            onClick={onClick}
-            title={title}
-            className={`w-8 h-8 flex items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-800 hover:text-zinc-100 transition-colors text-xs font-bold cursor-pointer ${className}`}
-        >
-            {children}
-        </button>
-    );
-
-    const Sep = () => (
-        <div className="w-px h-4 bg-zinc-800 mx-0.5 shrink-0" />
-    );
-
     return (
         <div className="flex items-center gap-0.5 px-3 py-2 border-b border-zinc-800 shrink-0 overflow-x-auto"
             style={{ background: "var(--bg)" }}>
 
             {/* Group 1: Headings */}
-            <Btn onClick={() => handleFormat("h")} title="Heading 1">
+            <ToolbarButton onClick={() => handleFormat("h")} title="Heading 1">
                 <span className="text-[11px]">H1</span>
-            </Btn>
-            <Btn onClick={() => handleFormat("h2")} title="Heading 2">
+            </ToolbarButton>
+            <ToolbarButton onClick={() => handleFormat("h2")} title="Heading 2">
                 <span className="text-[10px]">H2</span>
-            </Btn>
+            </ToolbarButton>
 
-            <Sep />
+            <ToolbarSeparator />
 
             {/* Group 2: Inline formatting */}
-            <Btn onClick={() => handleFormat("b")} title="Bold">
+            <ToolbarButton onClick={() => handleFormat("b")} title="Bold">
                 <span className="font-extrabold">B</span>
-            </Btn>
-            <Btn onClick={() => handleFormat("i")} title="Italic">
+            </ToolbarButton>
+            <ToolbarButton onClick={() => handleFormat("i")} title="Italic">
                 <span className="italic font-semibold">I</span>
-            </Btn>
+            </ToolbarButton>
 
-            <Sep />
+            <ToolbarSeparator />
 
             {/* Group 3: Structure */}
-            <Btn onClick={() => handleFormat("list")} title="Bullet List">
+            <ToolbarButton onClick={() => handleFormat("list")} title="Bullet List">
                 <i className="fa-solid fa-list-ul text-[11px]"></i>
-            </Btn>
-            <Btn onClick={() => handleFormat("olist")} title="Ordered List">
+            </ToolbarButton>
+            <ToolbarButton onClick={() => handleFormat("olist")} title="Ordered List">
                 <i className="fa-solid fa-list-ol text-[11px]"></i>
-            </Btn>
-            <Btn onClick={() => handleFormat("quote")} title="Blockquote">
+            </ToolbarButton>
+            <ToolbarButton onClick={() => handleFormat("quote")} title="Blockquote">
                 <i className="fa-solid fa-quote-left text-[11px]"></i>
-            </Btn>
-            <Btn onClick={() => handleFormat("divider")} title="Divider">
+            </ToolbarButton>
+            <ToolbarButton onClick={() => handleFormat("divider")} title="Divider">
                 <i className="fa-solid fa-minus text-[11px]"></i>
-            </Btn>
+            </ToolbarButton>
 
-            <Sep />
+            <ToolbarSeparator />
 
             {/* Group 4: Code */}
-            <Btn onClick={() => handleFormat("code")} title="Inline Code">
+            <ToolbarButton onClick={() => handleFormat("code")} title="Inline Code">
                 <span className="font-mono text-[10px]">{"</>"}</span>
-            </Btn>
-            <Btn onClick={() => handleFormat("codeblock")} title="Code Block">
+            </ToolbarButton>
+            <ToolbarButton onClick={() => handleFormat("codeblock")} title="Code Block">
                 <i className="fa-solid fa-code text-[11px]"></i>
-            </Btn>
+            </ToolbarButton>
 
-            <Sep />
+            <ToolbarSeparator />
 
             {/* Group 5: Media & Links */}
-            <Btn onClick={() => handleFormat("link")} title="Link">
+            <ToolbarButton onClick={() => handleFormat("link")} title="Link">
                 <i className="fa-solid fa-link text-[11px]"></i>
-            </Btn>
-            <Btn onClick={() => handleFormat("image-link")} title="Image URL">
+            </ToolbarButton>
+            <ToolbarButton onClick={() => handleFormat("image-link")} title="Image URL">
                 <i className="fa-regular fa-image text-[11px]"></i>
-            </Btn>
+            </ToolbarButton>
 
             {/* Upload — pushed right */}
-            <Btn
+            <ToolbarButton 
                 onClick={onImageUploadClick}
                 title={isUploading ? "Uploading..." : "Upload image"}
                 className={`ml-auto ${isUploading ? "opacity-50 cursor-not-allowed" : ""}`}
@@ -125,7 +118,7 @@ function EditorToolbar({ textareaRef, onChange, onImageUploadClick, isUploading 
                     ? <i className="fa-solid fa-circle-notch fa-spin text-[11px]"></i>
                     : <i className="fa-solid fa-arrow-up-from-bracket text-[11px]"></i>
                 }
-            </Btn>
+            </ToolbarButton>
         </div>
     );
 }

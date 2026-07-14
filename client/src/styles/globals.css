@@ -281,8 +281,17 @@ input:-webkit-autofill:active {
 }
 
 /* Mobile viewport layout adjustments to prevent bottom tab-bar overlap */
-@media (max-w: 767px) {
+@media (max-width: 767px) {
   body {
     padding-bottom: 96px !important;
   }
+}
+
+@keyframes slide-loader {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
+}
+
+.animate-slide-loader {
+  animation: slide-loader 1.2s infinite ease-in-out;
 }

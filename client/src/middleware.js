@@ -25,6 +25,11 @@ export const middleware = (request) => {
         return NextResponse.redirect(new URL("/feed", request.url));
     }
 
+    // Redirect logged-in users from the landing page to the feed
+    if (isLoggedIn && isPublicPage) {
+        return NextResponse.redirect(new URL("/feed", request.url));
+    }
+
     return NextResponse.next();
 
 }

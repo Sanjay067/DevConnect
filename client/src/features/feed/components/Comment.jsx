@@ -48,7 +48,14 @@ const formatTimeAgo = (dateString) => {
 
 
 function Comment({ postId }) {
-  const { data: commentsData, isLoading, isError } = useComments(postId);
+  const { 
+    data: commentsData, 
+    isLoading, 
+    isError, 
+    hasNextPage, 
+    fetchNextPage, 
+    isFetchingNextPage 
+  } = useComments(postId);
   const { mutate: submitComment, isPending } = useAddComment();
   const { mutate: executeLikeComment } = useLikeComment();
 
@@ -69,6 +76,7 @@ function Comment({ postId }) {
     setCommentInput(e.target.value);
   }
 
+  const comments = commentsData?.pages ? commentsData.pages.flatMap((page) => page.comments || []) : [];
 
   return (
 
@@ -82,14 +90,34 @@ function Comment({ postId }) {
       <div className="flex-1 p-4 overflow-y-auto bg-zinc-900 flex flex-col gap-5">
         {isLoading && <div className="text-zinc-500 text-center mt-10 text-xs font-medium">Loading comments...</div>}
         {isError && <div className="text-red-500/80 text-center mt-10 text-xs font-medium">Failed to load comments.</div>}
-        {!isLoading && commentsData?.comments?.length === 0 && (
+        {!isLoading && comments.length === 0 && (
           <div className="text-zinc-500 text-center mt-10 text-xs font-medium">No comments yet. Be the first!</div>
         )}
 
 
-        {!isLoading && commentsData?.comments?.map((comment) => (
+        {!isLoading && comments.map((comment) => (
           <CommentItem key={comment._id} comment={comment} postId={postId} />
         ))}
+
+        {hasNextPage && (
+          <button
+            onClick={() => fetchNextPage()}
+            disabled={isFetchingNextPage}
+            className="w-full text-center py-2.5 mt-2 bg-zinc-950 border border-zinc-850 hover:bg-zinc-900 text-zinc-400 hover:text-zinc-200 rounded-xl text-xs font-bold transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5 shrink-0"
+          >
+            {isFetchingNextPage ? (
+              <>
+                <i className="fa-solid fa-circle-notch fa-spin text-[10px]"></i>
+                Loading...
+              </>
+            ) : (
+              <>
+                <i className="fa-solid fa-angles-down text-[10px]"></i>
+                Load More Comments
+              </>
+            )}
+          </button>
+        )}
 
       </div>
 
@@ -131,7 +159,15 @@ function CommentItem({ comment, postId, isReply = false }) {
   const [editBody, setEditBody] = useState(comment.body);
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef(null);
-  const { data: repliesData, isLoading: isRepliesLoading } = useReplies(postId, comment._id, isRepliesExpanded);
+  const { 
+    data: repliesData, 
+    isLoading: isRepliesLoading,
+    hasNextPage: hasNextReplies,
+    fetchNextPage: fetchNextReplies,
+    isFetchingNextPage: isFetchingNextReplies
+  } = useReplies(postId, comment._id, isRepliesExpanded);
+  
+  const replies = repliesData?.pages ? repliesData.pages.flatMap((page) => page.replies || []) : [];
   const { mutate: submitReply, isPending: isReplySubmitting } = useAddReply();
   const { mutate: executeLikeComment } = useLikeComment();
   const { mutate: executeEditComment, isPending: isEditPending } = useEditComment();
@@ -317,9 +353,29 @@ function CommentItem({ comment, postId, isReply = false }) {
         <div className="ml-5 pl-6 border-l-2 border-zinc-800 flex flex-col gap-4 mt-2 mb-2">
           {isRepliesLoading && <div className="text-xs text-zinc-500">Loading replies...</div>}
 
-          {!isRepliesLoading && repliesData?.replies?.map((reply) => (
+          {!isRepliesLoading && replies.map((reply) => (
             <CommentItem key={reply._id} comment={reply} postId={postId} isReply={true} />
           ))}
+
+          {hasNextReplies && (
+            <button
+              onClick={() => fetchNextReplies()}
+              disabled={isFetchingNextReplies}
+              className="text-left py-1 text-emerald-500 hover:text-emerald-400 text-[11px] font-bold transition-colors cursor-pointer flex items-center gap-1.5 mt-1"
+            >
+              {isFetchingNextReplies ? (
+                <>
+                  <i className="fa-solid fa-circle-notch fa-spin text-[9px]"></i>
+                  Loading replies...
+                </>
+              ) : (
+                <>
+                  <i className="fa-solid fa-reply text-[9px] rotate-180"></i>
+                  Load more replies
+                </>
+              )}
+            </button>
+          )}
 
           <div ref={replyInputContainerRef} className="flex gap-2 mt-1">
             <input

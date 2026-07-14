@@ -2,8 +2,6 @@ import axios from "axios";
 import { store } from "@/store";
 import { clearUser } from "@/store/authSlice";
 
-const isProduction = process.env.NODE_ENV === "production";
-
 let rawBaseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 // Auto-append '/api' if missing from the Vercel env settings
@@ -76,10 +74,9 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
       if (
-        originalRequest.url?.includes("/auth/refresh-token") ||
-        originalRequest.url?.includes("/users/profiles/me")
+        originalRequest.url?.includes("/auth/refresh-token")
       ) {
         return Promise.reject(error);
       }
@@ -95,18 +92,18 @@ apiClient.interceptors.response.use(
 
       try {
         await apiClient.post("/auth/refresh-token");
+        isRefreshing = false;
         processQueue(null);
         return apiClient(originalRequest);
       } catch (refreshError) {
+        isRefreshing = false;
         processQueue(refreshError);
         store.dispatch(clearUser());
         document.cookie = "is_authenticated=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
-        if (typeof window !== "undefined") {
+        if (typeof window !== "undefined" && window.location.pathname !== "/auth") {
           window.location.href = "/auth";
         }
         return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
       }
     }
 

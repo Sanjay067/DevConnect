@@ -8,8 +8,8 @@ export const toggleLikePost = (postId) => {
 
 //Comments
 
-export const getComments = (postId) => {
-    return apiClient.get(`/posts/${postId}/comments`);
+export const getComments = (postId, page = 1, limit = 5) => {
+    return apiClient.get(`/posts/${postId}/comments`, { params: { page, limit } });
 }
 
 export const addComment = ({ postId, body }) => {
@@ -20,8 +20,8 @@ export const toggleLikeComment = (postId, commentId) => {
     return apiClient.post(`/posts/${postId}/comments/${commentId}/like`);
 }
 
-export const getCommentReplies = (postId, commentId) => {
-    return apiClient.get(`/posts/${postId}/comments/${commentId}/replies`);
+export const getCommentReplies = (postId, commentId, page = 1, limit = 5) => {
+    return apiClient.get(`/posts/${postId}/comments/${commentId}/replies`, { params: { page, limit } });
 }
 
 export const addCommentReply = ({ postId, commentId, body }) => {
@@ -74,6 +74,10 @@ export const uploadAsset = (fileData) => {
             "Content-Type": "multipart/form-data",
         },
     });
+};
+
+export const toggleFeaturePost = (postId) => {
+    return apiClient.patch(`/posts/${postId}/feature`);
 };
 
 

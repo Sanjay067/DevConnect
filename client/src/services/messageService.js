@@ -8,3 +8,9 @@ export const getConversationMessages = (peerId, page = 1) =>
 
 export const sendMessage = (peerId, body) =>
   apiClient.post(`/messages/${peerId}`, { body });
+
+export const getUnreadCount = () =>
+  apiClient.get("/messages/unread-count");
+
+export const deleteMessage = (messageId) =>
+  apiClient.delete(`/messages/delete/${messageId}`);

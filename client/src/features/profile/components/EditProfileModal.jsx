@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateMyProfile, updateAvatar, updateUserAccount } from "@/services/userService";
@@ -10,40 +10,22 @@ export default function EditProfileModal({ isOpen, onClose, initialData, userId 
     const dispatch = useDispatch();
     const queryClient = useQueryClient();
 
-    const [headline, setHeadline] = useState("");
-    const [bio, setBio] = useState("");
-    const [currentPosition, setCurrentPosition] = useState("");
-    const [location, setLocation] = useState("");
-    const [skills, setSkills] = useState("");
+    const [headline, setHeadline] = useState(() => initialData?.headline || "");
+    const [bio, setBio] = useState(() => initialData?.bio || "");
+    const [currentPosition, setCurrentPosition] = useState(() => initialData?.currentPosition || "");
+    const [location, setLocation] = useState(() => initialData?.location || "");
+    const [skills, setSkills] = useState(() => (initialData?.skills || []).join(", "));
     
     // Social Links
-    const [github, setGithub] = useState("");
-    const [linkedin, setLinkedin] = useState("");
-    const [portfolio, setPortfolio] = useState("");
+    const [github, setGithub] = useState(() => initialData?.socialLinks?.github || "");
+    const [linkedin, setLinkedin] = useState(() => initialData?.socialLinks?.linkedin || "");
+    const [portfolio, setPortfolio] = useState(() => initialData?.socialLinks?.portfolio || "");
 
     // Education
-    const [education, setEducation] = useState([]);
+    const [education, setEducation] = useState(() => initialData?.education || []);
 
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
-
-    useEffect(() => {
-        if (isOpen && initialData) {
-            setHeadline(initialData.headline || "");
-            setBio(initialData.bio || "");
-            setCurrentPosition(initialData.currentPosition || "");
-            setLocation(initialData.location || "");
-            setSkills((initialData.skills || []).join(", "));
-            
-            setGithub(initialData.socialLinks?.github || "");
-            setLinkedin(initialData.socialLinks?.linkedin || "");
-            setPortfolio(initialData.socialLinks?.portfolio || "");
-            
-            setEducation(initialData.education || []);
-            setMessage("");
-            setError("");
-        }
-    }, [isOpen, initialData]);
 
     const saveProfileMutation = useMutation({
         mutationFn: async () => {

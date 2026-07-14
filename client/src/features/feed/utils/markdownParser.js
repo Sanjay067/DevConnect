@@ -113,10 +113,9 @@ export const renderMarkdown = (text = "") => {
 
   codeBlocks.forEach((block, idx) => {
     const placeholder = `__MD_CODE_BLOCK_PLACEHOLDER_${idx}__`;
-    const cleanCode = block.code
-      .replace(/&amp;/g, "&")
-      .replace(/&lt;/g, "<")
-      .replace(/&gt;/g, ">");
+    // `block.code` has already been HTML-escaped above. Do not decode it:
+    // this string is eventually assigned to dangerouslySetInnerHTML.
+    const cleanCode = block.code;
 
     const codeHtml = `<div class="bg-gray-900 rounded-xl overflow-hidden my-4 border border-gray-800 font-mono text-xs text-gray-200">
       <div class="bg-gray-800 px-4 py-2 border-b border-gray-700 flex justify-between items-center text-gray-400 text-[10px] uppercase font-bold tracking-wider">

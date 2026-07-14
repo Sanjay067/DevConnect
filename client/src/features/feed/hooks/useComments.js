@@ -1,11 +1,15 @@
 import { fetchComments, createComment, commentLike, fetchReplies, createReply, updateComment, removeComment } from "../api/postApi";
-import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
+import { useQueryClient, useMutation, useQuery, useInfiniteQuery } from "@tanstack/react-query";
 
 export const useComments = (postId) => {
-    return useQuery({
+    return useInfiniteQuery({
         queryKey: ["comments", postId],
-        queryFn: () => fetchComments(postId),
+        queryFn: ({ pageParam = 1 }) => fetchComments({ postId, pageParam }),
         enabled: !!postId,
+        initialPageParam: 1,
+        getNextPageParam: (lastPage) => {
+            return lastPage.hasMore ? lastPage.page + 1 : undefined;
+        },
     });
 };
 
@@ -57,22 +61,25 @@ export const useLikeComment = () => {
 
             const previousComments = queryClient.getQueryData(["comments", postId]);
 
-            queryClient.setQueryData(["comments", postId], (oldComments) => {
-                if (!oldComments?.comments) return oldComments;
+            queryClient.setQueryData(["comments", postId], (oldData) => {
+                if (!oldData?.pages) return oldData;
 
                 return {
-                    ...oldComments,
-                    comments: oldComments.comments.map((comment) =>
-                        comment._id === commentId
-                            ? {
-                                  ...comment,
-                                  likeCount: comment.isLiked
-                                      ? (comment.likeCount || 0) - 1
-                                      : (comment.likeCount || 0) + 1,
-                                  isLiked: !comment.isLiked,
-                              }
-                            : comment
-                    ),
+                    ...oldData,
+                    pages: oldData.pages.map((page) => ({
+                        ...page,
+                        comments: page.comments.map((comment) =>
+                            comment._id === commentId
+                                ? {
+                                      ...comment,
+                                      likeCount: comment.isLiked
+                                          ? (comment.likeCount || 0) - 1
+                                          : (comment.likeCount || 0) + 1,
+                                      isLiked: !comment.isLiked,
+                                  }
+                                : comment
+                        ),
+                    })),
                 };
             });
 
@@ -87,10 +94,14 @@ export const useLikeComment = () => {
 };
 
 export const useReplies = (postId, commentId, isExpanded) => {
-    return useQuery({
+    return useInfiniteQuery({
         queryKey: ["replies", commentId],
-        queryFn: () => fetchReplies({ postId, commentId }),
+        queryFn: ({ pageParam = 1 }) => fetchReplies({ postId, commentId, pageParam }),
         enabled: !!commentId && !!isExpanded,
+        initialPageParam: 1,
+        getNextPageParam: (lastPage) => {
+            return lastPage.hasMore ? lastPage.page + 1 : undefined;
+        },
     });
 };
 
@@ -104,16 +115,19 @@ export const useAddReply = () => {
 
             const previousComments = queryClient.getQueryData(["comments", postId]);
 
-            queryClient.setQueryData(["comments", postId], (oldComments) => {
-                if (!oldComments?.comments) return oldComments;
+            queryClient.setQueryData(["comments", postId], (oldData) => {
+                if (!oldData?.pages) return oldData;
 
                 return {
-                    ...oldComments,
-                    comments: oldComments.comments.map((comment) =>
-                        comment._id === commentId
-                            ? { ...comment, replyCount: (comment.replyCount || 0) + 1 }
-                            : comment
-                    ),
+                    ...oldData,
+                    pages: oldData.pages.map((page) => ({
+                        ...page,
+                        comments: page.comments.map((comment) =>
+                            comment._id === commentId
+                                ? { ...comment, replyCount: (comment.replyCount || 0) + 1 }
+                                : comment
+                        ),
+                    })),
                 };
             });
 
