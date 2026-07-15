@@ -7,10 +7,10 @@ import { getAvatarUrl, getOptimizedImageUrl, getVideoUrl } from './cloudinary';
  */
 export const resolveProfilePicture = (value, size = 200) => {
   if (!value) {
-    return "https://res.cloudinary.com/dzxegwov1/image/upload/v1783014905/userPlaceholder_jd6cqx.jpg";
+    return;
   }
   if (value.startsWith('http')) {
-    return value; // legacy full URL
+    return value;
   }
   return getAvatarUrl(value, size);
 };

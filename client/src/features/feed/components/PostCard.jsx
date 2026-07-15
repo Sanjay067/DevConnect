@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Like from './Like';
 import Comment from './Comment';
 import { resolveProfilePicture, resolveMediaSrc } from '@/shared/lib/imageHelpers';
@@ -31,7 +32,16 @@ const getFirstMarkdownImage = (text) => {
 };
 
 function PostCard({ post, showMenu }) {
+    const router = useRouter();
     const queryClient = useQueryClient();
+
+    const handleCardClick = (e) => {
+        const interactiveSelectors = 'a, button, input, [role="button"], select, textarea';
+        if (e.target.closest(interactiveSelectors)) {
+            return;
+        }
+        router.push(`/posts/${post._id}`);
+    };
     const { mutate: executeLikeMutation } = useLikePost();
     const [isCommentDialogOpen, setIsCommentDialogOpen] = useState(false);
     const [isFollowing, setIsFollowing] = useState(false);
@@ -91,7 +101,8 @@ function PostCard({ post, showMenu }) {
 
     return (
         <div
-            className="w-full max-w-2xl mx-auto my-5 rounded-2xl p-6 border border-zinc-800 transition-all duration-300 hover:border-zinc-700/60 hover:-translate-y-px z-10"
+            onClick={handleCardClick}
+            className="w-full max-w-2xl mx-auto my-5 rounded-2xl p-6 border border-zinc-800 transition-all duration-300 hover:border-zinc-700/60 hover:-translate-y-px z-10 cursor-pointer"
             style={{
                 background: "var(--surface)",
                 boxShadow: "0 1px 0 rgba(255,255,255,0.03) inset, 0 4px 24px rgba(0,0,0,0.5), 0 1px 4px rgba(0,0,0,0.3)",
@@ -242,10 +253,10 @@ function PostCard({ post, showMenu }) {
             )}
 
             {/* 5. View More link → navigates to detail page */}
-            <div className="flex items-center justify-between mb-4 mt-1">
+            <div className="flex flex-wrap items-center justify-between gap-y-2.5 mb-4 mt-1">
                 <Link
                     href={`/posts/${post._id}`}
-                    className="text-zinc-500 hover:text-emerald-400 font-medium text-xs flex items-center gap-1.5 transition-all duration-200"
+                    className="text-zinc-500 hover:text-emerald-400 font-medium text-xs flex items-center gap-1.5 transition-all duration-200 whitespace-nowrap"
                 >
                     View more
                     <i className="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
@@ -258,7 +269,7 @@ function PostCard({ post, showMenu }) {
                             href={link.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-1.5 border border-zinc-800 text-zinc-300 bg-zinc-950/40 hover:bg-zinc-800 hover:text-zinc-100 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all duration-200 cursor-pointer"
+                            className="flex items-center gap-1.5 border border-zinc-800 text-zinc-350 bg-zinc-950/40 hover:bg-zinc-850 hover:text-zinc-100 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all duration-200 cursor-pointer"
                         >
                             <i className={link.label === 'Github' ? "fa-brands fa-github text-sm" : "fa-solid fa-globe text-sm"}></i>
                             {link.label === 'Github' ? 'GitHub' : 'Live Demo'}

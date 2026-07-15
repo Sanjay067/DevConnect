@@ -1,11 +1,38 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { checkAuth } from "@/store/authSlice";
 import { useLogin } from "@/features/auth/hooks/useLogin";
 import { useRegister } from "@/features/auth/hooks/useRegister";
+
+function TypingHeader({ text }) {
+  const [displayText, setDisplayText] = useState("");
+
+  useEffect(() => {
+    setDisplayText("");
+    let currentText = "";
+    let index = 0;
+    const interval = setInterval(() => {
+      currentText += text.charAt(index);
+      setDisplayText(currentText);
+      index++;
+      if (index >= text.length) {
+        clearInterval(interval);
+      }
+    }, 70); // 70ms natural speed
+
+    return () => clearInterval(interval);
+  }, [text]);
+
+  return (
+    <span className="font-mono text-[#00ff66] drop-shadow-[0_0_8px_rgba(0,255,102,0.4)]">
+      {displayText}
+      <span className="animate-pulse font-bold ml-0.5">_</span>
+    </span>
+  );
+}
 
 export default function AuthPage() {
   const router = useRouter();
@@ -83,13 +110,13 @@ export default function AuthPage() {
           {/* Logo */}
           <div className="mb-10 flex items-center gap-2">
             <i className="fa-regular fa-compass text-xl text-emerald-500"></i>
-            <span className="text-base font-bold tracking-tight text-zinc-100">DevConnect</span>
+            <span className="text-base font-bold tracking-tight text-zinc-100">dev.connect</span>
           </div>
 
           {/* Title block */}
           <div className="mb-8">
-            <h1 className="text-2xl font-bold tracking-tight text-zinc-50">
-              {isLogin ? "Welcome back" : "Create your account"}
+            <h1 className="text-2xl font-bold tracking-tight min-h-[32px]">
+              <TypingHeader text={isLogin ? "Welcome back" : "Create your account"} />
             </h1>
             <p className="mt-1.5 text-sm text-zinc-500">
               {isLogin

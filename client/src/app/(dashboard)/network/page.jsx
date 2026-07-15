@@ -1,31 +1,53 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
-import { useMemo, Suspense } from "react";
+import React, { useMemo, Suspense, useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useSelector } from "react-redux";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { getAllProfiles } from "@/services/userService";
-import { followUser, unfollowUser, getFollowing } from "@/services/followService";
-import { resolveProfilePicture } from "@/shared/lib/imageHelpers";
-import { getTechIconClass } from "@/shared/lib/techIcons";
+
+import { getFollowing } from "@/services/followService";
+import { useProfiles } from "@/features/network/hooks/useProfiles";
+import { useFollow } from "@/features/network/hooks/useFollow";
+
+import HeroSection from "@/features/network/components/HeroSection";
+import RecommendedDevelopers from "@/features/network/components/RecommendedDevelopers";
+import DeveloperGrid from "@/features/network/components/DeveloperGrid";
+import NetworkSkeleton from "@/features/network/components/NetworkSkeleton";
+
+// Simple debounce hook to avoid hammering the backend on search keystrokes
+function useDebounce(value, delay) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
 
 function NetworkPageContent() {
-  const queryClient = useQueryClient();
   const currentUser = useSelector((state) => state.auth.user);
   const router = useRouter();
   const searchParams = useSearchParams();
   const search = searchParams.get("q") || "";
+  const debouncedSearch = useDebounce(search, 300);
 
-  const { data: profilesData, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = useInfiniteQuery({
-    queryKey: ["profiles"],
-    queryFn: ({ pageParam = 1 }) => getAllProfiles(pageParam).then((res) => res.data),
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => {
-      return lastPage.hasMore ? lastPage.page + 1 : undefined;
-    },
-  });
+  // 1. Fetch Infinite Profiles list matching debounced search from server
+  const { 
+    data: profilesData, 
+    isLoading, 
+    hasNextPage, 
+    fetchNextPage, 
+    isFetchingNextPage 
+  } = useProfiles(debouncedSearch);
 
+  // 2. Fetch current user following relationships
   const { data: followingData } = useQuery({
     queryKey: ["following", currentUser?._id],
     queryFn: () => getFollowing(currentUser._id).then((res) => res.data),
@@ -38,27 +60,14 @@ function NetworkPageContent() {
     );
   }, [followingData]);
 
-  const followMutation = useMutation({
-    mutationFn: followUser,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["following"] });
-      queryClient.invalidateQueries({ queryKey: ["profiles"] });
-    },
-  });
-
-  const unfollowMutation = useMutation({
-    mutationFn: unfollowUser,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["following"] });
-      queryClient.invalidateQueries({ queryKey: ["profiles"] });
-    },
-  });
+  // 3. Follow mutations hook with optimistic updates
+  const followState = useFollow(currentUser);
 
   const toggleFollow = (userId) => {
     if (followingIds.has(String(userId))) {
-      unfollowMutation.mutate(userId);
+      followState.unfollow(userId);
     } else {
-      followMutation.mutate(userId);
+      followState.follow(userId);
     }
   };
 
@@ -66,409 +75,84 @@ function NetworkPageContent() {
     router.replace("/network");
   };
 
-  const allProfiles = useMemo(() => profilesData?.pages ? profilesData.pages.flatMap((page) => page.profiles || []) : [], [profilesData]);
-
-  // Filter profiles based on Navbar query
-  const filteredProfiles = useMemo(() => {
-    if (!search.trim()) return allProfiles;
-    return allProfiles.filter(
-      (p) =>
-        p.name?.toLowerCase().includes(search.toLowerCase()) ||
-        p.username?.toLowerCase().includes(search.toLowerCase()) ||
-        (p.skills || []).some((s) => s.toLowerCase().includes(search.toLowerCase()))
-    );
-  }, [allProfiles, search]);
-
-  // Recommended developers (e.g. top 3 with most followers or just first 3 excluding following)
-  const recommendedDevelopers = useMemo(() => {
-    return allProfiles
-      .filter((p) => !followingIds.has(String(p._id)))
-      .slice(0, 3);
-  }, [allProfiles, followingIds]);
-
-  if (isLoading) {
-    return (
-      <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6 lg:px-8 space-y-10" style={{ background: "var(--bg)" }}>
-
-        {/* ── Hero Skeleton ── */}
-        <div
-          className="relative rounded-3xl border border-zinc-800 p-6 md:p-8 overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 animate-pulse"
-          style={{ background: "linear-gradient(135deg, rgba(24,24,27,0.9) 0%, rgba(9,9,11,0.95) 100%)" }}
-        >
-          <div className="flex-1 space-y-3 z-10">
-            <div className="h-9 w-40 rounded-xl bg-zinc-800" />
-            <div className="h-4 w-80 rounded-lg bg-zinc-800" />
-            <div className="h-4 w-56 rounded-lg bg-zinc-800" />
-          </div>
-          <div className="hidden md:block w-1/2 h-44 rounded-2xl bg-zinc-800/60 shrink-0" />
-        </div>
-
-        {/* ── Recommended Developers Skeleton ── */}
-        <div className="space-y-4">
-          {/* Section label */}
-          <div className="flex items-center justify-between animate-pulse">
-            <div className="h-3 w-44 rounded bg-zinc-800" />
-            <div className="h-3 w-14 rounded bg-zinc-800" />
-          </div>
-
-          {/* 3 mini-cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[0, 1, 2].map((i) => (
-              <div
-                key={i}
-                className="rounded-2xl border border-zinc-800 bg-zinc-900/20 p-5 flex flex-col gap-4 animate-pulse"
-              >
-                {/* Avatar + name */}
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-zinc-800 shrink-0" />
-                  <div className="space-y-2 flex-1 min-w-0">
-                    <div className="h-3.5 w-28 rounded-md bg-zinc-800" />
-                    <div className="h-2.5 w-20 rounded-md bg-zinc-800" />
-                  </div>
-                </div>
-                {/* Headline */}
-                <div className="h-3 w-36 rounded bg-zinc-800" />
-                {/* Follow button */}
-                <div className="h-8 w-full rounded-xl bg-zinc-800 mt-auto" />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ── Discover Developers Grid Skeleton ── */}
-        <div className="space-y-4">
-          {/* Section label */}
-          <div className="flex items-center gap-2 animate-pulse">
-            <div className="h-3 w-36 rounded bg-zinc-800" />
-          </div>
-
-          {/* 3×2 full cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[0, 1, 2, 3, 4, 5].map((i) => (
-              <div
-                key={i}
-                className="rounded-2xl border border-zinc-800 bg-zinc-900/20 p-6 flex flex-col justify-between min-h-[350px] animate-pulse"
-                style={{ animationDelay: `${i * 60}ms` }}
-              >
-                {/* Top: avatar + name + headline */}
-                <div className="space-y-4">
-                  <div className="flex items-start gap-4">
-                    <div className="w-14 h-14 rounded-full bg-zinc-800 shrink-0" />
-                    <div className="space-y-2 flex-1 min-w-0 pt-1">
-                      <div className="h-4 w-32 rounded-md bg-zinc-800" />
-                      <div className="h-3 w-20 rounded-md bg-zinc-800" />
-                      <div className="h-3 w-28 rounded-md bg-zinc-800" />
-                    </div>
-                  </div>
-
-                  {/* Bio lines */}
-                  <div className="space-y-2">
-                    <div className="h-3 w-full rounded bg-zinc-800" />
-                    <div className="h-3 w-4/5 rounded bg-zinc-800" />
-                  </div>
-
-                  {/* Skill badges */}
-                  <div className="flex flex-wrap gap-1.5">
-                    {[52, 64, 48, 56].map((w, j) => (
-                      <div key={j} className="h-6 rounded-md bg-zinc-800" style={{ width: `${w}px` }} />
-                    ))}
-                  </div>
-                </div>
-
-                {/* Bottom: stats + buttons */}
-                <div className="pt-4 border-t border-zinc-800 mt-6 space-y-4">
-                  {/* Stats row */}
-                  <div className="flex items-center gap-4">
-                    <div className="h-3 w-24 rounded bg-zinc-800" />
-                    <div className="h-3 w-24 rounded bg-zinc-800" />
-                  </div>
-                  {/* Action buttons */}
-                  <div className="flex gap-2.5">
-                    <div className="flex-1 h-9 rounded-xl bg-zinc-800" />
-                    <div className="flex-1 h-9 rounded-xl bg-zinc-800" />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-      </div>
-    );
-  }
+  const profiles = useMemo(() => {
+    return profilesData?.pages 
+      ? profilesData.pages.flatMap((page) => page.profiles || []) 
+      : [];
+  }, [profilesData]);
 
   return (
     <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6 lg:px-8 space-y-10" style={{ background: "var(--bg)" }}>
       
-      {/* ── Hero Section ── */}
-      <section 
-        className="relative rounded-3xl border border-zinc-800 p-6 md:p-8 overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6"
-        style={{
-          background: "linear-gradient(135deg, rgba(24, 24, 27, 0.9) 0%, rgba(9, 9, 11, 0.95) 100%)",
-          boxShadow: "0 10px 30px -10px rgba(0, 0, 0, 0.7)"
-        }}
-      >
-        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_left,_var(--tw-gradient-stops))] from-emerald-500/25 via-transparent to-transparent pointer-events-none" />
-        
-        {/* Left Side Info */}
-        <div className="flex-1 space-y-3 z-10 text-center md:text-left">
-          <h1 className="text-3xl md:text-4xl font-extrabold text-zinc-50 tracking-tight leading-tight">
-            Network
-          </h1>
-          <p className="text-zinc-400 text-sm md:text-base leading-relaxed max-w-md">
-            Discover developers building amazing products. <br className="hidden sm:inline" />
-            Connect, collaborate, and learn together.
-          </p>
-        </div>
+      {/* Hero Header */}
+      <HeroSection />
 
-        {/* Right Side Illustration */}
-        <div className="w-full md:w-1/2 h-40 md:h-56 shrink-0 flex items-center justify-center md:justify-end z-10 pointer-events-none">
-          <img 
-            src="/network.png" 
-            alt="Network Nodes Collaboration" 
-            className="w-auto h-full max-h-48 md:max-h-56 object-contain opacity-95 filter drop-shadow-[0_0_15px_rgba(16,185,129,0.15)]"
-          />
-        </div>
-      </section>
-
-      {/* ── Recommended Developers Section ── */}
-      {recommendedDevelopers.length > 0 && !search.trim() && (
-        <section className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <i className="fa-solid fa-sparkles text-emerald-500 text-xs animate-pulse"></i>
-              <h2 className="text-xs font-extrabold uppercase tracking-widest text-zinc-500">Recommended Developers</h2>
-            </div>
-            <button 
-              onClick={handleResetSearch}
-              className="text-xs font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1.5 transition-colors cursor-pointer"
-            >
-              View All <i className="fa-solid fa-arrow-right text-[10px]"></i>
-            </button>
-          </div>
-
-          {/* Recommended Horizontal Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {recommendedDevelopers.map((profile) => {
-              const isFollowing = followingIds.has(String(profile._id));
-              const isPending =
-                (followMutation.isPending && String(followMutation.variables) === String(profile._id)) ||
-                (unfollowMutation.isPending && String(unfollowMutation.variables) === String(profile._id));
-
-              return (
-                <div
-                  key={`rec-${profile._id}`}
-                  className="group relative rounded-2xl border border-zinc-800 bg-zinc-900/20 p-5 hover:border-zinc-700/60 hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between"
-                >
-                  <Link href={`/profile/${profile._id}`} className="space-y-3 block">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full overflow-hidden border border-zinc-700 shrink-0 relative">
-                        <img
-                          src={resolveProfilePicture(profile.profilePicture)}
-                          alt={profile.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                        <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-zinc-950"></span>
-                      </div>
-                      <div className="min-w-0">
-                        <h3 className="font-extrabold text-zinc-100 text-sm truncate group-hover:text-emerald-400 transition-colors flex items-center gap-1">
-                          {profile.name}
-                          <i className="fa-solid fa-circle-check text-emerald-500 text-[10px]" title="Verified profile"></i>
-                        </h3>
-                        <p className="text-[10px] text-zinc-500 truncate">@{profile.username}</p>
-                      </div>
-                    </div>
-                    {profile.headline && (
-                      <p className="text-[11px] font-bold text-emerald-400 truncate">{profile.headline}</p>
-                    )}
-                  </Link>
-
-                  <button
-                    type="button"
-                    disabled={isPending}
-                    onClick={() => toggleFollow(profile._id)}
-                    className={`mt-4 w-full rounded-xl py-1.5 text-xs font-bold transition-all disabled:opacity-50 cursor-pointer ${
-                      isFollowing
-                        ? "border border-zinc-750 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
-                        : "bg-emerald-500 text-zinc-950 hover:bg-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.15)]"
-                    }`}
-                  >
-                    {isPending ? (
-                      <i className="fa-solid fa-circle-notch fa-spin text-xs" />
-                    ) : isFollowing ? (
-                      "Following"
-                    ) : (
-                      "Follow"
-                    )}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        </section>
+      {/* Recommended Section */}
+      {!isLoading && !search.trim() && (
+        <RecommendedDevelopers
+          profiles={profiles}
+          followingIds={followingIds}
+          onToggleFollow={toggleFollow}
+          activePendingId={followState.activeVariables}
+          isPending={followState.isPending}
+          onResetSearch={handleResetSearch}
+        />
       )}
 
-      {/* ── Developer Discovery Grid ── */}
+      {/* Discovery Section */}
       <section className="space-y-4">
         <div className="flex items-center gap-2">
-          <i className="fa-solid fa-users text-emerald-500 text-xs"></i>
+          <i className="fa-solid fa-users text-emerald-500 text-xs" aria-hidden="true"></i>
           <h2 className="text-xs font-extrabold uppercase tracking-widest text-zinc-500">
             {search.trim() ? `Search Results for "${search}"` : "Discover Developers"}
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProfiles.length === 0 && (
-            <div className="col-span-full text-center py-20 border border-dashed border-zinc-800 rounded-2xl bg-zinc-900/10">
-              <i className="fa-solid fa-user-slash text-4xl text-zinc-700 mb-4"></i>
-              <h3 className="text-sm font-semibold text-zinc-400">No developers matched</h3>
-              <p className="text-xs text-zinc-500 mt-1 max-w-xs mx-auto">
-                Try searching for different names, usernames, or technology skills.
-              </p>
-              {search.trim() && (
+        {isLoading ? (
+          <NetworkSkeleton />
+        ) : (
+          <>
+            <DeveloperGrid
+              profiles={profiles}
+              followingIds={followingIds}
+              onToggleFollow={toggleFollow}
+              activePendingId={followState.activeVariables}
+              isPending={followState.isPending}
+              onClearSearch={handleResetSearch}
+            />
+
+            {hasNextPage && (
+              <div className="flex justify-center pt-8">
                 <button
-                  onClick={handleResetSearch}
-                  className="mt-4 text-xs font-bold text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer"
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                  className="bg-emerald-500 hover:bg-emerald-400 text-zinc-950 px-6 py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-50 cursor-pointer shadow-md hover:shadow-lg flex items-center gap-2"
                 >
-                  Clear search filters
-                </button>
-              )}
-            </div>
-          )}
-
-          {filteredProfiles.map((profile) => {
-            const isFollowing = followingIds.has(String(profile._id));
-            const isPending =
-              (followMutation.isPending && String(followMutation.variables) === String(profile._id)) ||
-              (unfollowMutation.isPending && String(unfollowMutation.variables) === String(profile._id));
-
-            return (
-              <div
-                key={profile._id}
-                className="group relative rounded-2xl border border-zinc-850 bg-zinc-900/20 p-6 hover:border-zinc-700/60 hover:-translate-y-0.5 hover:shadow-2xl transition-all duration-300 flex flex-col justify-between min-h-[350px]"
-              >
-                {/* Developer Card Info */}
-                <div className="space-y-4">
-                  
-                  {/* Card Header Profile Block */}
-                  <div className="flex items-start gap-4">
-                    {/* Large circular avatar with online status */}
-                    <div className="w-14 h-14 rounded-full overflow-hidden border border-zinc-700 shrink-0 relative">
-                      <img
-                        src={resolveProfilePicture(profile.profilePicture)}
-                        alt={profile.name}
-                        className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
-                        loading="lazy"
-                      />
-                      <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-zinc-950" title="Online indicator"></span>
-                    </div>
-
-                    <div className="min-w-0">
-                      <h3 className="font-extrabold text-zinc-50 text-base leading-snug truncate hover:text-emerald-400 transition-colors flex items-center gap-1.5">
-                        {profile.name}
-                        <i className="fa-solid fa-circle-check text-emerald-500 text-xs" title="Verified Professional"></i>
-                      </h3>
-                      <p className="text-[10px] text-zinc-500">@{profile.username}</p>
-                      {profile.headline && (
-                        <p className="text-xs font-bold text-emerald-400 mt-1 truncate">{profile.headline}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Bio Description (maximum 2 lines) */}
-                  <p className="text-xs text-zinc-400 leading-relaxed line-clamp-2 min-h-[32px]">
-                    {profile.bio || "No biography details specified yet."}
-                  </p>
-
-                  {/* Technology Skill Badges */}
-                  {profile.skills && profile.skills.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 pt-1">
-                      {profile.skills.slice(0, 4).map((tech, idx) => (
-                        <span 
-                          key={idx} 
-                          className="bg-zinc-950 border border-zinc-850 text-zinc-400 px-2 py-1 rounded-md text-[10px] font-medium flex items-center gap-1 capitalize transition-colors hover:border-emerald-500/20"
-                        >
-                          <i className={`${getTechIconClass(tech)} text-[9px]`}></i>
-                          {tech}
-                        </span>
-                      ))}
-                      {profile.skills.length > 4 && (
-                        <span className="text-[9px] text-zinc-650 font-semibold self-center ml-1">
-                          +{profile.skills.length - 4} more
-                        </span>
-                      )}
-                    </div>
+                  {isFetchingNextPage ? (
+                    <>
+                      <i className="fa-solid fa-circle-notch fa-spin text-xs animate-spin" aria-hidden="true" />
+                      Loading...
+                    </>
+                  ) : (
+                    "Load More Developers"
                   )}
-                </div>
-
-                {/* Statistics & Action Buttons Block */}
-                <div className="pt-4 border-t border-zinc-850 mt-6 space-y-4">
-                  {/* Lightweight Stats */}
-                  <div className="flex items-center gap-4 text-[10px] text-zinc-500 font-bold uppercase tracking-wider">
-                    <div>Projects: <span className="text-xs font-extrabold text-zinc-200">{profile.projectsCount || 0}</span></div>
-                    <div>Followers: <span className="text-xs font-extrabold text-zinc-200">{profile.followersCount || 0}</span></div>
-                  </div>
-
-                  {/* Actions (Equal Width Buttons) */}
-                  <div className="flex gap-2.5">
-                    <button
-                      type="button"
-                      disabled={isPending}
-                      onClick={() => toggleFollow(profile._id)}
-                      className={`flex-1 rounded-xl py-2 text-xs font-bold transition-all disabled:opacity-50 cursor-pointer ${
-                        isFollowing
-                          ? "border border-zinc-750 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
-                          : "bg-emerald-500 text-zinc-950 hover:bg-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.15)]"
-                      }`}
-                    >
-                      {isPending ? (
-                        <i className="fa-solid fa-circle-notch fa-spin text-xs" />
-                      ) : isFollowing ? (
-                        "Following"
-                      ) : (
-                        "Follow"
-                      )}
-                    </button>
-                    <Link
-                      href={`/profile/${profile._id}`}
-                      className="flex-1 text-center border border-zinc-850 text-zinc-300 hover:text-zinc-100 hover:bg-zinc-850 rounded-xl py-2 text-xs font-bold transition-all shadow-sm"
-                    >
-                      View Profile
-                    </Link>
-                  </div>
-                </div>
-
+                </button>
               </div>
-            );
-          })}
-        </div>
-        {hasNextPage && (
-          <div className="flex justify-center pt-8">
-            <button
-              onClick={() => fetchNextPage()}
-              disabled={isFetchingNextPage}
-              className="bg-emerald-500 hover:bg-emerald-400 text-zinc-950 px-6 py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-50 cursor-pointer shadow-md hover:shadow-lg flex items-center gap-2"
-            >
-              {isFetchingNextPage ? (
-                <>
-                  <i className="fa-solid fa-circle-notch fa-spin"></i>
-                  Loading...
-                </>
-              ) : (
-                "Load More Developers"
-              )}
-            </button>
-          </div>
+            )}
+          </>
         )}
       </section>
-
     </div>
   );
 }
 
 export default function NetworkPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={
+      <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6 lg:px-8 space-y-10">
+        <NetworkSkeleton />
+      </div>
+    }>
       <NetworkPageContent />
     </Suspense>
   );

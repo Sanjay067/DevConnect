@@ -42,25 +42,25 @@ function CreatePostCard() {
                         className="flex-1 text-left border border-zinc-800 rounded-xl px-4 py-2.5 text-zinc-400 text-xs font-normal transition-all outline-none hover:border-zinc-700 hover:text-zinc-300 focus:ring-1 focus:ring-emerald-500/20 cursor-pointer"
                         style={{ background: "#0c0c0e" }}
                     >
-                        What&apos;s on your mind{currentUser?.name ? `, ${currentUser.name}` : ''}?
+                        What are you building today{currentUser?.name ? `, ${currentUser.name}` : ''}?
                     </button>
                 </div>
 
                 {/* Action strip */}
-                <div className="flex items-center gap-6 pt-3.5 mt-3.5 border-t border-zinc-800/70 text-zinc-500 text-[11px] font-medium">
-                    <button onClick={handleNavigate} className="flex items-center gap-2 hover:text-zinc-200 transition-colors cursor-pointer">
+                <div className="flex flex-wrap sm:flex-nowrap items-center gap-x-4 sm:gap-x-6 gap-y-2.5 pt-3.5 mt-3.5 border-t border-zinc-800/70 text-zinc-500 text-[11px] font-medium">
+                    <button onClick={handleNavigate} className="flex items-center gap-2 hover:text-zinc-200 transition-colors cursor-pointer shrink-0">
                         <i className="fa-regular fa-image text-emerald-500 text-xs"></i>
                         Media
                     </button>
-                    <button onClick={handleNavigate} className="flex items-center gap-2 hover:text-zinc-200 transition-colors cursor-pointer">
+                    <button onClick={handleNavigate} className="flex items-center gap-2 hover:text-zinc-200 transition-colors cursor-pointer shrink-0">
                         <i className="fa-solid fa-code text-emerald-500 text-xs"></i>
                         Tech Stack
                     </button>
-                    <button onClick={handleNavigate} className="flex items-center gap-2 hover:text-zinc-200 transition-colors cursor-pointer">
+                    <button onClick={handleNavigate} className="flex items-center gap-2 hover:text-zinc-200 transition-colors cursor-pointer shrink-0">
                         <i className="fa-solid fa-link text-emerald-500 text-xs"></i>
                         Links
                     </button>
-                    <button onClick={handleNavigate} className="flex items-center gap-2 hover:text-zinc-200 transition-colors ml-auto cursor-pointer">
+                    <button onClick={handleNavigate} className="flex items-center gap-2 hover:text-zinc-200 transition-colors sm:ml-auto cursor-pointer shrink-0">
                         <i className="fa-regular fa-handshake text-emerald-500 text-xs"></i>
                         Looking for Contributors
                     </button>

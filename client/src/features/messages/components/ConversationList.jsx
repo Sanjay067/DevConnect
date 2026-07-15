@@ -27,11 +27,12 @@ export default function ConversationList({
             <img src="/messages-sample2.png" alt="No Chats Yet" className="w-full h-full object-cover" />
           </div>
         ) : (
-          conversations.map(({ peer, lastMessage }) => (
+          conversations.map(({ peer, lastMessage, unreadCount }) => (
             <ConversationItem
               key={peer._id}
               peer={peer}
               lastMessage={lastMessage}
+              unreadCount={unreadCount}
               isActive={selectedPeerId === String(peer._id)}
               onClick={() => onSelectPeer(String(peer._id))}
             />

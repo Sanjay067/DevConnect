@@ -11,8 +11,8 @@ export const updateBanner = (formData) =>
     headers: { "Content-Type": "multipart/form-data" },
   });
 export const updateUserAccount = (data) => apiClient.patch("/users/me", data);
-export const getAllProfiles = (page = 1) =>
-  apiClient.get("/users/profiles", { params: { page, limit: 24 } });
+export const getAllProfiles = (page = 1, search = "") =>
+  apiClient.get("/users/profiles", { params: { page, limit: 24, q: search } });
 
 export const getPublicUserProfile = (userId) =>
   apiClient.get(`/users/profile/${userId}`);

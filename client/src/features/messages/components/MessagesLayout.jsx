@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 
 import ConversationList from "./ConversationList";
 import ChatHeader from "./ChatHeader";
@@ -17,9 +18,18 @@ export default function MessagesLayout() {
   const searchParams = useSearchParams();
   const currentUser = useSelector((state) => state.auth.user);
   const myId = String(currentUser?._id || "");
+  const queryClient = useQueryClient();
 
   const selectedPeerId = searchParams.get("peer");
   const [draft, setDraft] = useState("");
+
+  // Invalidate conversations and unread count to flush read-states immediately
+  useEffect(() => {
+    if (selectedPeerId) {
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      queryClient.invalidateQueries({ queryKey: ["unread-count"] });
+    }
+  }, [selectedPeerId, queryClient]);
 
   const { data: conversationsData, isLoading: loadingConversations } = useConversations();
   const conversations = conversationsData?.conversations || [];

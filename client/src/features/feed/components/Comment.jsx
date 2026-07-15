@@ -100,23 +100,25 @@ function Comment({ postId }) {
         ))}
 
         {hasNextPage && (
-          <button
-            onClick={() => fetchNextPage()}
-            disabled={isFetchingNextPage}
-            className="w-full text-center py-2.5 mt-2 bg-zinc-950 border border-zinc-850 hover:bg-zinc-900 text-zinc-400 hover:text-zinc-200 rounded-xl text-xs font-bold transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5 shrink-0"
-          >
-            {isFetchingNextPage ? (
-              <>
-                <i className="fa-solid fa-circle-notch fa-spin text-[10px]"></i>
-                Loading...
-              </>
-            ) : (
-              <>
-                <i className="fa-solid fa-angles-down text-[10px]"></i>
-                Load More Comments
-              </>
-            )}
-          </button>
+          <div className="flex justify-center mt-2 shrink-0">
+            <button
+              onClick={() => fetchNextPage()}
+              disabled={isFetchingNextPage}
+              className="text-xs text-zinc-500 hover:text-emerald-400 font-bold transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+            >
+              {isFetchingNextPage ? (
+                <>
+                  <i className="fa-solid fa-circle-notch fa-spin text-[10px]"></i>
+                  Loading...
+                </>
+              ) : (
+                <>
+                  <i className="fa-solid fa-angles-down text-[10px]"></i>
+                  Load more comments
+                </>
+              )}
+            </button>
+          </div>
         )}
 
       </div>

@@ -96,7 +96,7 @@ function Navbar() {
                         <div className="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
                             <i className="fa-regular fa-compass text-emerald-500 text-xs transition-transform duration-300 group-hover:rotate-45"></i>
                         </div>
-                        <span className="font-extrabold text-sm tracking-tight text-zinc-100">devConnect</span>
+                        <span className="font-extrabold text-sm tracking-tight text-emerald-500">dev.connect</span>
                     </Link>
                     <div className="relative flex-1 max-w-[180px]">
                         <i className="fa-solid fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] text-zinc-500"></i>
@@ -131,10 +131,10 @@ function Navbar() {
                         <Link href="/feed">
                             <div className="flex items-center gap-2 group">
                                 <i className="fa-regular fa-compass text-base text-emerald-500 transition-transform duration-300 group-hover:rotate-45"></i>
-                                <h2 className="text-sm font-bold tracking-tight text-zinc-100">DevConnect</h2>
+                                <h2 className="text-sm font-bold tracking-tight text-emerald-500">dev.connect</h2>
                             </div>
                         </Link>
- 
+
                         {/* Search */}
                         <div className="relative flex items-center">
                             <i className="fa-solid fa-search pointer-events-none absolute left-3 text-[10px] text-zinc-500"></i>
@@ -148,7 +148,7 @@ function Navbar() {
                             />
                         </div>
                     </div>
- 
+
                     {/* Center Navigation */}
                     <div className="flex items-center justify-center gap-3">
                         <Link href="/feed">
@@ -158,15 +158,15 @@ function Navbar() {
                                 <div className={`h-0.5 w-5 mt-1 rounded-full transition-all duration-300 ${isHomeActive ? 'bg-emerald-500 opacity-100 scale-x-100' : 'bg-transparent opacity-0 scale-x-0'}`} />
                             </div>
                         </Link>
- 
+
                         <Link href="/network">
                             <div className={`flex min-w-16 flex-col items-center px-2 pt-2 pb-1 transition-colors cursor-pointer ${isNetworkActive ? 'text-emerald-500' : 'text-zinc-500 hover:text-zinc-200'}`}>
-                                <i className="fa-solid fa-network-wired text-xs"></i>
+                                <i className="fa-solid fa-users text-xs"></i>
                                 <h4 className="text-[10px] font-medium mt-1">Network</h4>
                                 <div className={`h-0.5 w-5 mt-1 rounded-full transition-all duration-300 ${isNetworkActive ? 'bg-emerald-500 opacity-100 scale-x-100' : 'bg-transparent opacity-0 scale-x-0'}`} />
                             </div>
                         </Link>
- 
+
                         <Link href="/messages">
                             <div className={`relative flex min-w-16 flex-col items-center px-2 pt-2 pb-1 transition-colors cursor-pointer ${isMessagesActive ? 'text-emerald-500' : 'text-zinc-500 hover:text-zinc-200'}`}>
                                 <span className="relative inline-flex">
@@ -181,7 +181,7 @@ function Navbar() {
                                 <div className={`h-0.5 w-5 mt-1 rounded-full transition-all duration-300 ${isMessagesActive ? 'bg-emerald-500 opacity-100 scale-x-100' : 'bg-transparent opacity-0 scale-x-0'}`} />
                             </div>
                         </Link>
- 
+
                         <Link href={currentUser?._id ? `/profile/${currentUser._id}` : "/profile"}>
                             <div className={`flex min-w-16 flex-col items-center px-2 pt-2 pb-1 transition-colors cursor-pointer ${isProfileActive ? 'text-emerald-500' : 'text-zinc-500 hover:text-zinc-200'}`}>
                                 <i className="fa-solid fa-circle-user text-xs"></i>
@@ -190,7 +190,7 @@ function Navbar() {
                             </div>
                         </Link>
                     </div>
- 
+
                     {/* Right Section */}
                     <div className="flex items-center justify-end gap-2">
                         <button
@@ -204,57 +204,52 @@ function Navbar() {
                     </div>
                 </div>
             </div>
- 
+
             {/* ── Mobile Bottom Floating Tab Bar ── */}
             {!isMobileChatOpen && (
                 <div
-                className={`fixed bottom-4 left-4 right-4 z-50 md:hidden bg-zinc-950/95 border border-zinc-800/80 rounded-2xl px-2 py-2 shadow-2xl backdrop-blur-md max-w-sm mx-auto transition-all duration-300 ${
-                    hideNav ? "translate-y-[calc(100%+24px)] opacity-0 pointer-events-none" : "translate-y-0 opacity-100"
-                }`}
-                style={{ boxShadow: "0 10px 30px rgba(0, 0, 0, 0.7)" }}
-            >
-                <div className="flex items-center justify-around gap-1">
-                    <Link href="/feed" className="flex-1">
-                        <div className={`flex flex-col items-center py-1.5 px-2 rounded-xl transition-all duration-200 ${
-                            isHomeActive ? "bg-emerald-500/10 text-emerald-400" : "text-zinc-500 hover:text-zinc-300"
-                        }`}>
-                            <i className={`fa-solid fa-house text-[15px] ${isHomeActive ? "text-emerald-400" : ""}`}></i>
-                            <span className={`text-[9px] font-bold mt-1 ${isHomeActive ? "text-emerald-400" : ""}`}>Home</span>
-                        </div>
-                    </Link>
-                    <Link href="/network" className="flex-1">
-                        <div className={`flex flex-col items-center py-1.5 px-2 rounded-xl transition-all duration-200 ${
-                            isNetworkActive ? "bg-emerald-500/10 text-emerald-400" : "text-zinc-500 hover:text-zinc-300"
-                        }`}>
-                            <i className={`fa-solid fa-network-wired text-[15px] ${isNetworkActive ? "text-emerald-400" : ""}`}></i>
-                            <span className={`text-[9px] font-bold mt-1 ${isNetworkActive ? "text-emerald-400" : ""}`}>Network</span>
-                        </div>
-                    </Link>
-                    <Link href="/messages" className="flex-1">
-                        <div className={`flex flex-col items-center py-1.5 px-2 rounded-xl transition-all duration-200 ${
-                            isMessagesActive ? "bg-emerald-500/10 text-emerald-400" : "text-zinc-500 hover:text-zinc-300"
-                        }`}>
-                            <span className="relative inline-flex">
-                                <i className={`fa-regular fa-comment-dots text-[15px] ${isMessagesActive ? "text-emerald-400" : ""}`}></i>
-                                {unreadCount > 0 && (
-                                    <span className="absolute -top-1.5 -right-2 min-w-[14px] h-[14px] px-0.5 rounded-full bg-red-500 text-white text-[8px] font-bold flex items-center justify-center leading-none">
-                                        {badgeLabel}
-                                    </span>
-                                )}
-                            </span>
-                            <span className={`text-[9px] font-bold mt-1 ${isMessagesActive ? "text-emerald-400" : ""}`}>Chat</span>
-                        </div>
-                    </Link>
-                    <Link href={currentUser?._id ? `/profile/${currentUser._id}` : "/profile"} className="flex-1">
-                        <div className={`flex flex-col items-center py-1.5 px-2 rounded-xl transition-all duration-200 ${
-                            isProfileActive ? "bg-emerald-500/10 text-emerald-400" : "text-zinc-500 hover:text-zinc-300"
-                        }`}>
-                            <i className={`fa-solid fa-circle-user text-[15px] ${isProfileActive ? "text-emerald-400" : ""}`}></i>
-                            <span className={`text-[9px] font-bold mt-1 ${isProfileActive ? "text-emerald-400" : ""}`}>Profile</span>
-                        </div>
-                    </Link>
+                    className={`fixed bottom-4 left-4 right-4 z-50 md:hidden bg-zinc-950/95 border border-zinc-800/80 rounded-2xl px-2 py-2 shadow-2xl backdrop-blur-md max-w-sm mx-auto transition-all duration-300 ${hideNav ? "translate-y-[calc(100%+24px)] opacity-0 pointer-events-none" : "translate-y-0 opacity-100"
+                        }`}
+                    style={{ boxShadow: "0 10px 30px rgba(0, 0, 0, 0.7)" }}
+                >
+                    <div className="flex items-center justify-around gap-1">
+                        <Link href="/feed" className="flex-1">
+                            <div className={`flex flex-col items-center py-1.5 px-2 rounded-xl transition-all duration-200 ${isHomeActive ? "bg-emerald-500/10 text-emerald-400" : "text-zinc-500 hover:text-zinc-300"
+                                }`}>
+                                <i className={`fa-solid fa-house text-[15px] ${isHomeActive ? "text-emerald-400" : ""}`}></i>
+                                <span className={`text-[9px] font-bold mt-1 ${isHomeActive ? "text-emerald-400" : ""}`}>Home</span>
+                            </div>
+                        </Link>
+                        <Link href="/network" className="flex-1">
+                            <div className={`flex flex-col items-center py-1.5 px-2 rounded-xl transition-all duration-200 ${isNetworkActive ? "bg-emerald-500/10 text-emerald-400" : "text-zinc-500 hover:text-zinc-300"
+                                }`}>
+                                <i className={`fa-solid fa-users text-[15px] ${isNetworkActive ? "text-emerald-400" : ""}`}></i>
+                                <span className={`text-[9px] font-bold mt-1 ${isNetworkActive ? "text-emerald-400" : ""}`}>Network</span>
+                            </div>
+                        </Link>
+                        <Link href="/messages" className="flex-1">
+                            <div className={`flex flex-col items-center py-1.5 px-2 rounded-xl transition-all duration-200 ${isMessagesActive ? "bg-emerald-500/10 text-emerald-400" : "text-zinc-500 hover:text-zinc-300"
+                                }`}>
+                                <span className="relative inline-flex">
+                                    <i className={`fa-regular fa-comment-dots text-[15px] ${isMessagesActive ? "text-emerald-400" : ""}`}></i>
+                                    {unreadCount > 0 && (
+                                        <span className="absolute -top-1.5 -right-2 min-w-[14px] h-[14px] px-0.5 rounded-full bg-red-500 text-white text-[8px] font-bold flex items-center justify-center leading-none">
+                                            {badgeLabel}
+                                        </span>
+                                    )}
+                                </span>
+                                <span className={`text-[9px] font-bold mt-1 ${isMessagesActive ? "text-emerald-400" : ""}`}>Chat</span>
+                            </div>
+                        </Link>
+                        <Link href={currentUser?._id ? `/profile/${currentUser._id}` : "/profile"} className="flex-1">
+                            <div className={`flex flex-col items-center py-1.5 px-2 rounded-xl transition-all duration-200 ${isProfileActive ? "bg-emerald-500/10 text-emerald-400" : "text-zinc-500 hover:text-zinc-300"
+                                }`}>
+                                <i className={`fa-solid fa-circle-user text-[15px] ${isProfileActive ? "text-emerald-400" : ""}`}></i>
+                                <span className={`text-[9px] font-bold mt-1 ${isProfileActive ? "text-emerald-400" : ""}`}>Profile</span>
+                            </div>
+                        </Link>
+                    </div>
                 </div>
-            </div>
             )}
         </>
     );

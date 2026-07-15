@@ -1,7 +1,7 @@
 import React from "react";
 import { resolveProfilePicture } from "@/shared/lib/imageHelpers";
 
-export default function ConversationItem({ peer, lastMessage, isActive, onClick }) {
+export default function ConversationItem({ peer, lastMessage, isActive, onClick, unreadCount }) {
   return (
     <button
       type="button"
@@ -28,6 +28,11 @@ export default function ConversationItem({ peer, lastMessage, isActive, onClick 
             {lastMessage?.body || "Start a conversation"}
           </p>
         </div>
+        {unreadCount > 0 && (
+          <div className="w-5 h-5 rounded-full bg-emerald-500 text-zinc-950 text-[10px] font-extrabold flex items-center justify-center shrink-0 shadow-[0_0_10px_rgba(16,185,129,0.2)]">
+            {unreadCount}
+          </div>
+        )}
       </div>
     </button>
   );
