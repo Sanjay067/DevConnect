@@ -40,3 +40,12 @@ export function clearAuthCookieOptions() {
         path: "/",
     };
 }
+
+export function clearCsrfCookieOptions() {
+    return {
+        httpOnly: false,
+        secure: isProd(),
+        sameSite: isProd() ? "none" : "lax",
+        path: "/",
+    };
+}

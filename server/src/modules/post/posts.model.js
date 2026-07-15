@@ -61,6 +61,8 @@ const postSchema = new mongoose.Schema(
 
     score: { type: Number, default: 0 },
 
+    isFeatured: { type: Boolean, default: false },
+
     isActive: { type: Boolean, default: true },
   },
   { timestamps: true }
@@ -69,5 +71,7 @@ const postSchema = new mongoose.Schema(
 
 postSchema.index({ author: 1, isActive: 1, score: -1 });
 postSchema.index({ isActive: 1, score: -1 });
+postSchema.index({ isActive: 1, createdAt: -1 });
+postSchema.index({ author: 1, createdAt: -1 });
 
 export default mongoose.model("Post", postSchema);

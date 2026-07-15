@@ -15,13 +15,13 @@ export const followUser = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: "You cannot follow yourself" });
   }
 
-    const targetUser = await User.findById(followingId);
-    if (!targetUser) return res.status(404).json({ message: "User not found" });
+  const targetUser = await User.findById(followingId);
+  if (!targetUser) return res.status(404).json({ message: "User not found" });
 
-    const existingFollow = await Follow.findOne({ followerId, followingId });
-    if (existingFollow) {
-      return res.status(400).json({ message: "Already following this user" });
-    }
+  const existingFollow = await Follow.findOne({ followerId, followingId });
+  if (existingFollow) {
+    return res.status(400).json({ message: "Already following this user" });
+  }
 
   try {
     await Follow.create({ followerId, followingId });

@@ -167,10 +167,11 @@ export const createPost = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: "Valid content is required" });
   }
 
-  if (parsedContent?.blocks?.[0]?.data?.text) {
-    parsedContent.blocks[0].data.text = await promoteTempAssets(
-      parsedContent.blocks[0].data.text
-    );
+  // Promote temp assets in ALL blocks, not just the first
+  for (const block of parsedContent.blocks) {
+    if (block?.data?.text) {
+      block.data.text = await promoteTempAssets(block.data.text);
+    }
   }
 
   const media = (req.files || []).map((file) => ({
@@ -254,10 +255,11 @@ export const editPost = asyncHandler(async (req, res) => {
     if (title !== undefined) post.title = title.trim();
     if (shortDescription !== undefined) post.shortDescription = shortDescription?.trim();
     if (parsedContent !== undefined) {
-      if (parsedContent?.blocks?.[0]?.data?.text) {
-        parsedContent.blocks[0].data.text = await promoteTempAssets(
-          parsedContent.blocks[0].data.text
-        );
+      // Promote temp assets in ALL blocks, not just the first
+      for (const block of parsedContent.blocks || []) {
+        if (block?.data?.text) {
+          block.data.text = await promoteTempAssets(block.data.text);
+        }
       }
       post.content = parsedContent;
     }
@@ -359,4 +361,19 @@ export const deletePost = asyncHandler(async (req, res) => {
     session.endSession();
     throw err;
   }
+});
+
+export const toggleFeaturePost = asyncHandler(async (req, res) => {
+  const post = await Post.findById(req.params.postId);
+  if (!post) {
+    return res.status(404).json({ message: "Post not found" });
+  }
+
+  post.isFeatured = !post.isFeatured;
+  await post.save();
+
+  return res.status(200).json({
+    message: post.isFeatured ? "Post pinned to featured" : "Post removed from featured",
+    post,
+  });
 });

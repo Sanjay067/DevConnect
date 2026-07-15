@@ -2,6 +2,7 @@ import User from "../user/users.model.js";
 import {
   accessCookieOptions,
   clearAuthCookieOptions,
+  clearCsrfCookieOptions,
   refreshCookieOptions,
 } from "../../utils/cookieOptions.js";
 
@@ -9,13 +10,32 @@ import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 import Profile from "../user/profile.model.js";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import { asyncHandler } from "../../utils/asyncHandler.js";
+
+const hashRefreshToken = (token) =>
+  crypto.createHash("sha256").update(token).digest("hex");
+
+const createTokens = (userId) => ({
+  accessToken: jwt.sign({ userId }, process.env.JWT_ACCESS_TOKEN, { expiresIn: "60m" }),
+  refreshToken: jwt.sign({ userId }, process.env.JWT_REFRESH_TOKEN, { expiresIn: "7d" }),
+});
 
 export const signupHandler = asyncHandler(async (req, res) => {
   const { name, username, email, password, confirmPassword } = req.body;
 
   const normalizedEmail = String(email || "").toLowerCase().trim();
   const normalizedUsername = String(username || "").toLowerCase().trim();
+
+  if (!name?.trim() || !normalizedEmail || !normalizedUsername || typeof password !== "string") {
+    return res.status(400).json({ message: "Name, username, email, and password are required" });
+  }
+  if (password.length < 12 || password.length > 128) {
+    return res.status(400).json({ message: "Password must be between 12 and 128 characters" });
+  }
+  if (!/^[a-z0-9_]{3,30}$/.test(normalizedUsername)) {
+    return res.status(400).json({ message: "Username must be 3-30 lowercase letters, numbers, or underscores" });
+  }
 
   const existingUser = await User.findOne({ email: normalizedEmail });
 
@@ -49,18 +69,9 @@ export const signupHandler = asyncHandler(async (req, res) => {
       password: hashedPassword,
     });
 
-    const accessToken = jwt.sign(
-      { userId: newUser._id },
-      process.env.JWT_ACCESS_TOKEN,
-      { expiresIn: "60m" },
-    );
-    const refreshToken = jwt.sign(
-      { userId: newUser._id },
-      process.env.JWT_REFRESH_TOKEN,
-      { expiresIn: "7d" },
-    );
+    const { accessToken, refreshToken } = createTokens(newUser._id);
 
-    newUser.refreshToken = refreshToken;
+    newUser.refreshToken = hashRefreshToken(refreshToken);
 
     await newUser.save({ session });
 
@@ -94,6 +105,9 @@ export const loginHandler = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: "All fields are required " });
 
   const normalizedEmail = String(email || "").toLowerCase().trim();
+  if (!normalizedEmail || typeof password !== "string") {
+    return res.status(400).json({ message: "All fields are required" });
+  }
   const user = await User.findOne({ email: normalizedEmail });
 
   if (!user) return res.status(400).json({ message: "User doesn't exist" });
@@ -101,18 +115,9 @@ export const loginHandler = asyncHandler(async (req, res) => {
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) return res.status(400).json({ message: "Wrong password" });
 
-  const accessToken = jwt.sign(
-    { userId: user._id },
-    process.env.JWT_ACCESS_TOKEN,
-    { expiresIn: "60m" },
-  );
-  const refreshToken = jwt.sign(
-    { userId: user._id },
-    process.env.JWT_REFRESH_TOKEN,
-    { expiresIn: "7d" },
-  );
+  const { accessToken, refreshToken } = createTokens(user._id);
 
-  user.refreshToken = refreshToken;
+  user.refreshToken = hashRefreshToken(refreshToken);
   await user.save();
 
   return res
@@ -126,9 +131,15 @@ export const logoutHandler = asyncHandler(async (req, res) => {
   const refreshToken = req.cookies.refreshToken;
 
   if (refreshToken) {
-    const user = await User.findOne({ refreshToken });
+    let user = null;
+    try {
+      const { userId } = jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN);
+      user = await User.findById(userId);
+    } catch (_) {
+      // An invalid token is still cleared below.
+    }
 
-    if (user) {
+    if (user && user.refreshToken === hashRefreshToken(refreshToken)) {
       user.refreshToken = null;
       await user.save();
     }
@@ -137,7 +148,7 @@ export const logoutHandler = asyncHandler(async (req, res) => {
   return res
     .clearCookie("accessToken", clearAuthCookieOptions())
     .clearCookie("refreshToken", clearAuthCookieOptions())
-    .clearCookie("csrfToken", clearAuthCookieOptions())
+    .clearCookie("csrfToken", clearCsrfCookieOptions())
     .status(200)
     .json({ message: "Log out successful" });
 });

@@ -17,6 +17,18 @@ export const issueCsrfToken = (req, res) => {
     .json({ csrfToken });
 };
 
+// CORS controls whether a browser can read a response, but simple cross-site
+// requests can still reach an API. Reject unsafe browser requests unless the
+// Origin is one of the configured frontend origins.
+export const enforceTrustedOrigin = (isAllowedOrigin) => (req, res, next) => {
+  if (SAFE_METHODS.has(req.method)) return next();
+  const origin = req.get("origin");
+  if (!origin || !isAllowedOrigin(origin)) {
+    return res.status(403).json({ message: "Untrusted request origin" });
+  }
+  return next();
+};
+
 export const verifyCsrfToken = (req, res, next) => {
   if (SAFE_METHODS.has(req.method)) return next();
   if (EXEMPT_PATHS.has(req.path)) return next();
@@ -25,12 +37,17 @@ export const verifyCsrfToken = (req, res, next) => {
   const headerToken = req.get("x-csrf-token");
 
 
-  // Bypass CSRF in development mode for easy Postman testing
-  if (process.env.NODE_ENV !== "production") {
-    return next();
+  if (!cookieToken || !headerToken) {
+    return res.status(403).json({ message: "Invalid CSRF token" });
   }
 
-  if (!cookieToken || !headerToken || cookieToken !== headerToken) {
+  // Constant-time comparison to prevent timing attacks
+  const a = Buffer.from(cookieToken);
+  const b = Buffer.from(headerToken);
+  const tokensMatch =
+    a.length === b.length && crypto.timingSafeEqual(a, b);
+
+  if (!tokensMatch) {
     return res.status(403).json({ message: "Invalid CSRF token" });
   }
   return next();

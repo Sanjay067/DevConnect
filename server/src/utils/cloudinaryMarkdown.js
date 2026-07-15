@@ -1,12 +1,17 @@
-const CLOUDINARY_PUBLIC_ID_REGEX =
+// NOTE: This regex must be created inside the function (not at module level)
+// because the `g` flag makes it stateful — it retains `lastIndex` between
+// calls, causing alternating calls to skip all matches.
+const CLOUDINARY_PUBLIC_ID_PATTERN =
   /res\.cloudinary\.com\/[^/]+\/(?:image|video|raw)\/upload(?:\/[^/]+)*\/(devConnect\/posts\/[^)\s"'<>]+)/gi;
 
 export function extractCloudinaryPublicIdsFromText(text = "") {
   if (!text) return [];
 
+  // Create a new RegExp instance each call to reset lastIndex
+  const regex = new RegExp(CLOUDINARY_PUBLIC_ID_PATTERN.source, CLOUDINARY_PUBLIC_ID_PATTERN.flags);
   const ids = new Set();
   let match;
-  while ((match = CLOUDINARY_PUBLIC_ID_REGEX.exec(text)) !== null) {
+  while ((match = regex.exec(text)) !== null) {
     const publicId = match[1].replace(/\.[a-zA-Z0-9]+$/, "");
     ids.add(publicId);
   }

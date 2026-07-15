@@ -52,9 +52,8 @@ const profileSchema = mongoose.Schema({
     default: "",
   },
   socialLinks: {
-    github: { type: String, default: "" },
-    linkedin: { type: String, default: "" },
-    portfolio: { type: String, default: "" },
+    type: mongoose.Schema.Types.Mixed,
+    default: [],
   },
   skills: {
     type: [String],
@@ -73,6 +72,8 @@ const profileSchema = mongoose.Schema({
     default: [],
   },
 });
+
+profileSchema.index({ userId: 1 }, { unique: true });
 
 const Profile = mongoose.model("Profile", profileSchema);
 

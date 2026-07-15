@@ -151,30 +151,26 @@ export const deleteComment = asyncHandler(async (req, res) => {
   const session = await mongoose.startSession();
   let post;
 
-  try {
-    await session.withTransaction(async () => {
-      comment.isDeleted = true;
-      comment.body = "";
-      await comment.save({ session });
+  await session.withTransaction(async () => {
+    comment.isDeleted = true;
+    comment.body = "";
+    await comment.save({ session });
 
-      if (comment.parentComment) {
-        await Comment.updateOne(
-          { _id: comment.parentComment, replyCount: { $gt: 0 } },
-          { $inc: { replyCount: -1 } }
-        ).session(session);
-      }
+    if (comment.parentComment) {
+      await Comment.updateOne(
+        { _id: comment.parentComment, replyCount: { $gt: 0 } },
+        { $inc: { replyCount: -1 } }
+      ).session(session);
+    }
 
-      post = await Post.findOneAndUpdate(
-        { _id: postId, commentCount: { $gt: 0 } },
-        { $inc: { commentCount: -1 } },
-        { returnDocument: "after", session }
-      );
-    });
-  } catch (error) {
-    throw error;
-  } finally {
-    session.endSession();
-  }
+    post = await Post.findOneAndUpdate(
+      { _id: postId, commentCount: { $gt: 0 } },
+      { $inc: { commentCount: -1 } },
+      { returnDocument: "after", session }
+    );
+  });
+
+  session.endSession();
 
   if (post) updatePostScoreAsync(post);
 

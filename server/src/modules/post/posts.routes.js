@@ -7,6 +7,7 @@ import {
   deletePost,
   editPost,
   getPublicUserPosts,
+  toggleFeaturePost,
 } from "./posts.controller.js";
 import { toggleLikePost, getPostLikes } from "../like/likes.controller.js";
 import { verifyAccessToken } from "../../middlewares/verifyAccessToken.middleware.js";
@@ -29,12 +30,12 @@ router.get("/user/:userId", verifyAccessToken, getPublicUserPosts);
 router
   .route("/")
   .get(verifyAccessToken, getAllUserPosts)
-  .post(verifyAccessToken, uploadPostMedia.array("media", 5), createPost);
+  .post(verifyAccessToken, uploadLimiter, uploadPostMedia.array("media", 5), createPost);
 
 router
   .route("/:postId")
   .get(verifyAccessToken, getPostById)
-  .patch(verifyAccessToken, isPostAuthor, uploadPostMedia.array("media", 5), editPost)
+  .patch(verifyAccessToken, isPostAuthor, uploadLimiter, uploadPostMedia.array("media", 5), editPost)
   .delete(verifyAccessToken, isPostAuthor, deletePost);
 
 // Like/unlike a post
@@ -43,6 +44,8 @@ router
   .route("/:postId/like")
   .get(verifyAccessToken, getPostLikes)
   .post(verifyAccessToken, toggleLikePost)
+
+router.patch("/:postId/feature", verifyAccessToken, isPostAuthor, toggleFeaturePost);
 
 // Mount comment routes under /:postId/comments
 

@@ -57,10 +57,14 @@ export const updateUser = asyncHandler(async (req, res) => {
 
   const { email, username, name, skills, interests } = newUserData;
 
-  if (username || email) {
+  // Normalize identifiers to lowercase to match how they're stored
+  const normalizedEmail = email ? String(email).toLowerCase().trim() : undefined;
+  const normalizedUsername = username ? String(username).toLowerCase().trim() : undefined;
+
+  if (normalizedUsername || normalizedEmail) {
     const orConditions = [];
-    if (username) orConditions.push({ username });
-    if (email) orConditions.push({ email });
+    if (normalizedUsername) orConditions.push({ username: normalizedUsername });
+    if (normalizedEmail) orConditions.push({ email: normalizedEmail });
     const existingUser = await User.findOne({ $or: orConditions });
 
     if (existingUser && String(existingUser._id) !== String(user._id)) {
@@ -72,9 +76,9 @@ export const updateUser = asyncHandler(async (req, res) => {
 
   if (name) user.name = name;
 
-  if (email) user.email = email;
+  if (normalizedEmail) user.email = normalizedEmail;
 
-  if (username) user.username = username;
+  if (normalizedUsername) user.username = normalizedUsername;
 
   if (skills !== undefined) {
     user.skills = Array.isArray(skills)
@@ -186,9 +190,30 @@ export const getAllProfiles = asyncHandler(async (req, res) => {
   const page = Math.max(1, Number(req.query.page || 1));
   const limit = Math.min(50, Math.max(1, Number(req.query.limit || 24)));
   const skip = (page - 1) * limit;
+  const { q } = req.query;
 
   // Query Profiles excluding the current user's profile
-  const filter = { userId: { $ne: req.user._id } };
+  let filter = { userId: { $ne: req.user._id } };
+
+  if (q && String(q).trim()) {
+    const safeQuery = escapeRegex(String(q).trim());
+    const matchingUsers = await User.find({
+      $or: [
+        { name: { $regex: safeQuery, $options: "i" } },
+        { username: { $regex: safeQuery, $options: "i" } }
+      ]
+    }).select("_id");
+    const userIds = matchingUsers.map((u) => u._id);
+
+    filter = {
+      userId: { $ne: req.user._id },
+      $or: [
+        { userId: { $in: userIds } },
+        { skills: { $regex: safeQuery, $options: "i" } }
+      ]
+    };
+  }
+
   const total = await Profile.countDocuments(filter);
 
   const rows = await Profile.find(filter)
@@ -197,35 +222,42 @@ export const getAllProfiles = asyncHandler(async (req, res) => {
     .limit(limit)
     .lean();
 
-  const profiles = await Promise.all(
-    rows.map(async (p) => {
-      if (!p.userId) return null;
+  // Filter out rows where userId population failed (deleted users)
+  const validRows = rows.filter((p) => p.userId);
+  const userIds = validRows.map((p) => p.userId._id);
 
-      const followersCount = await Follow.countDocuments({ followingId: p.userId._id });
-      const projectsCount = await Post.countDocuments({ author: p.userId._id });
+  // Bulk aggregation: followers counts for all userIds in one query
+  const followerAgg = await Follow.aggregate([
+    { $match: { followingId: { $in: userIds } } },
+    { $group: { _id: "$followingId", count: { $sum: 1 } } },
+  ]);
+  const followerMap = new Map(followerAgg.map((r) => [String(r._id), r.count]));
 
-      return {
-        _id: p.userId._id,
-        username: p.userId.username,
-        name: p.userId.name,
-        profilePicture: p.userId.profilePicture,
-        headline: p.headline,
-        bio: p.bio,
-        skills: p.skills || [],
-        followersCount,
-        projectsCount,
-      };
-    })
-  );
+  // Bulk aggregation: post counts for all userIds in one query
+  const postAgg = await Post.aggregate([
+    { $match: { author: { $in: userIds }, isActive: true } },
+    { $group: { _id: "$author", count: { $sum: 1 } } },
+  ]);
+  const postMap = new Map(postAgg.map((r) => [String(r._id), r.count]));
 
-  const filteredProfiles = profiles.filter(Boolean);
+  const profiles = validRows.map((p) => ({
+    _id: p.userId._id,
+    username: p.userId.username,
+    name: p.userId.name,
+    profilePicture: p.userId.profilePicture,
+    headline: p.headline,
+    bio: p.bio,
+    skills: p.skills || [],
+    followersCount: followerMap.get(String(p.userId._id)) || 0,
+    projectsCount: postMap.get(String(p.userId._id)) || 0,
+  }));
 
   return res.status(200).json({
-    profiles: filteredProfiles,
+    profiles,
     page,
     limit,
     total,
-    hasMore: skip + filteredProfiles.length < total,
+    hasMore: skip + profiles.length < total,
   });
 });
 

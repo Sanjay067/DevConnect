@@ -44,6 +44,15 @@ class CloudinaryStorage {
   }
 }
 
+const imageMimeTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+const postMimeTypes = new Set([...imageMimeTypes, "video/mp4"]);
+const fileFilterFor = (allowedTypes) => (req, file, cb) => {
+  if (!allowedTypes.has(file.mimetype)) {
+    return cb(new Error("Unsupported media type"));
+  }
+  return cb(null, true);
+};
+
 // profile pictures
 const avatarStorage = new CloudinaryStorage({
   cloudinary,
@@ -85,22 +94,26 @@ const bannerStorage = new CloudinaryStorage({
 
 export const uploadAvatar = multer({
   storage: avatarStorage,
+  fileFilter: fileFilterFor(imageMimeTypes),
   limits: { fileSize: 1024 * 1024 } // 1MB limit
 });
 
 export const uploadBanner = multer({
   storage: bannerStorage,
+  fileFilter: fileFilterFor(imageMimeTypes),
   limits: { fileSize: 2 * 1024 * 1024 } // 2MB limit
 });
 
 export const uploadPostMedia = multer({
   storage: postMediaStorage,
-  limits: { fileSize: 7000 * 7000 } // 49MB limit
+  fileFilter: fileFilterFor(postMimeTypes),
+  limits: { fileSize: 10 * 1024 * 1024, files: 5 } // 10MB per file
 });
 
 export const uploadTempMedia = multer({
   storage: tempMediaStorage,
-  limits: { fileSize: 7000 * 7000 } // 49MB limit
+  fileFilter: fileFilterFor(imageMimeTypes),
+  limits: { fileSize: 10 * 1024 * 1024, files: 1 }
 });
 
 export { cloudinary };

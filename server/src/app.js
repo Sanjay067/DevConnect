@@ -5,11 +5,10 @@ import helmet from "helmet";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
-import dns from "dns";
-dns.setServers(["8.8.8.8", "8.8.4.4"]);
 import { apiLimiter } from "./middlewares/rateLimits.js";
-import { verifyCsrfToken } from "./middlewares/csrf.middleware.js";
-
+import { enforceTrustedOrigin, verifyCsrfToken } from "./middlewares/csrf.middleware.js";
+import dns from  'dns';
+dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
 import apiRouter from "./routes/index.js";
 
@@ -19,44 +18,41 @@ const app = express();
 app.set("trust proxy", 1);
 const authAnomalyCounts = { 401: 0, 403: 0, 429: 0 };
 
-const rawOrigins = (process.env.CLIENT_ORIGIN || "http://localhost:3000")
+const configuredOrigins = process.env.NODE_ENV === "production"
+  ? process.env.CLIENT_ORIGIN
+  : process.env.CLIENT_ORIGIN || "http://localhost:3000";
+const rawOrigins = (configuredOrigins || "")
   .split(",")
   .map((o) => o.trim())
   .filter(Boolean);
 
 const normalizeOrigin = (origin = "") => origin.replace(/\/+$/, "");
 const clientOrigins = rawOrigins.map(normalizeOrigin);
-const wildcardOrigins = clientOrigins
-  .filter((o) => o.startsWith("*."))
-  .map((o) => o.slice(1).toLowerCase());
 const strictOrigins = clientOrigins
-  .filter((o) => !o.startsWith("*."))
   .map((o) => o.toLowerCase());
 
 
 const isAllowedOrigin = (origin) => {
-  if (!origin) return true;
+  // In development, allow requests with no Origin header (curl, Postman, etc.)
+  if (!origin) return process.env.NODE_ENV !== "production";
 
   const normalized = normalizeOrigin(origin).toLowerCase();
   
-  // Allow localhost for local development
-  if (normalized.startsWith("http://localhost:") || normalized.startsWith("http://127.0.0.1:")) {
+  // Localhost is only useful for local development. Never accept it in production.
+  if (process.env.NODE_ENV !== "production" &&
+    (normalized.startsWith("http://localhost:") || normalized.startsWith("http://127.0.0.1:"))) {
     return true;
   }
 
   // Allow strict matches
   if (strictOrigins.includes(normalized)) return true;
 
-  // Allow wildcard subdomains
-  if (wildcardOrigins.some((suffix) => normalized.endsWith(suffix))) return true;
-
-  // Allow any vercel.app subdomains starting with 'dev-connect-' (dynamic vercel deployments)
-  if (/^https:\/\/dev-connect-[a-zA-Z0-9-]+\.vercel\.app$/.test(normalized)) {
-    return true;
-  }
-
   return false;
 };
+
+if (process.env.NODE_ENV === "production" && clientOrigins.length === 0) {
+  throw new Error("CLIENT_ORIGIN must contain the exact production frontend origin(s)");
+}
 
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 app.use(cookieParser());
@@ -75,6 +71,11 @@ app.use(
 );
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true, limit: "5mb" }));
+
+app.get("/healthz", (req, res) => {
+  const ready = mongoose.connection.readyState === 1;
+  return res.status(ready ? 200 : 503).json({ status: ready ? "ok" : "unavailable" });
+});
 
 app.use((req, res, next) => {
   res.on("finish", () => {
@@ -97,21 +98,42 @@ app.use((req, res, next) => {
 });
 
 
+app.use(enforceTrustedOrigin(isAllowedOrigin));
 app.use(verifyCsrfToken);
 app.use("/api", apiLimiter);
 
 app.use("/api", apiRouter);
 
+app.use((error, req, res, next) => {
+  if (res.headersSent) return next(error);
+  console.error(error);
+  if (error.name === "MulterError" || error.message === "Unsupported media type") {
+    return res.status(400).json({ message: error.message || "Invalid upload" });
+  }
+  return res.status(500).json({ message: "Internal Server Error" });
+});
+
 const start = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URL);
+    if (!process.env.MONGO_URL || !process.env.JWT_ACCESS_TOKEN || !process.env.JWT_REFRESH_TOKEN) {
+      throw new Error("Required environment variables are missing");
+    }
+    await mongoose.connect(process.env.MONGO_URL, { serverSelectionTimeoutMS: 10_000 });
 
     console.log("Connected to MongoDB");
-    app.listen(process.env.PORT, () => {
+    const server = app.listen(process.env.PORT || 5000, () => {
       console.log(`Server is running on port ${process.env.PORT}`);
     });
+
+    const shutdown = (signal) => {
+      console.log(`${signal} received; shutting down`);
+      server.close(() => mongoose.disconnect().finally(() => process.exit(0)));
+    };
+    process.once("SIGTERM", () => shutdown("SIGTERM"));
+    process.once("SIGINT", () => shutdown("SIGINT"));
   } catch (error) {
     console.error("Error connecting to MongoDB:", error);
+    process.exitCode = 1;
   }
 };
 
