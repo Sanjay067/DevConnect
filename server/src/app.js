@@ -7,10 +7,12 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import { apiLimiter } from "./middlewares/rateLimits.js";
 import { enforceTrustedOrigin, verifyCsrfToken } from "./middlewares/csrf.middleware.js";
-import dns from  'dns';
+import dns from 'dns';
 dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
 import apiRouter from "./routes/index.js";
+import { cleanupTempAssets } from "./utils/cleanupTempAssets.js";
+import { initSocket } from "./config/socket.js";
 
 dotenv.config();
 
@@ -37,7 +39,7 @@ const isAllowedOrigin = (origin) => {
   if (!origin) return process.env.NODE_ENV !== "production";
 
   const normalized = normalizeOrigin(origin).toLowerCase();
-  
+
   // Localhost is only useful for local development. Never accept it in production.
   if (process.env.NODE_ENV !== "production" &&
     (normalized.startsWith("http://localhost:") || normalized.startsWith("http://127.0.0.1:"))) {
@@ -124,6 +126,16 @@ const start = async () => {
     const server = app.listen(process.env.PORT || 5000, () => {
       console.log(`Server is running on port ${process.env.PORT}`);
     });
+
+    // Initialize Socket.io server with shared CORS validator
+    initSocket(server, isAllowedOrigin);
+
+    // Run temporary asset cleanup job every 6 hours
+    setInterval(() => {
+      cleanupTempAssets().catch((err) => {
+        console.error("[cleanup] Stale Cloudinary assets cleanup failed:", err);
+      });
+    }, 6 * 60 * 60 * 1000);
 
     const shutdown = (signal) => {
       console.log(`${signal} received; shutting down`);

@@ -1,5 +1,6 @@
 import Follow from "./follow.model.js";
 import User from "../user/users.model.js";
+import Notification from "../notification/notification.model.js";
 import mongoose from "mongoose";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 
@@ -25,6 +26,27 @@ export const followUser = asyncHandler(async (req, res) => {
 
   try {
     await Follow.create({ followerId, followingId });
+
+    // Dispatch async notification creation & automatic 30-item capping
+    Notification.create({
+      recipientId: followingId,
+      senderId: followerId,
+      type: "FOLLOW",
+    })
+      .then(async () => {
+        const excess = await Notification.find({ recipientId: followingId })
+          .sort({ createdAt: -1 })
+          .skip(30)
+          .select("_id");
+
+        if (excess.length > 0) {
+          const idsToDelete = excess.map((n) => n._id);
+          await Notification.deleteMany({ _id: { $in: idsToDelete } });
+        }
+      })
+      .catch((err) => {
+        console.error("Error creating notification:", err);
+      });
   } catch (error) {
     if (error?.code === 11000) return res.status(400).json({ message: "Already following" });
     throw error;

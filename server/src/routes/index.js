@@ -5,6 +5,7 @@ import postRoutes from "../modules/post/posts.routes.js";
 import feedRoutes from "../modules/feed/feed.routes.js";
 import followRoutes from "../modules/follow/follow.routes.js";
 import messageRoutes from "../modules/message/message.routes.js";
+import notificationRoutes from "../modules/notification/notification.routes.js";
 
 const router = Router();
 
@@ -14,6 +15,7 @@ router.use("/posts", postRoutes);
 router.use("/feed", feedRoutes);
 router.use("/follows", followRoutes);
 router.use("/messages", messageRoutes);
+router.use("/notifications", notificationRoutes);
 
 
 export default router;

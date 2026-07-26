@@ -61,6 +61,40 @@ const promoteTempAssets = async (markdownText) => {
 };
 
 
+export const enrichPostWithRating = (postObj, userId) => {
+  if (!postObj) return postObj;
+  const ratings = postObj.ratings || [];
+  const likes = postObj.likes || [];
+  const userIdStr = userId ? String(userId) : null;
+
+  let userRatingScore = null;
+  if (userIdStr) {
+    const userRating = ratings.find((r) => String(r.userId) === userIdStr);
+    if (userRating) {
+      userRatingScore = userRating.score;
+    } else if (likes.some((l) => String(l) === userIdStr)) {
+      userRatingScore = 10;
+    }
+  }
+
+  const ratingsSum = ratings.reduce((sum, r) => sum + Number(r.score || 0), 0);
+  const legacyLikesCount = likes.length > 0 ? likes.length : (postObj.likeCount && ratings.length === 0 ? postObj.likeCount : 0);
+  const legacyPoints = legacyLikesCount * 10;
+
+  const totalPoints = ratingsSum + legacyPoints;
+  const totalRatingCount = ratings.length + legacyLikesCount;
+  const averageRating = totalRatingCount > 0 ? Number((totalPoints / totalRatingCount).toFixed(1)) : 0;
+
+  return {
+    ...postObj,
+    userRatingScore,
+    totalPoints,
+    averageRating,
+    ratingCount: totalRatingCount,
+    isLiked: !!userRatingScore,
+  };
+};
+
 export const getPostById = asyncHandler(async (req, res) => {
   const post = await Post.findById(req.params.postId).populate(
     "author",
@@ -80,11 +114,16 @@ export const getPostById = asyncHandler(async (req, res) => {
     targetType: "Post",
   }).select("_id");
 
+  const enriched = enrichPostWithRating(post.toObject(), userId);
+  if (userLike && !enriched.userRatingScore) {
+    enriched.userRatingScore = 10;
+    enriched.isLiked = true;
+  }
+
   return res.status(200).json({
     message: "Post fetched successfully",
     post: {
-      ...post.toObject(),
-      isLiked: !!userLike,
+      ...enriched,
       isAuthor,
     },
   });
@@ -375,5 +414,65 @@ export const toggleFeaturePost = asyncHandler(async (req, res) => {
   return res.status(200).json({
     message: post.isFeatured ? "Post pinned to featured" : "Post removed from featured",
     post,
+  });
+});
+
+export const ratePost = asyncHandler(async (req, res) => {
+  const { postId } = req.params;
+  const { score } = req.body;
+  const userId = req.user._id;
+
+  const targetScore = Number(score);
+  if (isNaN(targetScore) || targetScore < 1 || targetScore > 10) {
+    return res.status(400).json({ message: "Score must be a number between 1 and 10" });
+  }
+
+  const post = await Post.findById(postId);
+  if (!post) {
+    return res.status(404).json({ message: "Post not found" });
+  }
+
+  if (!post.ratings) post.ratings = [];
+
+  const existingRatingIndex = post.ratings.findIndex(
+    (r) => r.userId.toString() === userId.toString()
+  );
+
+  let newUserRatingScore = null;
+
+  if (existingRatingIndex !== -1) {
+    if (post.ratings[existingRatingIndex].score === targetScore) {
+      // Toggle off (remove rating)
+      post.ratings.splice(existingRatingIndex, 1);
+      newUserRatingScore = null;
+    } else {
+      // Update rating score
+      post.ratings[existingRatingIndex].score = targetScore;
+      newUserRatingScore = targetScore;
+    }
+  } else {
+    // Add new rating score
+    post.ratings.push({ userId, score: targetScore });
+    newUserRatingScore = targetScore;
+  }
+
+  // Recalculate rating metrics: sum of score ratings + legacy likes * 10
+  const ratingsSum = post.ratings.reduce((sum, r) => sum + r.score, 0);
+  const legacyLikesCount = post.likes?.length || 0;
+  const legacyPoints = legacyLikesCount * 10;
+  const totalCount = post.ratings.length + legacyLikesCount;
+
+  post.totalPoints = ratingsSum + legacyPoints;
+  post.ratingCount = totalCount;
+  post.likeCount = totalCount;
+  post.averageRating = totalCount > 0 ? Number((post.totalPoints / totalCount).toFixed(1)) : 0;
+
+  await post.save();
+
+  const enriched = enrichPostWithRating(post.toObject(), userId);
+
+  return res.status(200).json({
+    message: newUserRatingScore ? "Post rated successfully" : "Rating removed",
+    post: enriched,
   });
 });

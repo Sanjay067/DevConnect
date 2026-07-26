@@ -51,7 +51,11 @@ export const addComment = asyncHandler(async (req, res) => {
     session.endSession();
   }
 
-  if (post) updatePostScoreAsync(post);
+  if (post) {
+    updatePostScoreAsync(post).catch((err) => {
+      console.error(`[Background Task] Failed to run updatePostScoreAsync for post ${post._id}:`, err);
+    });
+  }
   await comment.populate("author", "name username profilePicture");
 
   return res.status(201).json({ message: "Comment added", comment });
@@ -112,7 +116,11 @@ export const replyToComment = asyncHandler(async (req, res) => {
     session.endSession();
   }
 
-  if (post) updatePostScoreAsync(post);
+  if (post) {
+    updatePostScoreAsync(post).catch((err) => {
+      console.error(`[Background Task] Failed to run updatePostScoreAsync for post ${post._id}:`, err);
+    });
+  }
   await reply.populate("author", "name username profilePicture");
 
   return res.status(201).json({ message: "Reply added", comment: reply });
@@ -172,7 +180,11 @@ export const deleteComment = asyncHandler(async (req, res) => {
 
   session.endSession();
 
-  if (post) updatePostScoreAsync(post);
+  if (post) {
+    updatePostScoreAsync(post).catch((err) => {
+      console.error(`[Background Task] Failed to run updatePostScoreAsync for post ${post._id}:`, err);
+    });
+  }
 
   return res.status(200).json({ message: "Comment deleted" });
 });

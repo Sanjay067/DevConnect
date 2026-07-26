@@ -100,7 +100,9 @@ export const toggleLikePost = asyncHandler(async (req, res) => {
 
 
   if (post) {
-    updatePostScoreAsync(post);
+    updatePostScoreAsync(post).catch((err) => {
+      console.error(`[Background Task] Failed to run updatePostScoreAsync for post ${post._id}:`, err);
+    });
   }
 
   return res.json({

@@ -16,10 +16,12 @@ import { asyncHandler } from "../../utils/asyncHandler.js";
 const hashRefreshToken = (token) =>
   crypto.createHash("sha256").update(token).digest("hex");
 
-const createTokens = (userId) => ({
-  accessToken: jwt.sign({ userId }, process.env.JWT_ACCESS_TOKEN, { expiresIn: "60m" }),
-  refreshToken: jwt.sign({ userId }, process.env.JWT_REFRESH_TOKEN, { expiresIn: "7d" }),
-});
+const createTokens = (userId) => {
+  return {
+    accessToken: jwt.sign({ userId }, process.env.JWT_ACCESS_TOKEN, { expiresIn: "60m" }),
+    refreshToken: jwt.sign({ userId }, process.env.JWT_REFRESH_TOKEN, { expiresIn: "7d" }),
+  }
+};
 
 export const signupHandler = asyncHandler(async (req, res) => {
   const { name, username, email, password, confirmPassword } = req.body;
@@ -101,13 +103,13 @@ export const signupHandler = asyncHandler(async (req, res) => {
 
 export const loginHandler = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
-  if (!email || !password)
-    return res.status(400).json({ message: "All fields are required " });
-
   const normalizedEmail = String(email || "").toLowerCase().trim();
   if (!normalizedEmail || typeof password !== "string") {
     return res.status(400).json({ message: "All fields are required" });
   }
+  if (!password)
+    return res.status(400).json({ message: "All fields are required " });
+
   const user = await User.findOne({ email: normalizedEmail });
 
   if (!user) return res.status(400).json({ message: "User doesn't exist" });
@@ -136,7 +138,7 @@ export const logoutHandler = asyncHandler(async (req, res) => {
       const { userId } = jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN);
       user = await User.findById(userId);
     } catch (_) {
-      // An invalid token is still cleared below.
+
     }
 
     if (user && user.refreshToken === hashRefreshToken(refreshToken)) {

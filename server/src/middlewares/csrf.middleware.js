@@ -17,9 +17,6 @@ export const issueCsrfToken = (req, res) => {
     .json({ csrfToken });
 };
 
-// CORS controls whether a browser can read a response, but simple cross-site
-// requests can still reach an API. Reject unsafe browser requests unless the
-// Origin is one of the configured frontend origins.
 export const enforceTrustedOrigin = (isAllowedOrigin) => (req, res, next) => {
   if (SAFE_METHODS.has(req.method)) return next();
   const origin = req.get("origin");

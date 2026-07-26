@@ -59,6 +59,20 @@ const postSchema = new mongoose.Schema(
     likeCount: { type: Number, default: 0 },
     commentCount: { type: Number, default: 0 },
 
+    likes: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "User" }
+    ],
+    ratings: [
+      {
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+        score: { type: Number, required: true, min: 1, max: 10 },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
+    totalPoints: { type: Number, default: 0 },
+    averageRating: { type: Number, default: 0 },
+    ratingCount: { type: Number, default: 0 },
+
     score: { type: Number, default: 0 },
 
     isFeatured: { type: Boolean, default: false },

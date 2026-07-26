@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import Message from "./messages.model.js";
 import User from "../user/users.model.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
+import { getIO, getUserSockets } from "../../config/socket.js";
 
 function toId(v) {
   return new mongoose.Types.ObjectId(String(v));
@@ -135,6 +136,24 @@ export const sendMessage = asyncHandler(async (req, res) => {
     receiverId: toId(peerId),
     body,
   });
+
+  try {
+    const io = getIO();
+    
+    // Notify receiver
+    const receiverSockets = getUserSockets(peerId);
+    for (const socketId of receiverSockets) {
+      io.to(socketId).emit("new-message", { message });
+    }
+
+    // Notify other tabs of the sender
+    const senderSockets = getUserSockets(myId);
+    for (const socketId of senderSockets) {
+      io.to(socketId).emit("new-message", { message });
+    }
+  } catch (err) {
+    console.error("[Socket Event] Failed to emit new-message:", err.message);
+  }
 
   return res.status(201).json({ message });
 });
