@@ -8,7 +8,6 @@ import {
   editPost,
   getPublicUserPosts,
   toggleFeaturePost,
-  ratePost,
 } from "./posts.controller.js";
 import { toggleLikePost, getPostLikes } from "../like/likes.controller.js";
 import { verifyAccessToken } from "../../middlewares/verifyAccessToken.middleware.js";
@@ -45,8 +44,6 @@ router
   .route("/:postId/like")
   .get(verifyAccessToken, getPostLikes)
   .post(verifyAccessToken, toggleLikePost);
-
-router.post("/:postId/rate", verifyAccessToken, ratePost);
 
 router.patch("/:postId/feature", verifyAccessToken, isPostAuthor, toggleFeaturePost);
 
