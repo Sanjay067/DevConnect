@@ -13,6 +13,7 @@ import FeaturedProjects from "./FeaturedProjects";
 import AllShowcases from "./AllShowcases";
 import EditProfileModal from "./EditProfileModal";
 import ProfileSkeleton from "./ProfileSkeleton";
+import FollowListModal from "./FollowListModal";
 
 export default function ProfileLayout({ userId, isOwnProfile }) {
     const queryClient = useQueryClient();
@@ -30,6 +31,7 @@ export default function ProfileLayout({ userId, isOwnProfile }) {
     const { uploadBanner, isBannerPending } = useProfileUploads(userId);
 
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [followModalType, setFollowModalType] = useState(null); // 'followers' | 'following' | null
 
     const deleteMutation = useMutation({
         mutationFn: deletePost,
@@ -84,13 +86,19 @@ export default function ProfileLayout({ userId, isOwnProfile }) {
                     onToggleFollow={() => toggleFollow()}
                     onEditClick={() => setIsEditModalOpen(true)}
                     onUploadBanner={uploadBanner}
+                    onProjectsClick={() => {
+                        const el = document.getElementById("projects-section");
+                        if (el) el.scrollIntoView({ behavior: "smooth" });
+                    }}
+                    onFollowersClick={() => setFollowModalType("followers")}
+                    onFollowingClick={() => setFollowModalType("following")}
                 />
 
                 {/* ── Two-Column Main Layout ── */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
                     
                     {/* ── LEFT COLUMN: Featured + All Showcases ── */}
-                    <div className="lg:col-span-2 space-y-10 order-2 lg:order-1">
+                    <div id="projects-section" className="lg:col-span-2 space-y-10 order-2 lg:order-1 scroll-mt-6">
                         
                         {/* 1. Featured / Pinned Projects */}
                         <FeaturedProjects
@@ -131,6 +139,14 @@ export default function ProfileLayout({ userId, isOwnProfile }) {
                 onClose={() => setIsEditModalOpen(false)} 
                 initialData={profile} 
                 userId={userId} 
+            />
+
+            {/* Followers / Following List Modal */}
+            <FollowListModal
+                isOpen={!!followModalType}
+                onClose={() => setFollowModalType(null)}
+                userId={userId}
+                type={followModalType}
             />
         </div>
     );

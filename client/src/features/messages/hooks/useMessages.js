@@ -8,8 +8,6 @@ export const useMessages = (selectedPeerId, myId, onSendSuccess) => {
     queryKey: ["messages", selectedPeerId],
     queryFn: () => getConversationMessages(selectedPeerId).then((res) => res.data),
     enabled: !!selectedPeerId,
-    refetchInterval: (q) => (q.state.error ? false : 5000),
-    refetchIntervalInBackground: false,
     retry: false,
   });
 

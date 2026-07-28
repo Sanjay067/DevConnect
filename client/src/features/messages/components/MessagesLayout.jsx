@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useSelector } from "react-redux";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import ConversationList from "./ConversationList";
 import ChatHeader from "./ChatHeader";
@@ -12,6 +12,7 @@ import NoConversationSelected from "./NoConversationSelected";
 import { useConversations } from "../hooks/useConversations";
 import { useMessages } from "../hooks/useMessages";
 import { useScrollToBottom } from "../hooks/useScrollToBottom";
+import { getPublicUserProfile } from "@/services/userService";
 
 export default function MessagesLayout() {
   const router = useRouter();
@@ -31,12 +32,47 @@ export default function MessagesLayout() {
     }
   }, [selectedPeerId, queryClient]);
 
+  // Lock outer body scroll on messages view to enforce internal panel scrolling
+  useEffect(() => {
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, []);
+
   const { data: conversationsData, isLoading: loadingConversations } = useConversations();
   const conversations = conversationsData?.conversations || [];
 
-  const selectedPeer = conversations.find(
-    ({ peer }) => String(peer._id) === selectedPeerId
-  )?.peer;
+  const peerInConversations = useMemo(() => {
+    return conversations.find(
+      ({ peer }) => String(peer._id) === selectedPeerId
+    )?.peer;
+  }, [conversations, selectedPeerId]);
+
+  const isNewConversation = !!(selectedPeerId && !peerInConversations);
+
+  const { data: publicProfileWrapper } = useQuery({
+    queryKey: ["publicProfile", selectedPeerId],
+    queryFn: () => getPublicUserProfile(selectedPeerId).then((res) => res.data),
+    enabled: isNewConversation,
+  });
+
+  const publicUser = publicProfileWrapper?.user;
+
+  const selectedPeer = peerInConversations || publicUser;
+
+  const displayConversations = useMemo(() => {
+    if (isNewConversation && publicUser) {
+      const tempConv = {
+        peer: publicUser,
+        lastMessage: { body: "Start a conversation" },
+        unreadCount: 0,
+      };
+      return [tempConv, ...conversations];
+    }
+    return conversations;
+  }, [conversations, isNewConversation, publicUser]);
 
   const {
     messagesData,
@@ -64,14 +100,24 @@ export default function MessagesLayout() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto py-6 px-4 h-[calc(100vh-140px)] md:h-[calc(100vh-80px)]">
+    <div
+      className={`w-full transition-all duration-200 ${
+        selectedPeerId
+          ? "fixed inset-0 z-50 h-[100dvh] bg-zinc-950 p-0 md:static md:z-auto md:max-w-6xl md:mx-auto md:px-4 md:py-0 md:h-[calc(100vh-105px)] md:bg-transparent"
+          : "max-w-6xl mx-auto px-3 py-2 h-[calc(100dvh-125px)] md:px-4 md:py-0 md:h-[calc(100vh-105px)]"
+      }`}
+    >
       <div
-        className="flex h-full rounded-2xl border border-zinc-800 overflow-hidden shadow-2xl"
+        className={`flex h-full overflow-hidden shadow-2xl border-zinc-800 ${
+          selectedPeerId
+            ? "rounded-none border-0 md:rounded-2xl md:border"
+            : "rounded-2xl border"
+        }`}
         style={{ background: "var(--surface)" }}
       >
         {/* Left Panel: Conversations list */}
         <ConversationList
-          conversations={conversations}
+          conversations={displayConversations}
           selectedPeerId={selectedPeerId}
           loadingConversations={loadingConversations}
           onSelectPeer={handleSelectPeer}

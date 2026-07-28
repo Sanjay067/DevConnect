@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useLogout } from "@/features/auth/hooks/useLogout";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { getUnreadCount } from "@/services/messageService";
+import { getUnreadNotificationsCount } from "@/services/notificationService";
 
 function Navbar() {
     const currentUser = useSelector((state) => state.auth.user);
@@ -53,6 +54,7 @@ function Navbar() {
 
     const isHomeActive = pathname === "/feed" || pathname?.startsWith("/posts");
     const isNetworkActive = pathname === "/network";
+    const isNotificationsActive = pathname === "/notifications" || pathname?.startsWith("/notifications");
     const isMessagesActive = pathname === "/messages" || pathname?.startsWith("/messages");
     const isProfileActive = pathname?.startsWith("/profile");
 
@@ -69,6 +71,15 @@ function Navbar() {
     });
     const unreadCount = unreadData?.count ?? 0;
     const badgeLabel = unreadCount > 99 ? "99+" : String(unreadCount);
+
+    const { data: unreadNotifData } = useQuery({
+        queryKey: ["unread-notifications-count"],
+        queryFn: () => getUnreadNotificationsCount().then((res) => res.data),
+        refetchInterval: 30_000,
+        enabled: !!currentUser && !isNotificationsActive,
+    });
+    const unreadNotificationsCount = unreadNotifData?.count ?? 0;
+    const notifBadgeLabel = unreadNotificationsCount > 99 ? "99+" : String(unreadNotificationsCount);
 
     // Hide Navbar completely on post editor pages to maximize writing space.
     // This happens after all hooks so navigation cannot change hook order.
@@ -167,6 +178,21 @@ function Navbar() {
                             </div>
                         </Link>
 
+                        <Link href="/notifications">
+                            <div className={`relative flex min-w-16 flex-col items-center px-2 pt-2 pb-1 transition-colors cursor-pointer ${isNotificationsActive ? 'text-emerald-500' : 'text-zinc-500 hover:text-zinc-200'}`}>
+                                <span className="relative inline-flex">
+                                    <i className="fa-regular fa-bell text-xs"></i>
+                                    {unreadNotificationsCount > 0 && (
+                                        <span className="absolute -top-1.5 -right-2 min-w-[14px] h-[14px] px-0.5 rounded-full bg-red-500 text-white text-[8px] font-bold flex items-center justify-center leading-none">
+                                            {notifBadgeLabel}
+                                        </span>
+                                    )}
+                                </span>
+                                <h4 className="text-[10px] font-medium mt-1">Activity</h4>
+                                <div className={`h-0.5 w-5 mt-1 rounded-full transition-all duration-300 ${isNotificationsActive ? 'bg-emerald-500 opacity-100 scale-x-100' : 'bg-transparent opacity-0 scale-x-0'}`} />
+                            </div>
+                        </Link>
+
                         <Link href="/messages">
                             <div className={`relative flex min-w-16 flex-col items-center px-2 pt-2 pb-1 transition-colors cursor-pointer ${isMessagesActive ? 'text-emerald-500' : 'text-zinc-500 hover:text-zinc-200'}`}>
                                 <span className="relative inline-flex">
@@ -225,6 +251,20 @@ function Navbar() {
                                 }`}>
                                 <i className={`fa-solid fa-users text-[15px] ${isNetworkActive ? "text-emerald-400" : ""}`}></i>
                                 <span className={`text-[9px] font-bold mt-1 ${isNetworkActive ? "text-emerald-400" : ""}`}>Network</span>
+                            </div>
+                        </Link>
+                        <Link href="/notifications" className="flex-1">
+                            <div className={`flex flex-col items-center py-1.5 px-2 rounded-xl transition-all duration-200 ${isNotificationsActive ? "bg-emerald-500/10 text-emerald-400" : "text-zinc-500 hover:text-zinc-300"
+                                }`}>
+                                <span className="relative inline-flex">
+                                    <i className={`fa-regular fa-bell text-[15px] ${isNotificationsActive ? "text-emerald-400" : ""}`}></i>
+                                    {unreadNotificationsCount > 0 && (
+                                        <span className="absolute -top-1.5 -right-2 min-w-[14px] h-[14px] px-0.5 rounded-full bg-red-500 text-white text-[8px] font-bold flex items-center justify-center leading-none">
+                                            {notifBadgeLabel}
+                                        </span>
+                                    )}
+                                </span>
+                                <span className={`text-[9px] font-bold mt-1 ${isNotificationsActive ? "text-emerald-400" : ""}`}>Activity</span>
                             </div>
                         </Link>
                         <Link href="/messages" className="flex-1">

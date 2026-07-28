@@ -8,9 +8,9 @@ import { usePost } from "@/features/feed/hooks/useFeed";
 import { renderMarkdown } from "@/features/feed/utils/markdownParser";
 import { getTechIconClass } from "@/shared/lib/techIcons";
 import { resolveProfilePicture } from "@/shared/lib/imageHelpers";
-import { useLikePost } from "@/features/feed/hooks/useLikePost";
+import { useRatePost } from "@/features/feed/hooks/useRatePost";
 import Comment from "@/features/feed/components/Comment";
-import Like from "@/features/feed/components/Like";
+import PointsButton from "@/features/feed/components/PointsButton";
 
 import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -53,7 +53,7 @@ export default function PostDetailPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const currentUser = useSelector((state) => state.auth.user);
-  const { mutate: executeLikeMutation } = useLikePost();
+  const rateMutation = useRatePost();
 
   const { data: post, isLoading, isError } = usePost(postId);
 
@@ -112,7 +112,10 @@ export default function PostDetailPage() {
         {/* Author row — profile left, links + edit right */}
         <div className="flex items-center justify-between gap-3 mb-8">
           {/* Left: avatar + name */}
-          <div className="flex items-center gap-3">
+          <Link
+            href={post.author?._id ? `/profile/${post.author._id}` : "#"}
+            className="flex items-center gap-3 group cursor-pointer"
+          >
             <div className="w-11 h-11 rounded-full overflow-hidden ring-1 ring-zinc-800 shrink-0">
               {post.author?.profilePicture ? (
                 <img
@@ -125,14 +128,16 @@ export default function PostDetailPage() {
               )}
             </div>
             <div>
-              <p className="text-sm font-semibold text-zinc-100 leading-snug">{post.author?.name}</p>
+              <p className="text-sm font-semibold text-zinc-100 leading-snug group-hover:text-emerald-400 transition-colors">
+                {post.author?.name}
+              </p>
               <p className="text-xs text-zinc-500 mt-0.5">
                 @{post.author?.username}
                 <span className="mx-1.5 text-zinc-700">•</span>
                 {formatTimeAgo(post.createdAt)}
               </p>
             </div>
-          </div>
+          </Link>
 
           {/* Right: GitHub / Live Demo + Edit */}
           <div className="flex items-center gap-2 shrink-0">
@@ -225,10 +230,9 @@ export default function PostDetailPage() {
 
         {/* Footer actions */}
         <div className="flex items-center gap-6 py-5 border-t border-zinc-800 text-zinc-500 mb-12">
-          <Like
-            initialLiked={post.isLiked}
-            initialLikeCount={post.likeCount || 0}
-            onToggle={() => executeLikeMutation(post._id)}
+          <PointsButton
+            post={post}
+            onRate={(score) => rateMutation.mutate({ postId: post._id, score })}
           />
           <div className="flex items-center gap-1.5 text-xs font-medium">
             <i className="fa-regular fa-comment text-sm"></i>

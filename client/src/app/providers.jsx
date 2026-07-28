@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { getCsrfToken } from "@/services/authService";
 import { checkAuth } from "@/store/authSlice";
+import { SocketProvider } from "@/shared/context/SocketContext";
 
 export default function Providers({ children }) {
 
@@ -26,8 +27,10 @@ export default function Providers({ children }) {
   return (
     <Provider store={store}>
       <QueryClientProvider client={queryClient}>
-        <InitApp />
-        {children}
+        <SocketProvider>
+          <InitApp />
+          {children}
+        </SocketProvider>
       </QueryClientProvider>
     </Provider>
   );

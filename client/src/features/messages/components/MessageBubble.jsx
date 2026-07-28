@@ -9,7 +9,7 @@ export default function MessageBubble({ msg, isMine, onDelete }) {
   return (
     <div className={`flex ${isMine ? "justify-end" : "justify-start"} group relative mb-1`}>
       {canDelete && (
-        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex items-center mr-2 self-center relative">
+        <div className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-150 flex items-center mr-2 self-center relative">
           <button
             type="button"
             onClick={() => setShowMenu(!showMenu)}

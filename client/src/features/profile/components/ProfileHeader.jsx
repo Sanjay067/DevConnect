@@ -13,6 +13,9 @@ export default function ProfileHeader({
   onToggleFollow,
   onEditClick,
   onUploadBanner,
+  onProjectsClick,
+  onFollowersClick,
+  onFollowingClick,
 }) {
   const handleBannerChange = (e) => {
     const file = e.target.files?.[0];
@@ -28,7 +31,7 @@ export default function ProfileHeader({
   return (
     <div className="bg-zinc-950/50 rounded-2xl border border-zinc-800/80 shadow-xl overflow-hidden mb-8 backdrop-blur-sm">
       {/* Cover Banner */}
-      <div className="h-28 sm:h-36 md:h-48 w-full relative group/banner border-b border-zinc-800 bg-zinc-950 overflow-hidden">
+      <div className="h-28 sm:h-36 md:h-48 w-full relative group/banner border-b border-zinc-800 bg-zinc-950">
         {profile?.bannerPicture ? (
           <img src={profile.bannerPicture} alt="Profile Banner" className="w-full h-full object-cover" />
         ) : (
@@ -39,7 +42,7 @@ export default function ProfileHeader({
         
         {/* Change Banner overlay for owner */}
         {isOwnProfile && (
-          <label className="absolute right-4 bottom-4 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold bg-zinc-950/80 hover:bg-zinc-900 text-zinc-300 hover:text-zinc-100 cursor-pointer transition-all border border-zinc-800 opacity-0 group-hover/banner:opacity-100 backdrop-blur-sm shadow-md">
+          <label className="absolute right-3 top-3 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold bg-zinc-950/80 hover:bg-zinc-900 text-zinc-300 hover:text-zinc-100 cursor-pointer transition-all border border-zinc-800 opacity-0 group-hover/banner:opacity-100 backdrop-blur-sm shadow-md">
             <i className="fa-solid fa-camera" aria-hidden="true"></i>
             {isBannerPending ? "Uploading..." : "Change Banner"}
             <input
@@ -138,21 +141,41 @@ export default function ProfileHeader({
           </div>
 
           {/* Stats — flex with equal spacing, no overflow */}
-          <div className="flex items-center mt-5 pt-4 border-t border-zinc-900">
-            <div className="flex-1 text-center">
-              <div className="text-sm font-extrabold text-zinc-100">{posts?.length || 0}</div>
-              <div className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mt-0.5">Projects</div>
+          <div className="flex items-center mt-5 pt-4 border-t border-zinc-900 gap-1 sm:gap-2">
+            <button
+              type="button"
+              onClick={onProjectsClick}
+              className="flex-1 text-center hover:bg-zinc-900/40 py-2.5 rounded-xl cursor-pointer transition-all outline-none border border-transparent hover:border-zinc-800/40 group"
+            >
+              <div className="text-sm font-extrabold text-zinc-100 group-hover:text-emerald-400 transition-colors">{posts?.length || 0}</div>
+              <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-zinc-500 group-hover:text-zinc-350 transition-colors mt-0.5">Projects</div>
+            </button>
+            <div className="w-px h-8 bg-zinc-850 self-center" />
+            <div className="flex-1 text-center py-2.5 rounded-xl transition-all outline-none border border-transparent group">
+              <div className="text-sm font-extrabold text-amber-400 flex items-center justify-center gap-1">
+                <i className="fa-solid fa-star text-xs text-amber-400" />
+                {profile?.totalScore || 0}
+              </div>
+              <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-zinc-500 mt-0.5">Total Points</div>
             </div>
-            <div className="w-px h-8 bg-zinc-800" />
-            <div className="flex-1 text-center">
-              <div className="text-sm font-extrabold text-zinc-100">{profile?.followersCount || 0}</div>
-              <div className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mt-0.5">Followers</div>
-            </div>
-            <div className="w-px h-8 bg-zinc-800" />
-            <div className="flex-1 text-center">
-              <div className="text-sm font-extrabold text-zinc-100">{profile?.followingCount || 0}</div>
-              <div className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mt-0.5">Following</div>
-            </div>
+            <div className="w-px h-8 bg-zinc-850 self-center" />
+            <button
+              type="button"
+              onClick={onFollowersClick}
+              className="flex-1 text-center hover:bg-zinc-900/40 py-2.5 rounded-xl cursor-pointer transition-all outline-none border border-transparent hover:border-zinc-800/40 group"
+            >
+              <div className="text-sm font-extrabold text-zinc-100 group-hover:text-emerald-400 transition-colors">{profile?.followersCount || 0}</div>
+              <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-zinc-500 group-hover:text-zinc-350 transition-colors mt-0.5">Followers</div>
+            </button>
+            <div className="w-px h-8 bg-zinc-850 self-center" />
+            <button
+              type="button"
+              onClick={onFollowingClick}
+              className="flex-1 text-center hover:bg-zinc-900/40 py-2.5 rounded-xl cursor-pointer transition-all outline-none border border-transparent hover:border-zinc-800/40 group"
+            >
+              <div className="text-sm font-extrabold text-zinc-100 group-hover:text-emerald-400 transition-colors">{profile?.followingCount || 0}</div>
+              <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-zinc-500 group-hover:text-zinc-350 transition-colors mt-0.5">Following</div>
+            </button>
           </div>
         </div>
       </div>

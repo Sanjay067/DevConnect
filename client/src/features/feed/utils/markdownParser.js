@@ -54,17 +54,21 @@ export const renderMarkdown = (text = "") => {
   );
 
   html = html.replace(/!\[(.*?)\]\((.*?)\)/g, (match, alt, url) => {
-    if (!isSafeUrl(url)) {
-      return `<span class="text-red-500 text-xs">[unsafe image: ${alt}]</span>`;
+    const cleanUrl = url.trim();
+    const cleanAlt = alt.trim();
+    if (!isSafeUrl(cleanUrl)) {
+      return `<span class="text-red-500 text-xs">[unsafe image: ${cleanAlt}]</span>`;
     }
-    return `<div class="my-4 max-w-full rounded-xl overflow-hidden border border-gray-100 shadow-sm"><img src="${url}" alt="${alt}" class="max-w-full h-auto mx-auto object-contain" /></div>`;
+    return `<div class="my-4 max-w-full rounded-xl overflow-hidden border border-gray-100 shadow-sm"><img src="${cleanUrl}" alt="${cleanAlt}" class="max-w-full h-auto mx-auto object-contain" /></div>`;
   });
 
   html = html.replace(/\[(.*?)\]\((.*?)\)/g, (match, label, url) => {
-    if (!isSafeUrl(url)) {
-      return `<span class="text-red-500 text-xs">[unsafe link: ${label}]</span>`;
+    const cleanUrl = url.trim();
+    const cleanLabel = label.trim();
+    if (!isSafeUrl(cleanUrl)) {
+      return `<span class="text-red-500 text-xs">[unsafe link: ${cleanLabel}]</span>`;
     }
-    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 hover:underline font-semibold">${label}</a>`;
+    return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 hover:underline font-semibold">${cleanLabel}</a>`;
   });
 
   html = html.replace(/@\[(.*?)\]/g, (match, techName) => {
@@ -113,8 +117,6 @@ export const renderMarkdown = (text = "") => {
 
   codeBlocks.forEach((block, idx) => {
     const placeholder = `__MD_CODE_BLOCK_PLACEHOLDER_${idx}__`;
-    // `block.code` has already been HTML-escaped above. Do not decode it:
-    // this string is eventually assigned to dangerouslySetInnerHTML.
     const cleanCode = block.code;
 
     const codeHtml = `<div class="bg-gray-900 rounded-xl overflow-hidden my-4 border border-gray-800 font-mono text-xs text-gray-200">

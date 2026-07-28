@@ -72,10 +72,29 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Handle 403 Invalid CSRF Token: reset stale token, fetch fresh token, and retry request once
+    if (
+      error.response?.status === 403 &&
+      error.response?.data?.message === "Invalid CSRF token" &&
+      originalRequest &&
+      !originalRequest._csrfRetry
+    ) {
+      originalRequest._csrfRetry = true;
+      csrfToken = null;
+      try {
+        const freshToken = await getCsrfToken();
+        if (freshToken) {
+          originalRequest.headers = originalRequest.headers || {};
+          originalRequest.headers["x-csrf-token"] = freshToken;
+          return apiClient(originalRequest);
+        }
+      } catch (csrfErr) {
+        console.error("Failed to refresh CSRF token after 403:", csrfErr);
+      }
+    }
+
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
-      if (
-        originalRequest.url?.includes("/auth/refresh-token")
-      ) {
+      if (originalRequest.url?.includes("/auth/refresh-token")) {
         return Promise.reject(error);
       }
 
@@ -96,9 +115,8 @@ apiClient.interceptors.response.use(
       } catch (refreshError) {
         isRefreshing = false;
         processQueue(refreshError);
-        
-        // Dynamically import store/clearUser to break circular dependency:
-        // apiClient -> store -> authSlice -> authService -> apiClient
+
+        // Dynamically import store/clearUser to break circular dependency
         Promise.all([
           import("@/store"),
           import("@/store/authSlice")
