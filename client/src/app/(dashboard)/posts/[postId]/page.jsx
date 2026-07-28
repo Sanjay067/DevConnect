@@ -8,9 +8,9 @@ import { usePost } from "@/features/feed/hooks/useFeed";
 import { renderMarkdown } from "@/features/feed/utils/markdownParser";
 import { getTechIconClass } from "@/shared/lib/techIcons";
 import { resolveProfilePicture } from "@/shared/lib/imageHelpers";
-import { useRatePost } from "@/features/feed/hooks/useRatePost";
+import { useLikePost } from "@/features/feed/hooks/useLikePost";
 import Comment from "@/features/feed/components/Comment";
-import PointsButton from "@/features/feed/components/PointsButton";
+import Like from "@/features/feed/components/Like";
 
 import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -53,7 +53,7 @@ export default function PostDetailPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const currentUser = useSelector((state) => state.auth.user);
-  const rateMutation = useRatePost();
+  const { mutate: executeLikeMutation } = useLikePost();
 
   const { data: post, isLoading, isError } = usePost(postId);
 
@@ -230,9 +230,11 @@ export default function PostDetailPage() {
 
         {/* Footer actions */}
         <div className="flex items-center gap-6 py-5 border-t border-zinc-800 text-zinc-500 mb-12">
-          <PointsButton
-            post={post}
-            onRate={(score) => rateMutation.mutate({ postId: post._id, score })}
+          <Like
+            key={`${post._id}-${post.isLiked}-${post.likeCount}`}
+            initialLiked={post.isLiked}
+            initialLikeCount={post.likeCount || 0}
+            onToggle={() => executeLikeMutation(post._id)}
           />
           <div className="flex items-center gap-1.5 text-xs font-medium">
             <i className="fa-regular fa-comment text-sm"></i>
