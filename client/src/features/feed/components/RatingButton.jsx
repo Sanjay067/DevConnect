@@ -3,15 +3,15 @@
 import React, { useState, useRef, useEffect } from "react";
 
 const SCORE_LABELS = {
-  1:  "Needs Work",
-  2:  "Poor",
-  3:  "Fair",
-  4:  "Average",
-  5:  "Decent",
-  6:  "Good",
-  7:  "Very Good",
-  8:  "Great",
-  9:  "Outstanding",
+  1: "Needs Work",
+  2: "Poor",
+  3: "Fair",
+  4: "Average",
+  5: "Decent",
+  6: "Good",
+  7: "Very Good",
+  8: "Great",
+  9: "Outstanding",
   10: "Excellent",
 };
 
@@ -32,11 +32,11 @@ export default function RatingButton({ post, onRate }) {
   const closeTimerRef = useRef(null);
   const prevAvgRef = useRef(post.averageRating);
 
-  const userScore    = post.userRatingScore ?? null;
-  const avgRating    = post.averageRating   ?? 0;
-  const ratingCount  = post.ratingCount     ?? 0;
-  const hasRatings   = ratingCount > 0;
-  const activeScore  = hoveredScore ?? userScore;
+  const userScore = post.userRatingScore ?? null;
+  const avgRating = post.averageRating ?? 0;
+  const ratingCount = post.ratingCount ?? 0;
+  const hasRatings = ratingCount > 0;
+  const activeScore = hoveredScore ?? userScore;
 
   // Animate when average changes
   useEffect(() => {
@@ -126,7 +126,7 @@ export default function RatingButton({ post, onRate }) {
         <i className={`fa-solid fa-star text-sm transition-transform duration-300
           ${isAnimating ? "scale-125 rotate-12 text-amber-300"
             : userScore ? "text-amber-400 scale-110"
-            : "text-zinc-500 hover:text-amber-400"}`}
+              : "text-zinc-500 hover:text-amber-400"}`}
         />
         <span className={`font-extrabold tracking-tight transition-transform duration-300 inline-block
           ${isAnimating ? "scale-110 text-amber-300" : ""}`}>
@@ -169,10 +169,10 @@ export default function RatingButton({ post, onRate }) {
           {/* Label */}
           <p className="text-[11px] text-zinc-500 font-semibold mb-2 text-center tracking-wide uppercase">
             {hoveredScore
-              ? <><span className="text-amber-300">{hoveredScore}</span> — {SCORE_LABELS[hoveredScore]}</>
+              ? <><span className="text-amber-300">{hoveredScore}</span>  {SCORE_LABELS[hoveredScore]}</>
               : userScore
-              ? <><span className="text-amber-300">{userScore}</span> — {SCORE_LABELS[userScore]} (click to remove)</>
-              : "Rate this project"}
+                ? <><span className="text-amber-300">{userScore}</span> {SCORE_LABELS[userScore]} (click to remove)</>
+                : "Rate this project"}
           </p>
 
           {/* Score grid — two rows: 1–5 and 6–10 */}
@@ -181,8 +181,8 @@ export default function RatingButton({ post, onRate }) {
               <div key={ri} className="flex gap-1 justify-center">
                 {row.map((num) => {
                   const isSelected = num === userScore;
-                  const isHovered  = num === hoveredScore;
-                  const isActive   = num === activeScore;
+                  const isHovered = num === hoveredScore;
+                  const isActive = num === activeScore;
                   return (
                     <button
                       key={num}
@@ -194,8 +194,8 @@ export default function RatingButton({ post, onRate }) {
                         ${isSelected
                           ? "bg-amber-500 text-zinc-900 shadow-[0_0_10px_rgba(245,158,11,0.5)] scale-110"
                           : isActive
-                          ? "bg-amber-500/20 text-amber-300 border border-amber-500/40 scale-105"
-                          : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-100"
+                            ? "bg-amber-500/20 text-amber-300 border border-amber-500/40 scale-105"
+                            : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-100"
                         }`}
                     >
                       {num}
