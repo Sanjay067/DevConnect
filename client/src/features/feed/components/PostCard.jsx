@@ -2,10 +2,10 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import Like from './Like';
+import RatingButton from './RatingButton';
 import Comment from './Comment';
 import { resolveProfilePicture, resolveMediaSrc } from '@/shared/lib/imageHelpers';
-import { useLikePost } from '../hooks/useLikePost';
+import { useRatePost } from '../hooks/useRatePost';
 import { useSelector } from 'react-redux';
 import { getTechIconClass } from '@/shared/lib/techIcons';
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -32,7 +32,7 @@ const getFirstMarkdownImage = (text) => {
 
 function PostCard({ post, showMenu }) {
     const queryClient = useQueryClient();
-    const { mutate: executeLikeMutation } = useLikePost();
+    const { debouncedRate } = useRatePost();
     const [isCommentDialogOpen, setIsCommentDialogOpen] = useState(false);
     const [isFollowing, setIsFollowing] = useState(false);
     const [showDropdown, setShowDropdown] = useState(false);
@@ -284,11 +284,9 @@ function PostCard({ post, showMenu }) {
 
             {/* 7. Footer: Actions */}
             <div className="flex items-center gap-5 pt-4 border-t border-zinc-800 text-zinc-500">
-                <Like
-                    key={`${post._id}-${post.isLiked}-${post.likeCount}`}
-                    initialLiked={post.isLiked}
-                    initialLikeCount={post.likeCount || 0}
-                    onToggle={() => executeLikeMutation(post._id)}
+                <RatingButton
+                    post={post}
+                    onRate={(score) => debouncedRate(String(post._id), score)}
                 />
 
                 {/* Comment */}

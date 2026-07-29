@@ -6,6 +6,11 @@ export const toggleLikePost = (postId) => {
     return apiClient.post(`/posts/${postId}/like`);
 }
 
+export const ratePost = ({ postId, score, signal }) => {
+    return apiClient.patch(`/posts/${postId}/rate`, { score }, { signal });
+}
+
+
 //Comments
 
 export const getComments = (postId, page = 1, limit = 5) => {

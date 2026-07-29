@@ -41,14 +41,14 @@ const postSchema = new mongoose.Schema(
       {
         url: String,
         label: String,
-      }
+      },
     ],
 
     techStack: [
       {
         type: String,
         trim: true,
-      }
+      },
     ],
 
     lookingForContributors: {
@@ -56,23 +56,15 @@ const postSchema = new mongoose.Schema(
       default: false,
     },
 
-    likeCount: { type: Number, default: 0 },
+    likeCount:    { type: Number, default: 0 },
     commentCount: { type: Number, default: 0 },
 
-    likes: [
-      { type: mongoose.Schema.Types.ObjectId, ref: "User" }
-    ],
-    ratings: [
-      {
-        userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-        score: { type: Number, required: true, min: 1, max: 10 },
-        createdAt: { type: Date, default: Date.now },
-      },
-    ],
-    totalPoints: { type: Number, default: 0 },
+    // Rating aggregates — updated atomically by ratings.controller.js
+    totalPoints:   { type: Number, default: 0 },
     averageRating: { type: Number, default: 0 },
-    ratingCount: { type: Number, default: 0 },
+    ratingCount:   { type: Number, default: 0 },
 
+    // Precomputed feed ranking score — updated by score.worker.js
     score: { type: Number, default: 0 },
 
     isFeatured: { type: Boolean, default: false },
@@ -82,8 +74,8 @@ const postSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-
 postSchema.index({ author: 1, isActive: 1, score: -1 });
+postSchema.index({ isActive: 1, totalPoints: -1, createdAt: -1 });
 postSchema.index({ isActive: 1, score: -1 });
 postSchema.index({ isActive: 1, createdAt: -1 });
 postSchema.index({ author: 1, createdAt: -1 });

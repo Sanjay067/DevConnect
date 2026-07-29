@@ -10,7 +10,7 @@ import { getTechIconClass } from "@/shared/lib/techIcons";
 import { resolveProfilePicture } from "@/shared/lib/imageHelpers";
 import { useRatePost } from "@/features/feed/hooks/useRatePost";
 import Comment from "@/features/feed/components/Comment";
-import PointsButton from "@/features/feed/components/PointsButton";
+import RatingButton from "@/features/feed/components/RatingButton";
 
 import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -53,7 +53,7 @@ export default function PostDetailPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const currentUser = useSelector((state) => state.auth.user);
-  const rateMutation = useRatePost();
+  const { debouncedRate } = useRatePost();
 
   const { data: post, isLoading, isError } = usePost(postId);
 
@@ -230,9 +230,9 @@ export default function PostDetailPage() {
 
         {/* Footer actions */}
         <div className="flex items-center gap-6 py-5 border-t border-zinc-800 text-zinc-500 mb-12">
-          <PointsButton
+          <RatingButton
             post={post}
-            onRate={(score) => rateMutation.mutate({ postId: post._id, score })}
+            onRate={(score) => debouncedRate(String(post._id), score)}
           />
           <div className="flex items-center gap-1.5 text-xs font-medium">
             <i className="fa-regular fa-comment text-sm"></i>

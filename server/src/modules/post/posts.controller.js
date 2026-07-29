@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import Post from "./posts.model.js";
 import Like from "../like/likes.model.js";
 import Comment from "../comment/comments.model.js";
+import Rating from "../rating/ratings.model.js";
 
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { cloudinary } from "../../config/cloudinary.js";
@@ -61,37 +62,21 @@ const promoteTempAssets = async (markdownText) => {
 };
 
 
-export const enrichPostWithRating = (postObj, userId) => {
+/**
+ * Attaches `userRatingScore` and `isLiked` to a post object.
+ * Expects `userRatingScore` to be pre-fetched from the Rating collection
+ * (injected via `userRatingsMap` where keys are postId strings).
+ *
+ * For backwards compat: falls back to `isLiked` from the Like model.
+ */
+export const enrichPostWithRating = (postObj, userRatingsMap = {}, likedSet = new Set()) => {
   if (!postObj) return postObj;
-  const ratings = postObj.ratings || [];
-  const likes = postObj.likes || [];
-  const userIdStr = userId ? String(userId) : null;
-
-  let userRatingScore = null;
-  if (userIdStr) {
-    const userRating = ratings.find((r) => String(r.userId) === userIdStr);
-    if (userRating) {
-      userRatingScore = userRating.score;
-    } else if (likes.some((l) => String(l) === userIdStr)) {
-      userRatingScore = 10;
-    }
-  }
-
-  const ratingsSum = ratings.reduce((sum, r) => sum + Number(r.score || 0), 0);
-  const legacyLikesCount = likes.length > 0 ? likes.length : (postObj.likeCount && ratings.length === 0 ? postObj.likeCount : 0);
-  const legacyPoints = legacyLikesCount * 10;
-
-  const totalPoints = ratingsSum + legacyPoints;
-  const totalRatingCount = ratings.length + legacyLikesCount;
-  const averageRating = totalRatingCount > 0 ? Number((totalPoints / totalRatingCount).toFixed(1)) : 0;
-
+  const postId = String(postObj._id);
+  const userRatingScore = userRatingsMap[postId] ?? null;
   return {
     ...postObj,
     userRatingScore,
-    totalPoints,
-    averageRating,
-    ratingCount: totalRatingCount,
-    isLiked: !!userRatingScore,
+    isLiked: likedSet.has(postId) || userRatingScore !== null,
   };
 };
 

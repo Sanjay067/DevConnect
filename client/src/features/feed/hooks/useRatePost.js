@@ -1,125 +1,170 @@
-import { ratePost } from "@/services/postService";
+import { useRef, useCallback } from "react";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { ratePost } from "@/services/postService";
 
-const helperUpdatePost = (post, targetScore) => {
+// ── Cache helpers ─────────────────────────────────────────────────────────────
+
+const applyRatingUpdate = (post, targetScore) => {
   if (!post) return post;
-  const currentScore = post.userRatingScore || (post.isLiked ? 10 : null);
-  const currentTotal = post.totalPoints ?? ((post.likeCount || 0) * 10);
-  const currentCount = post.ratingCount ?? (post.likeCount || 0);
+
+  const currentScore = post.userRatingScore ?? null;
+  const currentTotal = post.totalPoints ?? 0;
+  const currentCount = post.ratingCount ?? 0;
 
   let newScore = null;
   let newTotal = currentTotal;
   let newCount = currentCount;
 
   if (currentScore === targetScore) {
-    // Toggle off (un-rate)
+    // Toggle off: user clicked their current score again (un-rate)
     newScore = null;
     newTotal = Math.max(0, currentTotal - targetScore);
     newCount = Math.max(0, currentCount - 1);
-  } else if (currentScore != null) {
-    // Score change (e.g. 5 -> 8)
+  } else if (currentScore !== null) {
+    // Score change (e.g. 6 to 9) — no count change, just totalPoints delta
     newScore = targetScore;
     newTotal = Math.max(0, currentTotal + (targetScore - currentScore));
+    newCount = currentCount;
   } else {
-    // New rating
+    // First rating on this post
     newScore = targetScore;
     newTotal = currentTotal + targetScore;
     newCount = currentCount + 1;
   }
 
-  const newAverage = newCount > 0 ? Number((newTotal / newCount).toFixed(1)) : 0;
+  const newAvg = newCount > 0 ? Number((newTotal / newCount).toFixed(1)) : 0;
 
   return {
     ...post,
     userRatingScore: newScore,
-    isLiked: !!newScore,
     totalPoints: newTotal,
     ratingCount: newCount,
-    likeCount: newCount,
-    averageRating: newAverage,
+    averageRating: newAvg,
+    isLiked: newScore !== null,
   };
 };
 
 const updateFeedCache = (oldFeed, postId, updateFn) => {
   if (!oldFeed) return oldFeed;
-  // Handle Infinite Query structure ({ pages: [{ posts: [] }, ...] })
+  // Infinite query: { pages: [{ posts: [] }, ...] }
   if (oldFeed.pages) {
     return {
       ...oldFeed,
       pages: oldFeed.pages.map((page) => ({
         ...page,
-        posts: (page.posts || []).map((p) => (p._id === postId ? updateFn(p) : p)),
+        posts: (page.posts || []).map((p) =>
+          String(p._id) === postId ? updateFn(p) : p
+        ),
       })),
     };
   }
-  // Handle standard query structure ({ posts: [] })
+  // Standard query: { posts: [] }
   if (oldFeed.posts) {
     return {
       ...oldFeed,
-      posts: oldFeed.posts.map((p) => (p._id === postId ? updateFn(p) : p)),
+      posts: oldFeed.posts.map((p) =>
+        String(p._id) === postId ? updateFn(p) : p
+      ),
     };
   }
   return oldFeed;
 };
 
+// ── Hook ──────────────────────────────────────────────────────────────────────
+
 export const useRatePost = () => {
   const queryClient = useQueryClient();
+  const abortCtrlRef = useRef(null);
+  const debounceRef = useRef(null);
 
-  return useMutation({
-    mutationFn: ({ postId, score }) => ratePost({ postId, score }),
+  const mutation = useMutation({
+    mutationFn: ({ postId, score, signal }) => ratePost({ postId, score, signal }),
 
     onMutate: async ({ postId, score }) => {
-      // 1. Cancel outgoing queries for feed & post so they don't overwrite optimistic update
       await queryClient.cancelQueries({ queryKey: ["feed"] });
       await queryClient.cancelQueries({ queryKey: ["post", postId] });
 
-      // 2. Snapshot previous cache for error rollback
       const previousFeed = queryClient.getQueryData(["feed"]);
       const previousPost = queryClient.getQueryData(["post", postId]);
 
-      // 3. Optimistically update infinite feed query cache in 0ms
-      queryClient.setQueryData(["feed"], (oldFeed) =>
-        updateFeedCache(oldFeed, postId, (p) => helperUpdatePost(p, score))
+      // Optimistic update — feed
+      queryClient.setQueryData(["feed"], (old) =>
+        updateFeedCache(old, postId, (p) => applyRatingUpdate(p, score))
       );
-
-      // 4. Optimistically update single post query cache in 0ms
-      queryClient.setQueryData(["post", postId], (oldData) => {
-        if (!oldData) return oldData;
-        if (oldData.post) {
-          return { ...oldData, post: helperUpdatePost(oldData.post, score) };
-        }
-        return helperUpdatePost(oldData, score);
+      // Optimistic update — single post detail
+      queryClient.setQueryData(["post", postId], (old) => {
+        if (!old) return old;
+        if (old.post) return { ...old, post: applyRatingUpdate(old.post, score) };
+        return applyRatingUpdate(old, score);
       });
 
       return { previousFeed, previousPost };
     },
 
-    onError: (err, { postId }, context) => {
-      // Rollback on network failure
-      if (context?.previousFeed) {
+    onError: (_err, { postId }, context) => {
+      if (context?.previousFeed)
         queryClient.setQueryData(["feed"], context.previousFeed);
-      }
-      if (context?.previousPost) {
+      if (context?.previousPost)
         queryClient.setQueryData(["post", postId], context.previousPost);
-      }
     },
 
     onSuccess: (data, { postId }) => {
-      const updatedPost = data?.data?.post;
-      if (updatedPost) {
-        // Silently write exact authoritative server response into infinite query cache
-        queryClient.setQueryData(["feed"], (oldFeed) =>
-          updateFeedCache(oldFeed, postId, (p) => ({ ...p, ...updatedPost }))
-        );
+      const updated = data?.data;
+      if (!updated) return;
 
-        queryClient.setQueryData(["post", postId], (oldData) => {
-          if (!oldData) return oldData;
-          if (oldData.post) {
-            return { ...oldData, post: { ...oldData.post, ...updatedPost } };
-          }
-          return { ...oldData, ...updatedPost };
-        });
-      }
+      const serverPatch = (p) => ({
+        ...p,
+        userRatingScore: updated.userRatingScore ?? null,
+        totalPoints: updated.totalPoints ?? p.totalPoints,
+        averageRating: updated.averageRating ?? p.averageRating,
+        ratingCount: updated.ratingCount ?? p.ratingCount,
+        likeCount: updated.likeCount ?? p.likeCount,
+        isLiked: updated.userRatingScore !== null,
+      });
+
+      queryClient.setQueryData(["feed"], (old) =>
+        updateFeedCache(old, postId, serverPatch)
+      );
+      queryClient.setQueryData(["post", postId], (old) => {
+        if (!old) return old;
+        if (old.post) return { ...old, post: serverPatch(old.post) };
+        return serverPatch(old);
+      });
     },
   });
+
+  /**
+   * Debounced rate — UI updates immediately every click,
+   * but the network request fires only after 300ms of inactivity.
+   * Previous in-flight requests are aborted via AbortController.
+   */
+  const debouncedRate = useCallback(
+    (postId, score) => {
+      // Cancel in-flight stale request
+      if (abortCtrlRef.current) abortCtrlRef.current.abort();
+      const controller = new AbortController();
+      abortCtrlRef.current = controller;
+
+      // Cancel pending timer
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+
+      // Apply optimistic update immediately via onMutate
+      queryClient.setQueryData(["feed"], (old) =>
+        updateFeedCache(old, postId, (p) => applyRatingUpdate(p, score))
+      );
+      queryClient.setQueryData(["post", postId], (old) => {
+        if (!old) return old;
+        if (old.post) return { ...old, post: applyRatingUpdate(old.post, score) };
+        return applyRatingUpdate(old, score);
+      });
+
+      // Schedule actual network request after 300ms pause
+      debounceRef.current = setTimeout(() => {
+        mutation.mutate({ postId, score, signal: controller.signal });
+      }, 300);
+    },
+    [mutation, queryClient]
+  );
+
+  return { ...mutation, debouncedRate };
 };

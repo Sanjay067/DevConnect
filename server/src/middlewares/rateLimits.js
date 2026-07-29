@@ -26,3 +26,13 @@ export const uploadLimiter = rateLimit({
   legacyHeaders: false,
   message: { message: "Too many uploads, please try again later." },
 });
+
+/** Limit for post rating actions */
+export const ratingLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: Number(process.env.RATING_RATE_LIMIT_MAX || 60),
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many rating actions, please slow down." },
+});
+
