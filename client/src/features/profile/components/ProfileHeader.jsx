@@ -8,7 +8,8 @@ export default function ProfileHeader({
   user,
   posts,
   isOwnProfile,
-  isFollowing,
+  followStatus = "not_following",
+  isFollowPending = false,
   isBannerPending,
   onToggleFollow,
   onEditClick,
@@ -87,14 +88,21 @@ export default function ProfileHeader({
                 <button
                   type="button"
                   onClick={onToggleFollow}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer ${
-                    isFollowing 
-                      ? "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+                  disabled={isFollowPending}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer disabled:opacity-60 ${
+                    followStatus === "following" 
+                      ? "bg-zinc-800 text-zinc-300 hover:bg-zinc-700 border border-zinc-700/50"
+                      : followStatus === "follow_back"
+                      ? "bg-emerald-500 text-zinc-950 hover:bg-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.25)]"
                       : "bg-emerald-500 text-zinc-950 hover:bg-emerald-400"
                   }`}
                 >
-                  {isFollowing ? (
+                  {isFollowPending ? (
+                    <i className="fa-solid fa-circle-notch fa-spin text-xs" />
+                  ) : followStatus === "following" ? (
                     <><i className="fa-solid fa-user-check mr-1" aria-hidden="true"></i>Following</>
+                  ) : followStatus === "follow_back" ? (
+                    <><i className="fa-solid fa-user-plus mr-1" aria-hidden="true"></i>Follow Back</>
                   ) : (
                     <><i className="fa-solid fa-plus mr-1" aria-hidden="true"></i>Follow</>
                   )}

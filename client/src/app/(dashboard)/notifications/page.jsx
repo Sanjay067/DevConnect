@@ -4,8 +4,8 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getNotifications, markNotificationsRead } from "@/services/notificationService";
-import { followUser, unfollowUser } from "@/services/followService";
 import { resolveProfilePicture } from "@/shared/lib/imageHelpers";
+import { useFollowSystem } from "@/shared/hooks/useFollowSystem";
 
 const formatTimeAgo = (dateString) => {
   if (!dateString) return "";
@@ -39,6 +39,7 @@ function NotificationsSkeleton() {
 
 export default function NotificationsPage() {
   const queryClient = useQueryClient();
+  const { getFollowStatus, toggleFollow, isPending: isFollowPending, activeTargetId } = useFollowSystem();
 
   const { data: notificationsData, isLoading } = useQuery({
     queryKey: ["notifications"],
@@ -49,15 +50,6 @@ export default function NotificationsPage() {
     mutationFn: markNotificationsRead,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["unread-notifications-count"] });
-    },
-  });
-
-  const followMutation = useMutation({
-    mutationFn: ({ userId, isFollowing }) =>
-      isFollowing ? unfollowUser(userId) : followUser(userId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
     },
   });
 
@@ -100,6 +92,9 @@ export default function NotificationsPage() {
           {notifications.map((notif) => {
             const sender = notif.senderId;
             if (!sender) return null;
+            const followStatus = getFollowStatus(sender._id);
+            const isPendingThisUser = isFollowPending && String(activeTargetId) === String(sender._id);
+
             return (
               <div
                 key={notif._id}
@@ -141,34 +136,40 @@ export default function NotificationsPage() {
                   </div>
                 </div>
 
-                {/* Follow / Following Action */}
-                <button
-                  type="button"
-                  onClick={() =>
-                    followMutation.mutate({
-                      userId: sender._id,
-                      isFollowing: sender.isFollowing,
-                    })
-                  }
-                  disabled={followMutation.isPending}
-                  className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer shrink-0 disabled:opacity-60 ${
-                    sender.isFollowing
-                      ? "bg-zinc-800 text-zinc-300 hover:bg-zinc-700 border border-zinc-700/50"
-                      : "bg-emerald-500 text-zinc-950 hover:bg-emerald-400"
-                  }`}
-                >
-                  {sender.isFollowing ? (
-                    <>
-                      <i className="fa-solid fa-user-check mr-1" aria-hidden="true" />
-                      Following
-                    </>
-                  ) : (
-                    <>
-                      <i className="fa-solid fa-plus mr-1" aria-hidden="true" />
-                      Follow
-                    </>
-                  )}
-                </button>
+                {/* Follow / Following / Follow Back Action */}
+                {followStatus !== "self" && (
+                  <button
+                    type="button"
+                    onClick={() => toggleFollow(sender._id)}
+                    disabled={isPendingThisUser}
+                    className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer shrink-0 disabled:opacity-60 ${
+                      followStatus === "following"
+                        ? "bg-zinc-800 text-zinc-300 hover:bg-zinc-700 border border-zinc-700/50"
+                        : followStatus === "follow_back"
+                        ? "bg-emerald-500 text-zinc-950 hover:bg-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.25)]"
+                        : "bg-emerald-500 text-zinc-950 hover:bg-emerald-400"
+                    }`}
+                  >
+                    {isPendingThisUser ? (
+                      <i className="fa-solid fa-circle-notch fa-spin text-xs" />
+                    ) : followStatus === "following" ? (
+                      <>
+                        <i className="fa-solid fa-user-check mr-1" aria-hidden="true" />
+                        Following
+                      </>
+                    ) : followStatus === "follow_back" ? (
+                      <>
+                        <i className="fa-solid fa-user-plus mr-1" aria-hidden="true" />
+                        Follow Back
+                      </>
+                    ) : (
+                      <>
+                        <i className="fa-solid fa-plus mr-1" aria-hidden="true" />
+                        Follow
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
             );
           })}

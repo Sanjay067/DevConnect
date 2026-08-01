@@ -5,9 +5,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useSelector } from "react-redux";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { getFollowing } from "@/services/followService";
 import { useProfiles } from "@/features/network/hooks/useProfiles";
-import { useFollow } from "@/features/network/hooks/useFollow";
+import { useFollowSystem } from "@/shared/hooks/useFollowSystem";
 
 import HeroSection from "@/features/network/components/HeroSection";
 import RecommendedDevelopers from "@/features/network/components/RecommendedDevelopers";
@@ -32,7 +31,6 @@ function useDebounce(value, delay) {
 }
 
 function NetworkPageContent() {
-  const currentUser = useSelector((state) => state.auth.user);
   const router = useRouter();
   const searchParams = useSearchParams();
   const search = searchParams.get("q") || "";
@@ -47,29 +45,8 @@ function NetworkPageContent() {
     isFetchingNextPage 
   } = useProfiles(debouncedSearch);
 
-  // 2. Fetch current user following relationships
-  const { data: followingData } = useQuery({
-    queryKey: ["following", currentUser?._id],
-    queryFn: () => getFollowing(currentUser._id).then((res) => res.data),
-    enabled: !!currentUser?._id,
-  });
-
-  const followingIds = useMemo(() => {
-    return new Set(
-      (followingData?.following || []).map((f) => String(f.followingId?._id || f.followingId))
-    );
-  }, [followingData]);
-
-  // 3. Follow mutations hook with optimistic updates
-  const followState = useFollow(currentUser);
-
-  const toggleFollow = (userId) => {
-    if (followingIds.has(String(userId))) {
-      followState.unfollow(userId);
-    } else {
-      followState.follow(userId);
-    }
-  };
+  // 2. Centralized follow state hook
+  const { getFollowStatus, toggleFollow, isPending, activeTargetId } = useFollowSystem();
 
   const handleResetSearch = () => {
     router.replace("/network");
@@ -91,10 +68,10 @@ function NetworkPageContent() {
       {!isLoading && !search.trim() && (
         <RecommendedDevelopers
           profiles={profiles}
-          followingIds={followingIds}
+          getFollowStatus={getFollowStatus}
           onToggleFollow={toggleFollow}
-          activePendingId={followState.activeVariables}
-          isPending={followState.isPending}
+          activePendingId={activeTargetId}
+          isPending={isPending}
           onResetSearch={handleResetSearch}
         />
       )}
@@ -114,10 +91,10 @@ function NetworkPageContent() {
           <>
             <DeveloperGrid
               profiles={profiles}
-              followingIds={followingIds}
+              getFollowStatus={getFollowStatus}
               onToggleFollow={toggleFollow}
-              activePendingId={followState.activeVariables}
-              isPending={followState.isPending}
+              activePendingId={activeTargetId}
+              isPending={isPending}
               onClearSearch={handleResetSearch}
             />
 

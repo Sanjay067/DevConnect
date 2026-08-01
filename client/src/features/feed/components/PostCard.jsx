@@ -9,7 +9,7 @@ import { useRatePost } from '../hooks/useRatePost';
 import { useSelector } from 'react-redux';
 import { getTechIconClass } from '@/shared/lib/techIcons';
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { followUser, unfollowUser } from "@/services/followService";
+import { useFollowSystem } from "@/shared/hooks/useFollowSystem";
 
 import { deletePost, toggleFeaturePost } from "@/services/postService";
 
@@ -33,11 +33,14 @@ const getFirstMarkdownImage = (text) => {
 function PostCard({ post, showMenu }) {
     const queryClient = useQueryClient();
     const { debouncedRate } = useRatePost();
+    const { getFollowStatus, toggleFollow, isPending: isFollowPending, activeTargetId } = useFollowSystem();
     const [isCommentDialogOpen, setIsCommentDialogOpen] = useState(false);
-    const [isFollowing, setIsFollowing] = useState(false);
     const [showDropdown, setShowDropdown] = useState(false);
     const currentUser = useSelector((state) => state.auth.user);
     const isOwnPost = post.author?._id === currentUser?._id;
+
+    const authorFollowStatus = getFollowStatus(post.author?._id);
+    const isThisAuthorPending = isFollowPending && String(activeTargetId) === String(post.author?._id);
 
     const featureMutation = useMutation({
         mutationFn: () => toggleFeaturePost(post._id),
@@ -58,15 +61,6 @@ function PostCard({ post, showMenu }) {
         }
         return img;
     }, [markdownText, post.media]);
-
-    const followMutation = useMutation({
-        mutationFn: () => isFollowing ? unfollowUser(post.author?._id) : followUser(post.author?._id),
-        onMutate: () => setIsFollowing(prev => !prev),
-        onError: () => setIsFollowing(prev => !prev),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["following"] });
-        },
-    });
 
     const deleteMutation = useMutation({
         mutationFn: deletePost,
@@ -130,17 +124,25 @@ function PostCard({ post, showMenu }) {
                 {/* Follow / Edit button */}
                 {!isOwnPost && (
                     <button
-                        onClick={() => followMutation.mutate()}
-                        disabled={followMutation.isPending}
-                        className={`border font-semibold text-xs px-3.5 py-1.5 rounded-lg cursor-pointer transition-all disabled:opacity-60 ${
-                            isFollowing
-                                ? "border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
-                                : "border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-500/70"
-                        }`}
+                        type="button"
+                        onClick={() => toggleFollow(post.author?._id)}
+                        disabled={isThisAuthorPending}
+                        className={`font-semibold text-xs px-3.5 py-1.5 rounded-lg cursor-pointer transition-all disabled:opacity-60 ${authorFollowStatus === "following"
+                                ? "border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+                                : authorFollowStatus === "follow_back"
+                                    ? "bg-emerald-500 text-zinc-950 hover:bg-emerald-400 font-bold"
+                                    : "border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-500/70"
+                            }`}
                     >
-                        {followMutation.isPending ? (
+                        {isThisAuthorPending ? (
                             <i className="fa-solid fa-circle-notch fa-spin text-xs" />
-                        ) : isFollowing ? "Following" : "Follow"}
+                        ) : authorFollowStatus === "following" ? (
+                            "Following"
+                        ) : authorFollowStatus === "follow_back" ? (
+                            "+ Follow Back"
+                        ) : (
+                            "+ Follow"
+                        )}
                     </button>
                 )}
                 {isOwnPost && showMenu && (
@@ -155,8 +157,8 @@ function PostCard({ post, showMenu }) {
 
                         {showDropdown && (
                             <>
-                                <div 
-                                    className="fixed inset-0 z-30 cursor-default" 
+                                <div
+                                    className="fixed inset-0 z-30 cursor-default"
                                     onClick={() => setShowDropdown(false)}
                                 />
                                 <div className="absolute right-0 mt-1.5 z-45 min-w-[150px] bg-zinc-950 border border-zinc-800 rounded-xl shadow-2xl p-1.5 animate-in fade-in slide-in-from-top-2 duration-150">
@@ -167,7 +169,7 @@ function PostCard({ post, showMenu }) {
                                         <i className="fa-regular fa-pen-to-square"></i>
                                         Edit Project
                                     </Link>
-                                    
+
                                     <button
                                         type="button"
                                         onClick={() => {
@@ -286,6 +288,7 @@ function PostCard({ post, showMenu }) {
             <div className="flex items-center gap-5 pt-4 border-t border-zinc-800 text-zinc-500">
                 <RatingButton
                     post={post}
+                    isOwnPost={isOwnPost}
                     onRate={(score) => debouncedRate(String(post._id), score)}
                 />
 

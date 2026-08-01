@@ -3,8 +3,9 @@
 import { useState, useMemo } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { useProfile, useToggleFollow, useUserPosts } from "@/features/profile/hooks/useProfile";
+import { useProfile, useUserPosts } from "@/features/profile/hooks/useProfile";
 import { useProfileUploads } from "@/features/profile/hooks/useProfileUploads";
+import { useFollowSystem } from "@/shared/hooks/useFollowSystem";
 import { deletePost, toggleFeaturePost } from "@/services/postService";
 
 import ProfileHeader from "./ProfileHeader";
@@ -24,10 +25,12 @@ export default function ProfileLayout({ userId, isOwnProfile }) {
     
     const profile = profileWrapper?.profile;
     const user = profile?.userId || profileWrapper?.user;
-    const isFollowing = profile?.isFollowing || false;
+    
+    // 2. Centralized Follow System Hook
+    const { getFollowStatus, toggleFollow: systemToggleFollow, isPending: isFollowPending, activeTargetId } = useFollowSystem();
+    const followStatus = getFollowStatus(userId);
+    const isThisUserPending = isFollowPending && String(activeTargetId) === String(userId);
 
-    // 2. Mutations
-    const { mutate: toggleFollow } = useToggleFollow(userId, isFollowing);
     const { uploadBanner, isBannerPending } = useProfileUploads(userId);
 
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -81,9 +84,10 @@ export default function ProfileLayout({ userId, isOwnProfile }) {
                     user={user}
                     posts={posts}
                     isOwnProfile={isOwnProfile}
-                    isFollowing={isFollowing}
+                    followStatus={followStatus}
+                    isFollowPending={isThisUserPending}
                     isBannerPending={isBannerPending}
-                    onToggleFollow={() => toggleFollow()}
+                    onToggleFollow={() => systemToggleFollow(userId)}
                     onEditClick={() => setIsEditModalOpen(true)}
                     onUploadBanner={uploadBanner}
                     onProjectsClick={() => {

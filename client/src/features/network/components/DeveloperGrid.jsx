@@ -4,7 +4,7 @@ import EmptyState from "./EmptyState";
 
 export default function DeveloperGrid({ 
   profiles, 
-  followingIds, 
+  getFollowStatus, 
   onToggleFollow, 
   activePendingId, 
   isPending, 
@@ -17,14 +17,14 @@ export default function DeveloperGrid({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {profiles.map((profile) => {
-        const isFollowing = followingIds.has(String(profile._id));
+        const followStatus = getFollowStatus ? getFollowStatus(profile._id) : "not_following";
         const cardPending = isPending && String(activePendingId) === String(profile._id);
 
         return (
           <DeveloperCard
             key={profile._id}
             profile={profile}
-            isFollowing={isFollowing}
+            followStatus={followStatus}
             onToggleFollow={onToggleFollow}
             isPending={cardPending}
           />

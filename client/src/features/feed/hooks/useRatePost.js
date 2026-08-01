@@ -70,6 +70,20 @@ const updateFeedCache = (oldFeed, postId, updateFn) => {
   return oldFeed;
 };
 
+const updateUserPostsCache = (oldData, postId, updateFn) => {
+  if (!oldData) return oldData;
+  if (Array.isArray(oldData)) {
+    return oldData.map((p) => (String(p._id) === postId ? updateFn(p) : p));
+  }
+  if (oldData.posts) {
+    return {
+      ...oldData,
+      posts: oldData.posts.map((p) => (String(p._id) === postId ? updateFn(p) : p)),
+    };
+  }
+  return oldData;
+};
+
 // ── Hook ──────────────────────────────────────────────────────────────────────
 
 export const useRatePost = () => {
@@ -83,6 +97,7 @@ export const useRatePost = () => {
     onMutate: async ({ postId, score }) => {
       await queryClient.cancelQueries({ queryKey: ["feed"] });
       await queryClient.cancelQueries({ queryKey: ["post", postId] });
+      await queryClient.cancelQueries({ queryKey: ["userPosts"] });
 
       const previousFeed = queryClient.getQueryData(["feed"]);
       const previousPost = queryClient.getQueryData(["post", postId]);
@@ -97,6 +112,10 @@ export const useRatePost = () => {
         if (old.post) return { ...old, post: applyRatingUpdate(old.post, score) };
         return applyRatingUpdate(old, score);
       });
+      // Optimistic update — userPosts (profile view)
+      queryClient.setQueriesData({ queryKey: ["userPosts"] }, (old) =>
+        updateUserPostsCache(old, postId, (p) => applyRatingUpdate(p, score))
+      );
 
       return { previousFeed, previousPost };
     },
@@ -130,6 +149,10 @@ export const useRatePost = () => {
         if (old.post) return { ...old, post: serverPatch(old.post) };
         return serverPatch(old);
       });
+      queryClient.setQueriesData({ queryKey: ["userPosts"] }, (old) =>
+        updateUserPostsCache(old, postId, serverPatch)
+      );
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
     },
   });
 
@@ -157,6 +180,9 @@ export const useRatePost = () => {
         if (old.post) return { ...old, post: applyRatingUpdate(old.post, score) };
         return applyRatingUpdate(old, score);
       });
+      queryClient.setQueriesData({ queryKey: ["userPosts"] }, (old) =>
+        updateUserPostsCache(old, postId, (p) => applyRatingUpdate(p, score))
+      );
 
       // Schedule actual network request after 300ms pause
       debounceRef.current = setTimeout(() => {

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import { useSelector } from "react-redux";
 
 const SCORE_LABELS = {
   1:  "Needs Work",
@@ -21,8 +22,12 @@ const SCORE_LABELS = {
  * Props:
  *   post           — post object with { averageRating, ratingCount, userRatingScore, totalPoints }
  *   onRate(score)  — called when the user clicks a score (debounced at the hook level)
+ *   isOwnPost      — optional boolean indicating if post belongs to logged-in user
  */
-export default function RatingButton({ post, onRate }) {
+export default function RatingButton({ post, onRate, isOwnPost: isOwnPostProp }) {
+  const currentUser = useSelector((state) => state.auth.user);
+  const isOwnPost = isOwnPostProp ?? Boolean(post?.isAuthor || (currentUser?._id && post?.author?._id === currentUser?._id));
+
   const [showPopover, setShowPopover] = useState(false);
   const [hoveredScore, setHoveredScore] = useState(null);
   const [deltaLabel, setDeltaLabel] = useState(null);
@@ -73,11 +78,13 @@ export default function RatingButton({ post, onRate }) {
   }, [showPopover]);
 
   const openPopover = () => {
+    if (isOwnPost) return;
     if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
     setShowPopover(true);
   };
 
   const scheduleClose = () => {
+    if (isOwnPost) return;
     closeTimerRef.current = setTimeout(() => {
       setShowPopover(false);
       setHoveredScore(null);
@@ -85,6 +92,7 @@ export default function RatingButton({ post, onRate }) {
   };
 
   const handleSelectScore = (score) => {
+    if (isOwnPost) return;
     onRate(score);
     setShowPopover(false);
     setHoveredScore(null);
@@ -112,15 +120,19 @@ export default function RatingButton({ post, onRate }) {
       {/* Trigger button */}
       <button
         type="button"
+        title={isOwnPost ? "Your project" : undefined}
         onClick={(e) => {
           e.stopPropagation();
+          if (isOwnPost) return;
           setShowPopover((v) => !v);
         }}
         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold
-          transition-all duration-200 cursor-pointer
-          ${userScore
-            ? "border-amber-500/40 bg-amber-500/10 text-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.15)]"
-            : "border-zinc-800 bg-zinc-950/60 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200"
+          transition-all duration-200
+          ${isOwnPost
+            ? "cursor-default border-zinc-800/80 bg-zinc-950/40 text-zinc-400"
+            : userScore
+            ? "cursor-pointer border-amber-500/40 bg-amber-500/10 text-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.15)]"
+            : "cursor-pointer border-zinc-800 bg-zinc-950/60 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200"
           }`}
       >
         <i className={`fa-solid fa-star text-sm transition-transform duration-300
