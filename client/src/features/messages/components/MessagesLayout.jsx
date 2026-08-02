@@ -21,7 +21,10 @@ export default function MessagesLayout() {
   const myId = String(currentUser?._id || "");
   const queryClient = useQueryClient();
 
-  const selectedPeerId = searchParams.get("peer");
+  const selectedPeerId =
+    searchParams.get("peer") ||
+    searchParams.get("user") ||
+    searchParams.get("userId");
   const [draft, setDraft] = useState("");
 
   // Invalidate conversations and unread count to flush read-states immediately
@@ -52,10 +55,10 @@ export default function MessagesLayout() {
 
   const isNewConversation = !!(selectedPeerId && !peerInConversations);
 
-  const { data: publicProfileWrapper } = useQuery({
+  const { data: publicProfileWrapper, isLoading: loadingPublicProfile } = useQuery({
     queryKey: ["publicProfile", selectedPeerId],
     queryFn: () => getPublicUserProfile(selectedPeerId).then((res) => res.data),
-    enabled: isNewConversation,
+    enabled: !!selectedPeerId,
   });
 
   const publicUser = publicProfileWrapper?.user;
@@ -133,11 +136,18 @@ export default function MessagesLayout() {
             <NoConversationSelected />
           ) : (
             <>
-              <ChatHeader selectedPeer={selectedPeer} onBack={handleBack} />
+              <ChatHeader
+                selectedPeer={selectedPeer}
+                isLoading={loadingPublicProfile}
+                onBack={handleBack}
+              />
 
               <MessageList
                 messages={messages}
                 myId={myId}
+                selectedPeer={selectedPeer}
+                publicProfile={publicProfileWrapper?.profile}
+                loadingPublicProfile={loadingPublicProfile}
                 loadingMessages={loadingMessages}
                 messagesError={messagesError}
                 messagesEndRef={messagesEndRef}

@@ -181,9 +181,9 @@ export default function RatingButton({ post, onRate, isOwnPost: isOwnPostProp })
           {/* Label */}
           <p className="text-[11px] text-zinc-500 font-semibold mb-2 text-center tracking-wide uppercase">
             {hoveredScore
-              ? <><span className="text-amber-300">{hoveredScore}</span>  {SCORE_LABELS[hoveredScore]}</>
+              ? <><span className="text-amber-300">{hoveredScore}</span> — {SCORE_LABELS[hoveredScore]}</>
               : userScore
-                ? <><span className="text-amber-300">{userScore}</span> {SCORE_LABELS[userScore]} (click to remove)</>
+                ? <><span className="text-amber-300">{userScore}</span> — {SCORE_LABELS[userScore]} (click to remove)</>
                 : "Rate this project"}
           </p>
 

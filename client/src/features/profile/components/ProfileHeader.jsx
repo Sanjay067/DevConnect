@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import { useQueryClient } from "@tanstack/react-query";
 import { resolveProfilePicture } from "@/shared/lib/imageHelpers";
 import { getNormalizedLinks } from "@/shared/lib/socialLinks";
 
@@ -18,6 +19,22 @@ export default function ProfileHeader({
   onFollowersClick,
   onFollowingClick,
 }) {
+  const queryClient = useQueryClient();
+
+  const handleMessageClick = () => {
+    if (user?._id) {
+      queryClient.setQueryData(["publicProfile", String(user._id)], {
+        user: {
+          _id: user._id,
+          name: user.name,
+          username: user.username,
+          profilePicture: user.profilePicture,
+        },
+        profile: profile,
+      });
+    }
+  };
+
   const handleBannerChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -109,6 +126,7 @@ export default function ProfileHeader({
                 </button>
                 <Link 
                   href={`/messages?peer=${user?._id}`}
+                  onClick={handleMessageClick}
                   className="px-4 py-2 rounded-xl text-xs font-bold border border-zinc-800 text-zinc-300 hover:text-zinc-100 hover:bg-zinc-900 transition-all flex items-center gap-1.5 shadow-md"
                 >
                   <i className="fa-regular fa-comment-dots" aria-hidden="true"></i>
