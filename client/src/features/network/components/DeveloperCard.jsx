@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { resolveProfilePicture } from "@/shared/lib/imageHelpers";
 import { getTechIconClass } from "@/shared/lib/techIcons";
 
@@ -9,7 +10,25 @@ const MAX_SKILLS = 4;
 
 export default function DeveloperCard({ profile, followStatus = "not_following", onToggleFollow, isPending }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const isNewbie = !profile.bio && (!profile.skills || profile.skills.length === 0) && (profile.projectsCount || 0) === 0;
+
+  const handleMessageClick = () => {
+    if (profile?._id) {
+      queryClient.setQueryData(["publicProfile", String(profile._id)], {
+        user: {
+          _id: profile._id,
+          name: profile.name,
+          username: profile.username,
+          profilePicture: profile.profilePicture,
+        },
+        profile: {
+          headline: profile.headline,
+          bio: profile.bio,
+        },
+      });
+    }
+  };
 
   const handleCardClick = (e) => {
     if (e.target.closest("button") || e.target.closest("a")) {
@@ -114,6 +133,16 @@ export default function DeveloperCard({ profile, followStatus = "not_following",
                 "+ Follow"
               )}
             </button>
+          )}
+          {followStatus !== "self" && (
+            <Link
+              href={`/messages?peer=${profile._id}`}
+              onClick={handleMessageClick}
+              className="px-3 py-2 border border-zinc-850 text-zinc-300 hover:text-zinc-100 hover:bg-zinc-850 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5"
+            >
+              <i className="fa-regular fa-comment-dots text-emerald-400 text-xs" />
+              <span>Message</span>
+            </Link>
           )}
           <Link
             href={`/profile/${profile._id}`}

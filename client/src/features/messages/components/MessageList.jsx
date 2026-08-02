@@ -1,12 +1,16 @@
 import React, { Fragment } from "react";
 import MessageBubble from "./MessageBubble";
 import MessageThreadSkeleton from "./MessageThreadSkeleton";
+import ChatUserProfileCard from "./ChatUserProfileCard";
 import { getDayKey } from "../utils/getDayKey";
 import { formatDateSeparator } from "../utils/formatDateSeparator";
 
 export default function MessageList({
   messages = [],
   myId,
+  selectedPeer,
+  publicProfile,
+  loadingPublicProfile,
   loadingMessages,
   messagesError,
   messagesEndRef,
@@ -33,14 +37,25 @@ export default function MessageList({
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-5 space-y-4 flex flex-col">
+    <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 flex flex-col">
+      {/* Top Profile Header Card (Instagram / WhatsApp style) */}
+      {(selectedPeer || loadingPublicProfile) && (
+        <ChatUserProfileCard
+          peer={selectedPeer}
+          profile={publicProfile}
+          isLoading={loadingPublicProfile}
+        />
+      )}
+
       {messages.length === 0 ? (
-        <div className="flex flex-col h-full items-center justify-center gap-3 text-center select-none">
-          <div className="w-12 h-12 rounded-2xl bg-zinc-800/80 border border-zinc-700 flex items-center justify-center text-xl">
+        <div className="flex flex-col items-center justify-center pb-8 gap-2 text-center select-none">
+          <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-lg text-emerald-400">
             👋
           </div>
-          <p className="text-sm font-semibold text-zinc-400">Start the conversation</p>
-          <p className="text-xs text-zinc-600 max-w-[200px]">Say hello — you&apos;re connected!</p>
+          <p className="text-xs font-semibold text-zinc-400">Say hello!</p>
+          <p className="text-[11px] text-zinc-600 max-w-[220px]">
+            Send a message to start chatting with {selectedPeer?.name || "this developer"}.
+          </p>
         </div>
       ) : (
         messages.map((msg, idx) => {
