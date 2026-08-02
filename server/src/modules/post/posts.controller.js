@@ -122,18 +122,27 @@ export const getAllUserPosts = asyncHandler(async (req, res) => {
     .sort({ createdAt: -1 });
 
   const postIds = posts.map((p) => p._id);
-  const userLikes = await Like.find({
-    userId,
-    targetId: { $in: postIds },
-    targetType: "Post",
-  }).select("targetId");
+  const [userLikes, userRatings] = await Promise.all([
+    Like.find({
+      userId,
+      targetId: { $in: postIds },
+      targetType: "Post",
+    }).select("targetId"),
+    Rating.find({
+      userId,
+      postId: { $in: postIds },
+    }).select("postId score"),
+  ]);
 
   const likedSet = new Set(userLikes.map((l) => String(l.targetId)));
+  const userRatingsMap = {};
+  for (const r of userRatings) {
+    userRatingsMap[String(r.postId)] = r.score;
+  }
 
-  const finalPosts = posts.map((p) => ({
-    ...p.toObject(),
-    isLiked: likedSet.has(String(p._id)),
-  }));
+  const finalPosts = posts.map((p) =>
+    enrichPostWithRating(p.toObject(), userRatingsMap, likedSet)
+  );
 
   return res
     .status(200)
@@ -154,20 +163,30 @@ export const getPublicUserPosts = asyncHandler(async (req, res) => {
 
   const postIds = posts.map((p) => p._id);
   let likedSet = new Set();
-  
+  const userRatingsMap = {};
+
   if (currentUserId) {
-    const userLikes = await Like.find({
-      userId: currentUserId,
-      targetId: { $in: postIds },
-      targetType: "Post",
-    }).select("targetId");
+    const [userLikes, userRatings] = await Promise.all([
+      Like.find({
+        userId: currentUserId,
+        targetId: { $in: postIds },
+        targetType: "Post",
+      }).select("targetId"),
+      Rating.find({
+        userId: currentUserId,
+        postId: { $in: postIds },
+      }).select("postId score"),
+    ]);
+
     likedSet = new Set(userLikes.map((l) => String(l.targetId)));
+    for (const r of userRatings) {
+      userRatingsMap[String(r.postId)] = r.score;
+    }
   }
 
-  const finalPosts = posts.map((p) => ({
-    ...p.toObject(),
-    isLiked: likedSet.has(String(p._id)),
-  }));
+  const finalPosts = posts.map((p) =>
+    enrichPostWithRating(p.toObject(), userRatingsMap, likedSet)
+  );
 
   return res.status(200).json({ posts: finalPosts });
 });

@@ -7,7 +7,7 @@ const MAX_RECOMMENDED = 3;
 
 export default function RecommendedDevelopers({ 
   profiles, 
-  followingIds, 
+  getFollowStatus, 
   onToggleFollow, 
   activePendingId, 
   isPending,
@@ -15,9 +15,12 @@ export default function RecommendedDevelopers({
 }) {
   const recommended = React.useMemo(() => {
     return profiles
-      .filter((p) => !followingIds.has(String(p._id)))
+      .filter((p) => {
+        const status = getFollowStatus ? getFollowStatus(p._id) : "not_following";
+        return status !== "following" && status !== "self";
+      })
       .slice(0, MAX_RECOMMENDED);
-  }, [profiles, followingIds]);
+  }, [profiles, getFollowStatus]);
 
   if (recommended.length === 0) return null;
 
@@ -38,7 +41,7 @@ export default function RecommendedDevelopers({
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {recommended.map((profile) => {
-          const isFollowing = followingIds.has(String(profile._id));
+          const followStatus = getFollowStatus ? getFollowStatus(profile._id) : "not_following";
           const cardPending = isPending && String(activePendingId) === String(profile._id);
 
           return (
@@ -74,17 +77,21 @@ export default function RecommendedDevelopers({
                 disabled={cardPending}
                 onClick={() => onToggleFollow(profile._id)}
                 className={`mt-4 w-full rounded-xl py-1.5 text-xs font-bold transition-all disabled:opacity-50 cursor-pointer ${
-                  isFollowing
+                  followStatus === "following"
                     ? "border border-zinc-750 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+                    : followStatus === "follow_back"
+                    ? "bg-emerald-500 text-zinc-950 hover:bg-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.2)]"
                     : "bg-emerald-500 text-zinc-950 hover:bg-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.15)]"
                 }`}
               >
                 {cardPending ? (
                   <i className="fa-solid fa-circle-notch fa-spin text-xs" />
-                ) : isFollowing ? (
+                ) : followStatus === "following" ? (
                   "Following"
+                ) : followStatus === "follow_back" ? (
+                  "+ Follow Back"
                 ) : (
-                  "Follow"
+                  "+ Follow"
                 )}
               </button>
             </div>

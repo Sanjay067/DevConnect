@@ -27,12 +27,12 @@ export const followUser = asyncHandler(async (req, res) => {
   try {
     await Follow.create({ followerId, followingId });
 
-    // Dispatch async notification creation & automatic 30-item capping
-    Notification.create({
-      recipientId: followingId,
-      senderId: followerId,
-      type: "FOLLOW",
-    })
+    // Upsert single notification for this follower and update timestamp
+    Notification.findOneAndUpdate(
+      { recipientId: followingId, senderId: followerId, type: "FOLLOW" },
+      { isRead: false, createdAt: new Date() },
+      { upsert: true, new: true }
+    )
       .then(async () => {
         const excess = await Notification.find({ recipientId: followingId })
           .sort({ createdAt: -1 })
@@ -45,7 +45,7 @@ export const followUser = asyncHandler(async (req, res) => {
         }
       })
       .catch((err) => {
-        console.error("Error creating notification:", err);
+        console.error("Error upserting notification:", err);
       });
   } catch (error) {
     if (error?.code === 11000) return res.status(400).json({ message: "Already following" });
@@ -65,6 +65,9 @@ export const unfollowUser = asyncHandler(async (req, res) => {
 
   const follow = await Follow.findOneAndDelete({ followerId, followingId });
   if (!follow) return res.status(400).json({ message: "Not following this user" });
+
+  // Clean up follow notification when unfollowing
+  await Notification.deleteOne({ recipientId: followingId, senderId: followerId, type: "FOLLOW" });
 
   return res.status(200).json({ message: "Successfully unfollowed user" });
 });

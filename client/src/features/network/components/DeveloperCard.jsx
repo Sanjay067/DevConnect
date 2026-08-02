@@ -7,7 +7,7 @@ import { getTechIconClass } from "@/shared/lib/techIcons";
 
 const MAX_SKILLS = 4;
 
-export default function DeveloperCard({ profile, isFollowing, onToggleFollow, isPending }) {
+export default function DeveloperCard({ profile, followStatus = "not_following", onToggleFollow, isPending }) {
   const router = useRouter();
   const isNewbie = !profile.bio && (!profile.skills || profile.skills.length === 0) && (profile.projectsCount || 0) === 0;
 
@@ -84,31 +84,37 @@ export default function DeveloperCard({ profile, isFollowing, onToggleFollow, is
         )}
       </div>
 
-      <div className="pt-4 border-t border-zinc-850 mt-6 space-y-4">
+      <div className="pt-4 border-t border-zinc-855 mt-6 space-y-4">
         <div className="flex items-center gap-4 text-[10px] text-zinc-500 font-bold uppercase tracking-wider">
           <div>Projects: <span className="text-xs font-extrabold text-zinc-200">{profile.projectsCount || 0}</span></div>
           <div>Followers: <span className="text-xs font-extrabold text-zinc-200">{profile.followersCount || 0}</span></div>
         </div>
 
         <div className="flex gap-2.5">
-          <button
-            type="button"
-            disabled={isPending}
-            onClick={() => onToggleFollow(profile._id)}
-            className={`flex-1 rounded-xl py-2 text-xs font-bold transition-all disabled:opacity-50 cursor-pointer ${
-              isFollowing
-                ? "border border-zinc-750 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
-                : "bg-emerald-500 text-zinc-950 hover:bg-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.15)]"
-            }`}
-          >
-            {isPending ? (
-              <i className="fa-solid fa-circle-notch fa-spin text-xs" />
-            ) : isFollowing ? (
-              "Following"
-            ) : (
-              "Follow"
-            )}
-          </button>
+          {followStatus !== "self" && (
+            <button
+              type="button"
+              disabled={isPending}
+              onClick={() => onToggleFollow(profile._id)}
+              className={`flex-1 rounded-xl py-2 text-xs font-bold transition-all disabled:opacity-50 cursor-pointer ${
+                followStatus === "following"
+                  ? "border border-zinc-750 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+                  : followStatus === "follow_back"
+                  ? "bg-emerald-500 text-zinc-950 hover:bg-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.2)]"
+                  : "bg-emerald-500 text-zinc-950 hover:bg-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.15)]"
+              }`}
+            >
+              {isPending ? (
+                <i className="fa-solid fa-circle-notch fa-spin text-xs" />
+              ) : followStatus === "following" ? (
+                "Following"
+              ) : followStatus === "follow_back" ? (
+                "+ Follow Back"
+              ) : (
+                "+ Follow"
+              )}
+            </button>
+          )}
           <Link
             href={`/profile/${profile._id}`}
             className="flex-1 text-center border border-zinc-850 text-zinc-300 hover:text-zinc-100 hover:bg-zinc-850 rounded-xl py-2 text-xs font-bold transition-all shadow-sm"

@@ -6,7 +6,7 @@ import CreatePostCard from './CreatePostCard';
 
 function FeedWrapper({ posts = [], isFetchingNextPage }) {
     return (
-        <div className="max-w-7xl mx-auto flex gap-8 px-4 justify-center">
+        <div className="max-w-7xl mx-auto flex gap-8 px-2 sm:px-4 justify-center">
             <div className='flex-1 min-w-0 transition-all duration-300'>
                 <CreatePostCard />
                 {posts.map((post) => (
