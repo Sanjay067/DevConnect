@@ -8,7 +8,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata = {
-  title: "DevConnect",
+  title: "dev.connect",
   description: "A place for developers to connect, share, and grow.",
 };
 
@@ -16,7 +16,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${jetbrainsMono.variable} h-full antialiased`}>
       <head>
-        <link rel="icon" href="/devConnect-logo.png" type="image/png" />
+        <link rel="icon" href="/dev.connect.png" type="image/png" />
         <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" rel="stylesheet" />
       </head>
       <body className="min-h-full flex flex-col">

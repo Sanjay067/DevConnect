@@ -25,5 +25,8 @@
     "multer": "^2.0.2",
     "multer-storage-cloudinary": "^2.2.1",
     "socket.io": "^4.8.3"
+  },
+  "devDependencies": {
+    "puppeteer": "^25.5.0"
   }
 }

@@ -216,6 +216,21 @@ function PostCard({ post, showMenu }) {
                     </p>
                 )}
 
+                {/* Tech Stack Badges */}
+                {post.techStack && post.techStack.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-1">
+                        {post.techStack.map((tech, idx) => {
+                            const iconClass = getTechIconClass(tech);
+                            return (
+                                <span key={idx} className="bg-zinc-950 border border-zinc-800 text-zinc-400 hover:border-emerald-500/40 hover:text-zinc-200 hover:bg-emerald-500/5 px-2.5 py-1 rounded-lg text-xs font-medium flex items-center gap-1.5 capitalize select-none transition-all duration-200">
+                                    {iconClass && <i className={`${iconClass} text-xs`}></i>}
+                                    {tech}
+                                </span>
+                            );
+                        })}
+                    </div>
+                )}
+
                 {/* Looking for Contributors badge */}
                 {post.lookingForContributors && (
                     <div className="inline-flex items-center gap-1.5 self-start mt-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold border border-emerald-500/30 bg-emerald-500/10 text-emerald-400">
@@ -268,21 +283,6 @@ function PostCard({ post, showMenu }) {
                     ))}
                 </div>
             </div>
-
-            {/* 6. Tech Stack Badges */}
-            {post.techStack && post.techStack.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-5">
-                    {post.techStack.map((tech, idx) => {
-                        const iconClass = getTechIconClass(tech);
-                        return (
-                            <span key={idx} className="bg-zinc-950 border border-zinc-800 text-zinc-400 hover:border-emerald-500/40 hover:text-zinc-200 hover:bg-emerald-500/5 px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 capitalize select-none transition-all duration-200">
-                                {iconClass && <i className={`${iconClass} text-xs`}></i>}
-                                {tech}
-                            </span>
-                        );
-                    })}
-                </div>
-            )}
 
             {/* 7. Footer: Actions */}
             <div className="flex items-center gap-5 pt-4 border-t border-zinc-800 text-zinc-500">

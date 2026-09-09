@@ -28,7 +28,7 @@ const promoteTempAssets = async (markdownText) => {
   if (!markdownText) return markdownText;
 
   let updatedText = markdownText;
-  const tempUrlRegex = /https:\/\/res\.cloudinary\.com\/[^\/]+\/image\/upload\/(?:v\d+\/)?(devConnect\/temp\/[^\.]+)\.[a-zA-Z0-9]+/g;
+  const tempUrlRegex = /https:\/\/res\.cloudinary\.com\/[^\/]+\/image\/upload\/(?:v\d+\/)?(dev.connect\/temp\/[^\.]+)\.[a-zA-Z0-9]+/g;
 
   const matches = [...markdownText.matchAll(tempUrlRegex)];
   const seen = new Set();
@@ -45,7 +45,7 @@ const promoteTempAssets = async (markdownText) => {
   for (const match of uniqueMatches) {
     const fullUrl = match[0];
     const oldPublicId = match[1];
-    const newPublicId = oldPublicId.replace("devConnect/temp/", "devConnect/posts/");
+    const newPublicId = oldPublicId.replace("dev.connect/temp/", "dev.connect/posts/");
 
     try {
       console.log(`Promoting asset: ${oldPublicId} -> ${newPublicId}`);
@@ -53,7 +53,7 @@ const promoteTempAssets = async (markdownText) => {
       updatedText = updatedText.replaceAll(fullUrl, renameResult.secure_url);
     } catch (error) {
       console.error(`Failed to promote asset ${oldPublicId}:`, error.message);
-      const fallbackUrl = fullUrl.replace("/devConnect/temp/", "/devConnect/posts/");
+      const fallbackUrl = fullUrl.replace("/dev.connect/temp/", "/dev.connect/posts/");
       updatedText = updatedText.replaceAll(fullUrl, fallbackUrl);
     }
   }

@@ -46,7 +46,7 @@ const isAllowedOrigin = (origin) => {
     return true;
   }
 
-  // Allow strict matches
+  
   if (strictOrigins.includes(normalized)) return true;
 
   return false;
@@ -73,7 +73,6 @@ app.use(
 );
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true, limit: "5mb" }));
-
 app.get("/healthz", (req, res) => {
   const ready = mongoose.connection.readyState === 1;
   return res.status(ready ? 200 : 503).json({ status: ready ? "ok" : "unavailable" });

@@ -38,12 +38,12 @@ export default function DeveloperCard({ profile, followStatus = "not_following",
   };
 
   return (
-    <div 
+    <div
       onClick={handleCardClick}
       className="group relative rounded-2xl border border-zinc-855 bg-zinc-900/20 p-6 hover:border-zinc-700/60 hover:-translate-y-0.5 hover:shadow-2xl transition-all duration-300 flex flex-col justify-between min-h-[350px] cursor-pointer"
     >
       <div className="space-y-4">
-        
+
         <div className="flex items-start gap-4">
           <div className="w-14 h-14 rounded-full overflow-hidden border border-zinc-700 shrink-0 relative">
             <Image
@@ -72,7 +72,7 @@ export default function DeveloperCard({ profile, followStatus = "not_following",
             <i className="fa-solid fa-seedling text-[#00ff66] text-base mb-1 animate-bounce" style={{ animationDuration: '3s' }} aria-hidden="true"></i>
             <span className="text-[9px] font-extrabold text-[#00ff66]/90 uppercase tracking-widest">Fresh Talent</span>
             <p className="text-[9px] text-zinc-500 mt-1 max-w-[180px]">
-              New developer ready to collaborate on devConnect.
+              New developer ready to collaborate on dev.connect.
             </p>
           </div>
         ) : (
@@ -84,8 +84,8 @@ export default function DeveloperCard({ profile, followStatus = "not_following",
             {profile.skills && profile.skills.length > 0 && (
               <div className="flex flex-wrap gap-1.5 pt-1">
                 {profile.skills.slice(0, MAX_SKILLS).map((tech, idx) => (
-                  <span 
-                    key={idx} 
+                  <span
+                    key={idx}
                     className="bg-zinc-950 border border-zinc-850 text-zinc-400 px-2 py-1 rounded-md text-[10px] font-medium flex items-center gap-1 capitalize transition-colors hover:border-emerald-500/20"
                   >
                     <i className={`${getTechIconClass(tech)} text-[9px]`} aria-hidden="true"></i>
@@ -115,13 +115,12 @@ export default function DeveloperCard({ profile, followStatus = "not_following",
               type="button"
               disabled={isPending}
               onClick={() => onToggleFollow(profile._id)}
-              className={`flex-1 rounded-xl py-2 text-xs font-bold transition-all disabled:opacity-50 cursor-pointer ${
-                followStatus === "following"
+              className={`flex-1 rounded-xl py-2 text-xs font-bold transition-all disabled:opacity-50 cursor-pointer ${followStatus === "following"
                   ? "border border-zinc-750 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
                   : followStatus === "follow_back"
-                  ? "bg-emerald-500 text-zinc-950 hover:bg-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.2)]"
-                  : "bg-emerald-500 text-zinc-950 hover:bg-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.15)]"
-              }`}
+                    ? "bg-emerald-500 text-zinc-950 hover:bg-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.2)]"
+                    : "bg-emerald-500 text-zinc-950 hover:bg-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.15)]"
+                }`}
             >
               {isPending ? (
                 <i className="fa-solid fa-circle-notch fa-spin text-xs" />
