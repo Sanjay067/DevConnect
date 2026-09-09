@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { checkAuth } from "@/store/authSlice";
 import { useLogin } from "@/features/auth/hooks/useLogin";
@@ -34,13 +34,23 @@ function TypingHeader({ text }) {
   );
 }
 
-export default function AuthPage() {
+function AuthForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const dispatch = useDispatch();
   const loginMutation = useLogin();
   const registerMutation = useRegister();
 
-  const [isLogin, setIsLogin] = useState(true);
+  const mode = searchParams.get("mode");
+  const [isLogin, setIsLogin] = useState(mode !== "signup" && mode !== "register");
+
+  useEffect(() => {
+    if (mode === "signup" || mode === "register") {
+      setIsLogin(false);
+    } else if (mode === "login") {
+      setIsLogin(true);
+    }
+  }, [mode]);
   const [form, setForm] = useState({
     email: "",
     password: "",
@@ -120,7 +130,7 @@ export default function AuthPage() {
             </h1>
             <p className="mt-1.5 text-sm text-zinc-500">
               {isLogin
-                ? "Sign in to continue to DevConnect"
+                ? "Sign in to continue to dev.connect"
                 : "Join thousands of developers building together"}
             </p>
           </div>
@@ -241,7 +251,7 @@ export default function AuthPage() {
           </div>
 
           {/* Brand name */}
-          <h2 className="mb-2 text-2xl font-bold tracking-tight text-zinc-50">DevConnect</h2>
+          <h2 className="mb-2 text-2xl font-bold tracking-tight text-zinc-50">dev.connect</h2>
           <p className="mb-10 text-sm text-zinc-400 leading-relaxed">
             Where developers build<br />together
           </p>
@@ -285,5 +295,22 @@ function InputField({ icon, type = "text", name, placeholder, value, onChange, r
         className="w-full bg-transparent text-sm text-zinc-100 placeholder-zinc-600 outline-none"
       />
     </div>
+  );
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense
+      fallback={
+        <div
+          className="flex min-h-screen w-full items-center justify-center"
+          style={{ background: "var(--bg)" }}
+        >
+          <i className="fa-solid fa-circle-notch fa-spin text-2xl text-emerald-500"></i>
+        </div>
+      }
+    >
+      <AuthForm />
+    </Suspense>
   );
 }

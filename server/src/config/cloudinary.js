@@ -57,7 +57,7 @@ const fileFilterFor = (allowedTypes) => (req, file, cb) => {
 const avatarStorage = new CloudinaryStorage({
   cloudinary,
   params: {
-    folder: "devConnect/avatars",
+    folder: "dev.connect/avatars",
     allowed_formats: ["jpg", "jpeg", "png", "webp"],
     transformation: [{ width: 400, height: 400, crop: "fill" }],
   },
@@ -67,7 +67,7 @@ const avatarStorage = new CloudinaryStorage({
 const tempMediaStorage = new CloudinaryStorage({
   cloudinary,
   params: {
-    folder: "devConnect/temp",
+    folder: "dev.connect/temp",
     allowed_formats: ["jpg", "jpeg", "png", "webp"],
     resource_type: "auto",
   },
@@ -77,7 +77,7 @@ const tempMediaStorage = new CloudinaryStorage({
 const postMediaStorage = new CloudinaryStorage({
   cloudinary,
   params: {
-    folder: "devConnect/posts",
+    folder: "dev.connect/posts",
     allowed_formats: ["jpg", "jpeg", "png", "webp", "mp4"],
     resource_type: "auto",
   },
@@ -86,7 +86,7 @@ const postMediaStorage = new CloudinaryStorage({
 const bannerStorage = new CloudinaryStorage({
   cloudinary,
   params: {
-    folder: "devConnect/banners",
+    folder: "dev.connect/banners",
     allowed_formats: ["jpg", "jpeg", "png", "webp"],
     transformation: [{ width: 1200, height: 400, crop: "fill" }],
   },

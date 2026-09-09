@@ -7,7 +7,7 @@ export const cleanupTempAssets = async () => {
 
     const result = await cloudinary.api.resources({
       type: "upload",
-      prefix: "devConnect/temp",
+      prefix: "dev.connect/temp",
       max_results: 100,
     });
 

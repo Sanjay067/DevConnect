@@ -61,7 +61,7 @@ export default function MyPostsPage() {
                             <i className="fa-solid fa-code text-4xl text-zinc-700 mb-4"></i>
                             <h3 className="text-lg font-semibold text-zinc-300">No projects yet</h3>
                             <p className="text-sm text-zinc-500 max-w-xs mx-auto mt-2 mb-6">
-                                Share your first project with the devConnect developer network to showcase your stack and connect.
+                                Share your first project with the dev.connect developer network to showcase your stack and connect.
                             </p>
                             <Link
                                 href="/posts/create"

@@ -1,4 +1,4 @@
-# devConnect 🌐
+# dev.connect 🌐
 
 A premium, developer-centric project-showcasing and social networking platform built for software engineers. Showcase your work, document technical features, connect with peers, rate projects, and collaborate — all from a beautifully crafted interface designed for developers.
 
@@ -8,7 +8,7 @@ A premium, developer-centric project-showcasing and social networking platform b
 
 1. Developer Feed & Project Showcases
 *   **Rich Markdown Editor**: Block-based post editor with inline toolbar (bold, italic, code, headings, lists, blockquotes, code blocks, horizontal rules).
-*   **Asset Pipeline**: Paste or drop images into the editor → automatic upload to Cloudinary `devConnect/temp` → temp-to-posts promotion on save via `cloudinary.uploader.rename()`.
+*   **Asset Pipeline**: Paste or drop images into the editor → automatic upload to Cloudinary `dev.connect/temp` → temp-to-posts promotion on save via `cloudinary.uploader.rename()`.
 *   **Interactive Tech Stack Badges**: Autocomplete suggestions triggered by `@` — render custom branded technology badges (React, Node.js, Docker, AWS, etc.) with Font Awesome icons.
 *   **1–10 Star Rating System**: Users rate projects on a 1–10 scale. Ratings are toggleable (click same score to un-rate) and updateable. Self-rating is blocked.
 *   **Like & Comment System**: Post/comment like toggles, multi-level threaded comments with nested replies, soft-delete support, and paginated replies.
@@ -88,7 +88,7 @@ A premium, developer-centric project-showcasing and social networking platform b
 | **CSRF Protection** | Double-submit cookie pattern with `crypto.timingSafeEqual` validation |
 | **Security** | Helmet headers, CORS with strict origin validation, `express-rate-limit` (API / Auth / Upload / Rating tiers) |
 | **Real-Time** | Socket.io v4 (JWT-authenticated WebSocket with multi-tab user tracking) |
-| **Media Storage** | Custom Cloudinary Multer storage engine (`devConnect/avatars`, `devConnect/banners`, `devConnect/posts`, `devConnect/temp`) |
+| **Media Storage** | Custom Cloudinary Multer storage engine (`dev.connect/avatars`, `dev.connect/banners`, `dev.connect/posts`, `dev.connect/temp`) |
 | **Background Jobs** | Temp asset cleanup (6-hour interval), post score recomputation (on engagement events) |
 | **Password Hashing** | bcrypt (10 salt rounds) |
 
@@ -111,7 +111,7 @@ A premium, developer-centric project-showcasing and social networking platform b
 ## 📂 Project Structure
 
 ```
-devConnect/
+dev.connect/
 ├── client/                             # Next.js 16 Frontend Application
 │   ├── public/                         # Static assets (logo, favicons)
 │   ├── src/
@@ -367,8 +367,8 @@ All endpoints are prefixed with `/api`.
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/Sanjay067/devConnect.git
-    cd devConnect
+    git clone https://github.com/Sanjay067/dev.connect.git
+    cd dev.connect
     ```
 
 2.  **Set up backend environment variables** — create `server/.env`:
@@ -430,7 +430,7 @@ npm run test:smoke
 *   **Modular Backend**: Each domain (auth, user, post, comment, like, rating, follow, feed, message, notification) is a self-contained module with its own model, controller, and routes.
 *   **Atomic Operations**: Mongoose sessions + transactions for multi-document writes (signup, post delete, like/comment counters).
 *   **Background Workers**: Post score recomputation fires asynchronously (`updatePostScoreAsync`) after likes, comments, and ratings — never blocks the response.
-*   **Temp Asset Lifecycle**: Inline images are uploaded to `devConnect/temp/` during editing, promoted to `devConnect/posts/` on save, and stale temps purged every 6 hours.
+*   **Temp Asset Lifecycle**: Inline images are uploaded to `dev.connect/temp/` during editing, promoted to `dev.connect/posts/` on save, and stale temps purged every 6 hours.
 *   **Token Refresh Queue**: Client-side Axios interceptor queues concurrent 401-failed requests during token refresh — replays all on success.
 *   **Multi-Tab WebSocket**: Server maps each `userId → Set<socketId>` — real-time events reach all open tabs.
 

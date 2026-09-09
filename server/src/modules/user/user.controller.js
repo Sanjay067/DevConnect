@@ -129,10 +129,11 @@ export const getMyProfile = asyncHandler(async (req, res) => {
   const followersCount = await Follow.countDocuments({ followingId: user._id });
   const followingCount = await Follow.countDocuments({ followerId: user._id });
 
-  const scoreResult = await Post.aggregate([
+  const scoreResult = await t.aggregate([
     { $match: { author: user._id, isActive: true } },
     { $group: { _id: null, totalScore: { $sum: "$totalPoints" } } }
   ]);
+  
   const totalScore = scoreResult[0]?.totalScore || 0;
 
   return res.json({

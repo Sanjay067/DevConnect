@@ -2,7 +2,7 @@
 // because the `g` flag makes it stateful — it retains `lastIndex` between
 // calls, causing alternating calls to skip all matches.
 const CLOUDINARY_PUBLIC_ID_PATTERN =
-  /res\.cloudinary\.com\/[^/]+\/(?:image|video|raw)\/upload(?:\/[^/]+)*\/(devConnect\/posts\/[^)\s"'<>]+)/gi;
+  /res\.cloudinary\.com\/[^/]+\/(?:image|video|raw)\/upload(?:\/[^/]+)*\/(dev.connect\/posts\/[^)\s"'<>]+)/gi;
 
 export function extractCloudinaryPublicIdsFromText(text = "") {
   if (!text) return [];

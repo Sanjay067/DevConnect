@@ -72,7 +72,7 @@ function PostEditor({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // ── Resizer logic ───────────────────────────────────────────
+
   const [editorWidth, setEditorWidth] = useState(70);
   const [isDragging, setIsDragging] = useState(false);
 

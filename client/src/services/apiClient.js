@@ -127,7 +127,11 @@ apiClient.interceptors.response.use(
         });
 
         document.cookie = "is_authenticated=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
-        if (typeof window !== "undefined" && window.location.pathname !== "/auth") {
+        if (
+          typeof window !== "undefined" &&
+          window.location.pathname !== "/auth" &&
+          window.location.pathname !== "/"
+        ) {
           window.location.href = "/auth";
         }
         return Promise.reject(refreshError);
