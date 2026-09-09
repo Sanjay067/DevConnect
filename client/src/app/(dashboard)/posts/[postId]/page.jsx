@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { useSelector } from "react-redux";
 import { usePost } from "@/features/feed/hooks/useFeed";
-import { renderMarkdown } from "@/features/feed/utils/markdownParser";
+import MarkdownRenderer from "@/features/feed/components/MarkdownRenderer";
 import { getTechIconClass } from "@/shared/lib/techIcons";
 import { resolveProfilePicture } from "@/shared/lib/imageHelpers";
 import { useRatePost } from "@/features/feed/hooks/useRatePost";
@@ -73,10 +73,6 @@ export default function PostDetailPage() {
   };
 
   const markdownText = post?.content?.blocks?.[0]?.data?.text || "";
-  const renderedMarkdown = useMemo(
-    () => (markdownText ? renderMarkdown(markdownText) : ""),
-    [markdownText]
-  );
 
   // ── Loading / Error states ────────────────────────────────────────────────
   if (isLoading) {
@@ -203,11 +199,10 @@ export default function PostDetailPage() {
         <div className="border-t border-zinc-800 mb-8" />
 
         {/* Rendered Markdown */}
-        {renderedMarkdown && (
-          <div
-            className="prose-content text-zinc-300 leading-relaxed text-[15px] mb-10 select-text"
-            dangerouslySetInnerHTML={{ __html: renderedMarkdown }}
-          />
+        {markdownText && (
+          <div className="mb-10 select-text">
+            <MarkdownRenderer content={markdownText} />
+          </div>
         )}
 
         {/* Tech stack badges */}

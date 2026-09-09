@@ -2,6 +2,9 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { resolveMediaSrc } from "@/shared/lib/imageHelpers";
 import { getTechIconClass } from "@/shared/lib/techIcons";
+import RatingButton from "@/features/feed/components/RatingButton";
+import Comment from "@/features/feed/components/Comment";
+import { useRatePost } from "@/features/feed/hooks/useRatePost";
 
 // Helper to get first image from post content (same logic as PostCard)
 const getFirstMarkdownImage = (text) => {
@@ -20,6 +23,8 @@ export default function FeaturedProjects({
   onToggleFeaturePost,
 }) {
   const [activeDropdownId, setActiveDropdownId] = useState(null);
+  const [activeCommentPostId, setActiveCommentPostId] = useState(null);
+  const { debouncedRate } = useRatePost();
 
   if (featuredProjects.length === 0) return null;
 
@@ -144,18 +149,7 @@ export default function FeaturedProjects({
                 </div>
 
                 {/* Card Footer Actions */}
-                <div className="pt-4 border-t border-zinc-850 mt-5 flex flex-col gap-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3.5 text-[11px] text-zinc-505">
-                      <span className="flex items-center gap-1"><i className="fa-solid fa-star text-xs text-amber-500" aria-hidden="true"></i> {post.likeCount || 0}</span>
-                      <span className="flex items-center gap-1"><i className="fa-regular fa-comment text-xs" aria-hidden="true"></i> {post.commentCount || 0}</span>
-                    </div>
-                    <Link href={`/posts/${post._id}`} className="text-zinc-400 hover:text-emerald-400 text-xs font-bold flex items-center gap-1 transition-colors">
-                      View Project
-                      <i className="fa-solid fa-arrow-right text-[10px]" aria-hidden="true"></i>
-                    </Link>
-                  </div>
-
+                <div className="pt-4 border-t border-zinc-800/80 mt-5 flex flex-col gap-3">
                   {/* GitHub / Demo Buttons */}
                   {post.links && post.links.length > 0 && (
                     <div className="flex gap-2">
@@ -165,12 +159,45 @@ export default function FeaturedProjects({
                           href={link.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex-1 flex items-center justify-center gap-1.5 border border-zinc-800 text-zinc-400 hover:text-zinc-205 bg-zinc-950/20 hover:bg-zinc-800/30 rounded-lg py-1.5 text-[10px] font-bold transition-all cursor-pointer"
+                          className="flex-1 flex items-center justify-center gap-1.5 border border-zinc-800 text-zinc-400 hover:text-zinc-200 bg-zinc-950/40 hover:bg-zinc-800/40 rounded-lg py-1.5 text-[11px] font-semibold transition-all cursor-pointer"
                         >
                           <i className={link.label === "Github" ? "fa-brands fa-github text-xs" : "fa-solid fa-globe text-xs"} aria-hidden="true"></i>
                           {link.label === "Github" ? "GitHub" : "Live Demo"}
                         </a>
                       ))}
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-4 text-zinc-500">
+                    <RatingButton
+                      post={post}
+                      isOwnPost={isOwnProfile}
+                      onRate={(score) => debouncedRate(String(post._id), score)}
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => setActiveCommentPostId(activeCommentPostId === post._id ? null : post._id)}
+                      className="flex items-center gap-1.5 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer text-xs"
+                    >
+                      <i className="fa-regular fa-comment text-sm"></i>
+                      <span className="font-medium">{post.commentCount || 0}</span>
+                      <span className="hidden sm:inline font-medium">Discuss</span>
+                    </button>
+
+                    <Link
+                      href={`/posts/${post._id}`}
+                      className="ml-auto text-zinc-400 hover:text-emerald-400 text-xs font-bold flex items-center gap-1 transition-colors"
+                    >
+                      <span>View</span>
+                      <i className="fa-solid fa-arrow-right text-[10px]" aria-hidden="true"></i>
+                    </Link>
+                  </div>
+
+                  {/* Comment Section Drawer */}
+                  {activeCommentPostId === post._id && (
+                    <div className="mt-2 pt-3 border-t border-zinc-800/80 min-h-60 max-h-[500px] flex flex-col transition-all duration-300">
+                      <Comment postId={post._id} />
                     </div>
                   )}
                 </div>

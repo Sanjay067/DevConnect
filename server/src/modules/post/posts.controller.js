@@ -93,13 +93,21 @@ export const getPostById = asyncHandler(async (req, res) => {
   const userId = req.user._id;
   const isAuthor = post.author._id.toString() === userId.toString();
 
-  const userLike = await Like.findOne({
-    userId,
-    targetId: post._id,
-    targetType: "Post",
-  }).select("_id");
+  const [userLike, userRating] = await Promise.all([
+    Like.findOne({
+      userId,
+      targetId: post._id,
+      targetType: "Post",
+    }).select("_id"),
+    Rating.findOne({
+      userId,
+      postId: post._id,
+    }).select("score"),
+  ]);
 
-  const enriched = enrichPostWithRating(post.toObject(), userId);
+  const userRatingsMap = userRating ? { [String(post._id)]: userRating.score } : {};
+  const likedSet = userLike ? new Set([String(post._id)]) : new Set();
+  const enriched = enrichPostWithRating(post.toObject(), userRatingsMap, likedSet);
   if (userLike && !enriched.userRatingScore) {
     enriched.userRatingScore = 10;
     enriched.isLiked = true;

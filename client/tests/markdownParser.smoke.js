@@ -1,7 +1,6 @@
 /**
- * Smoke tests for markdown rendering safety and structure.
- * Run: node --experimental-vm-modules client/tests/markdownParser.smoke.js
- * Or import renderMarkdown in a Node-compatible build; this file uses inline checks.
+ * Smoke tests for safe Markdown rendering architecture and components.
+ * Run: node client/tests/markdownParser.smoke.js
  */
 
 import { readFileSync } from "node:fs";
@@ -9,15 +8,16 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const parserPath = join(__dirname, "../src/features/feed/utils/markdownParser.js");
-const source = readFileSync(parserPath, "utf8");
+const rendererPath = join(__dirname, "../src/features/feed/components/MarkdownRenderer.jsx");
+const source = readFileSync(rendererPath, "utf8");
 
 const checks = [
-  { name: "sanitizes unsafe link protocols", pass: source.includes("isSafeUrl") },
-  { name: "wraps list items in ul", pass: source.includes("<ul class=") },
-  { name: "handles upload placeholders", pass: source.includes("UPLOAD_PLACEHOLDER_REGEX") },
-  { name: "uses shared tech icons", pass: source.includes("getTechIconClass") },
-  { name: "does not decode escaped code block HTML", pass: !source.includes('.replace(/&lt;/g, "<")') },
+  { name: "uses ReactMarkdown AST engine", pass: source.includes("ReactMarkdown") },
+  { name: "includes GitHub-flavored markdown plugin (remarkGfm)", pass: source.includes("remarkGfm") },
+  { name: "uses rehypeSanitize for XSS prevention", pass: source.includes("rehypeSanitize") },
+  { name: "supports @[Tech] badge renderer with tech icons", pass: source.includes("renderWithTechBadges") && source.includes("getTechIconClass") },
+  { name: "handles temporary upload placeholder replacement", pass: source.includes("__UPLOAD_") },
+  { name: "customizes code block syntax rendering safely", pass: source.includes("code:") && source.includes("inline") },
 ];
 
 let failed = 0;
@@ -34,4 +34,4 @@ if (failed > 0) {
   process.exit(1);
 }
 
-console.log("All markdown parser smoke checks passed.");
+console.log("All markdown renderer smoke checks passed.");
