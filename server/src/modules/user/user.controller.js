@@ -61,6 +61,12 @@ export const updateUser = asyncHandler(async (req, res) => {
   const normalizedEmail = email ? String(email).toLowerCase().trim() : undefined;
   const normalizedUsername = username ? String(username).toLowerCase().trim() : undefined;
 
+  if (normalizedUsername && !/^[a-z0-9_]{3,30}$/.test(normalizedUsername)) {
+    return res.status(400).json({
+      message: "Username must be 3-30 lowercase letters, numbers, or underscores",
+    });
+  }
+
   if (normalizedUsername || normalizedEmail) {
     const orConditions = [];
     if (normalizedUsername) orConditions.push({ username: normalizedUsername });
@@ -74,28 +80,28 @@ export const updateUser = asyncHandler(async (req, res) => {
     }
   }
 
-  if (name) user.name = name;
+  if (name !== undefined) {
+    const cleanName = String(name).trim().slice(0, 100);
+    if (!cleanName) return res.status(400).json({ message: "Name cannot be empty" });
+    user.name = cleanName;
+  }
 
   if (normalizedEmail) user.email = normalizedEmail;
 
   if (normalizedUsername) user.username = normalizedUsername;
 
   if (skills !== undefined) {
-    user.skills = Array.isArray(skills)
-      ? skills
-      : String(skills)
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean);
+    user.skills = (Array.isArray(skills) ? skills : String(skills).split(","))
+      .map((s) => String(s).trim().slice(0, 50))
+      .filter(Boolean)
+      .slice(0, 50);
   }
 
   if (interests !== undefined) {
-    user.interests = Array.isArray(interests)
-      ? interests
-      : String(interests)
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean);
+    user.interests = (Array.isArray(interests) ? interests : String(interests).split(","))
+      .map((s) => String(s).trim().slice(0, 50))
+      .filter(Boolean)
+      .slice(0, 30);
   }
 
   await user.save();
@@ -285,23 +291,62 @@ export const updateMyProfile = asyncHandler(async (req, res) => {
   if (!userProfile)
     return res.status(400).json({ message: "Profile not found" });
 
-  const allowedFields = [
-    "bio",
-    "pastWork",
-    "education",
-    "currentPosition",
-    "headline",
-    "location",
-    "socialLinks",
-    "skills",
-    "bannerPicture"
-  ];
+  const {
+    bio,
+    headline,
+    currentPosition,
+    location,
+    socialLinks,
+    pastWork,
+    education,
+    skills,
+    bannerPicture,
+  } = req.body;
 
-  allowedFields.forEach((field) => {
-    if (req.body[field] !== undefined) {
-      userProfile[field] = req.body[field];
-    }
-  });
+  if (headline !== undefined) userProfile.headline = String(headline).trim().slice(0, 150);
+  if (bio !== undefined) userProfile.bio = String(bio).trim().slice(0, 2000);
+  if (currentPosition !== undefined) userProfile.currentPosition = String(currentPosition).trim().slice(0, 100);
+  if (location !== undefined) userProfile.location = String(location).trim().slice(0, 100);
+  if (bannerPicture !== undefined) userProfile.bannerPicture = String(bannerPicture).trim().slice(0, 500);
+
+  if (skills !== undefined && Array.isArray(skills)) {
+    userProfile.skills = skills
+      .map((s) => String(s).trim().slice(0, 50))
+      .filter(Boolean)
+      .slice(0, 50);
+  }
+
+  if (socialLinks !== undefined && Array.isArray(socialLinks)) {
+    userProfile.socialLinks = socialLinks
+      .filter((link) => link && typeof link.url === "string" && /^https?:\/\//i.test(link.url.trim()))
+      .map((link) => ({
+        platform: String(link.platform || "custom").trim().slice(0, 30),
+        url: link.url.trim().slice(0, 300),
+      }))
+      .slice(0, 20);
+  }
+
+  if (pastWork !== undefined && Array.isArray(pastWork)) {
+    userProfile.pastWork = pastWork
+      .map((w) => ({
+        company: String(w.company || "").trim().slice(0, 100),
+        position: String(w.position || "").trim().slice(0, 100),
+        years: String(w.years || "").trim().slice(0, 50),
+      }))
+      .filter((w) => w.company || w.position || w.years)
+      .slice(0, 20);
+  }
+
+  if (education !== undefined && Array.isArray(education)) {
+    userProfile.education = education
+      .map((e) => ({
+        school: String(e.school || "").trim().slice(0, 100),
+        degree: String(e.degree || "").trim().slice(0, 100),
+        fieldOfStudy: String(e.fieldOfStudy || "").trim().slice(0, 100),
+      }))
+      .filter((e) => e.school || e.degree || e.fieldOfStudy)
+      .slice(0, 20);
+  }
 
   await userProfile.save();
   await userProfile.populate("userId", "name email username profilePicture");

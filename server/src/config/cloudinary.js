@@ -95,7 +95,7 @@ const bannerStorage = new CloudinaryStorage({
 export const uploadAvatar = multer({
   storage: avatarStorage,
   fileFilter: fileFilterFor(imageMimeTypes),
-  limits: { fileSize: 1024 * 1024 } // 1MB limit
+  limits: { fileSize: 3 * 1024 * 1024 } // 3MB limit
 });
 
 export const uploadBanner = multer({
