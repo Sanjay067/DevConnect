@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "node tests/runAll.js",
     "test:smoke": "node tests/markdownParser.smoke.js"
   },
   "dependencies": {
