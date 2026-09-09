@@ -72,9 +72,7 @@ function AuthForm() {
         {
           onSuccess: () => {
             document.cookie = "is_authenticated=true; path=/; max-age=3600; SameSite=Lax";
-            dispatch(checkAuth()).then(() => {
-              router.push("/feed");
-            });
+            window.location.href = "/feed";
           }
         }
       );
@@ -82,9 +80,7 @@ function AuthForm() {
       registerMutation.mutate(form, {
         onSuccess: () => {
           document.cookie = "is_authenticated=true; path=/; max-age=3600; SameSite=Lax";
-          dispatch(checkAuth()).then(() => {
-            router.push("/feed");
-          });
+          window.location.href = "/onboarding";
         },
       });
     }

@@ -199,7 +199,7 @@ export default function Home() {
             </span>
 
             <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
-              Ready to Share What You've Built?
+              Ready to Share What You&apos;ve Built?
             </h2>
 
             <p className="mt-4 text-base sm:text-lg text-zinc-400 max-w-2xl mx-auto">

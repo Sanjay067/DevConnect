@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Next.js & Build
+.next/
+*/.next/
+out/
+build/
+dist/
+
+# Tests & Coverage
+coverage/
+*/coverage/
+tests/
+*/tests/
+*.test.js
+*.smoke.js
+*.test.log
+test-results/
+.nyc_output/
+
+# Logs & Debug
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment
+.env
+.env.*
+!.env.example
+*/.env
+*/.env.*
+!*/.env.example
+
+# OS & Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo

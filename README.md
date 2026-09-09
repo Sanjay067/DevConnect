@@ -1,443 +1,254 @@
-# dev.connect 🌐
+<div align="center">
 
-A premium, developer-centric project-showcasing and social networking platform built for software engineers. Showcase your work, document technical features, connect with peers, rate projects, and collaborate — all from a beautifully crafted interface designed for developers.
+  <img src="client/public/dev.connect.png" alt="dev.connect logo" width="84" height="84" style="border-radius: 20px; margin-bottom: 12px;" />
+
+  # dev.connect 🌐
+  
+  **The developer-first platform to showcase architecture, get peer-rated, and build a living engineering portfolio.**
+
+  [![Next.js](https://img.shields.io/badge/Next.js-16_App_Router-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+  [![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
+  [![Node.js](https://img.shields.io/badge/Node.js-Express_5-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
+  [![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose_9-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://mongodb.com/)
+  [![Socket.io](https://img.shields.io/badge/Socket.io-v4_Realtime-010101?style=for-the-badge&logo=socket.io)](https://socket.io/)
+  [![License: MIT](https://img.shields.io/badge/License-MIT-00ff66?style=for-the-badge)](LICENSE)
+
+  <br/>
+
+  <p align="center">
+    <a href="#-why-devconnect">Why dev.connect?</a> •
+    <a href="#-feature-highlights">Feature Highlights</a> •
+    <a href="#-architecture--engineering-deep-dive">Architecture</a> •
+    <a href="#-quickstart">Quickstart</a> •
+    <a href="#-api-overview">API</a> •
+    <a href="#-contributing">Contributing</a>
+  </p>
+
+</div>
+
+---
+
+## 💡 Why dev.connect?
+
+Most developers build incredible software, only for their projects to gather dust in GitHub repositories or get lost in noisy generic feeds. 
+
+**dev.connect** was built to solve a simple problem: **Give software engineers a dedicated space to document their system architectures, receive genuine peer reviews, and turn their public work into a verified technical portfolio.**
+
+No vanity metrics. No fluff. Just clean write-ups, architecture breakdowns, live feedback, and real-time collaboration.
+
+```
+  ┌─────────────────┐       ┌─────────────────┐       ┌─────────────────┐
+  │   1. Document   │  ──▶  │   2. Get Rated  │  ──▶  │ 3. Living Proof │
+  │ Architecture &  │       │  1–10 Peer Star │       │ Top 3 Auto-Pin  │
+  │ Markdown Stacks │       │ Reviews (No-Bias)│       │ Portfolio Page  │
+  └─────────────────┘       └─────────────────┘       └─────────────────┘
+```
 
 ---
 
-## Key Features
+## ✨ Feature Highlights
 
-1. Developer Feed & Project Showcases
-*   **Rich Markdown Editor**: Block-based post editor with inline toolbar (bold, italic, code, headings, lists, blockquotes, code blocks, horizontal rules).
-*   **Asset Pipeline**: Paste or drop images into the editor → automatic upload to Cloudinary `dev.connect/temp` → temp-to-posts promotion on save via `cloudinary.uploader.rename()`.
-*   **Interactive Tech Stack Badges**: Autocomplete suggestions triggered by `@` — render custom branded technology badges (React, Node.js, Docker, AWS, etc.) with Font Awesome icons.
-*   **1–10 Star Rating System**: Users rate projects on a 1–10 scale. Ratings are toggleable (click same score to un-rate) and updateable. Self-rating is blocked.
-*   **Like & Comment System**: Post/comment like toggles, multi-level threaded comments with nested replies, soft-delete support, and paginated replies.
-*   **Feed Scoring Algorithm**: Personalised feed ranking via MongoDB aggregation pipeline combining:
-    -   `log1p(totalPoints) × 3` — total rating points signal
-    -   `averageRating × 2` — quality signal
-    -   `log1p(commentCount) × 3` — discussion signal
-    -   `1 / (1 + ageHours / 6)` — recency decay (6-hour half-life)
-    -   `|userSkills ∩ techStack| × 5` — skill relevance match
-    -   `+10` network boost — for followed authors
+### 📝 1. Deep Project Write-Ups & Asset Pipeline
+* **Block-based Markdown Editor**: Clean inline toolbar supporting code blocks, headers, bulleted specs, and blockquotes.
+* **Instant Clipboard / Drop Media**: Paste or drop screenshots directly into the editor — files upload automatically to Cloudinary temporary storage and are atomically promoted to permanent storage on post publish.
+* **Branded `@` Tech Tags**: Mention technologies using `@` (e.g. `@[React]`, `@[Docker]`, `@[Node.js]`) to render branded badges with verified Font Awesome 7 icons.
 
+### ⭐ 2. Transparent 1–10 Peer Rating Engine
+* **Honest Evaluation**: Score projects from 1 to 10 with instant atomic recalculations.
+* **Zero Self-Rating Bias**: Authors cannot rate their own creations.
+* **Toggleable & Dynamic**: Tap the same score to revoke a rating or switch scores with seamless delta-based counter updates.
 
-### 2. Developer-Centric Profile Page (Portfolio-First)
-*   **Featured Projects Showcase**: Automatically pins your top-3 projects ranked by `totalPoints` (aggregate rating score).
-*   **Profile Banner & Avatar**: Upload custom profile banners (1200×400 auto-crop) and avatars (400×400) via Cloudinary CDN.
-*   **Technical Details Sidebar**: Organises credentials into current position, location, web presence (GitHub, LinkedIn, Portfolio), visual skills badges, and education timeline.
-*   **Education & Work History**: Chronological timeline of schools, degrees, past companies, positions, and years.
-*   **Follow Stats & Total Score**: Displays follower / following counts and an aggregated reputation score (`totalPoints` across all authored posts).
+### 💼 3. Developer-First Living Portfolio
+* **Frictionless Onboarding**: Jumpstart your profile right away with custom avatars, banners, roles, locations, social links, and tech stacks.
+* **Auto-Pinned Top 3 Showcases**: Your profile automatically computes and pins your top 3 projects ranked by community rating score (`totalPoints`).
+* **Chronological Experience Timeline**: Education, company history, and past work with structured verification.
 
-### 3. Network & Developer Discovery
-*   **Spacious Discovery Grid**: A clean 3-column developer card layout browsable without sidebar clutter — paginated with infinite scroll.
-*   **Recommended Developers**: Dynamically suggests profiles the user doesn't currently follow.
-*   **Premium Developer Cards**: Online indicator, verification checkmarks, 2-line bios, technology stack tags with brand icons (Font Awesome 7), and quick connection metrics (followers, projects).
+### ⚡ 4. Real-Time Networking & WebSocket Chat
+* **Direct Messaging**: 1-on-1 private messaging powered by JWT-authenticated Socket.io channels with multi-tab broadcast synchronization.
+* **15-Minute Message Grace Window**: Edit or revoke sent messages within a 15-minute window.
+* **Discovery Grid**: Discover fellow engineers, filter by shared tech stacks, and start collaborating in one click.
 
-
-###
-### 4. Secure Private Messaging (Real-Time)
-*   **Socket.io WebSocket Layer**: Authenticated WebSocket connections with JWT cookie-based handshake middleware.
-*   **Conversation List**: Paginated conversation threads with per-peer unread badge counts.
-*   **Real-Time Message Delivery**: Messages broadcast to all sender + receiver tabs/devices via `getUserSockets()` multi-tab support.
-*   **Message Deletion**: Sender-only deletion within a 15-minute window.
-*   **Deep Link Connect**: "Message" button on any profile deep-links directly to the target user's pre-selected chat thread.
-
-### 5. Notification System
-*   **Follow Notifications**: Real-time notification when another developer follows you.
-*   **Unread Badge Counter**: Navbar bell icon with live unread notification count.
-*   **Mark All Read**: Bulk mark-as-read with automatic duplicate notification deduplication and 30-notification cap per user.
+### 🧠 5. Quality-Driven Feed Algorithm
+The personalised feed algorithm calculates engagement and relevance dynamically:
+$$\text{Score} = 3 \cdot \ln(1 + \text{Points}) + 2 \cdot \text{AvgRating} + 3 \cdot \ln(1 + \text{Comments}) + \frac{1}{1 + \frac{\text{AgeHours}}{6}} + 5 \cdot |\text{Skills} \cap \text{TechStack}| + \text{FollowBoost}$$
 
 ---
+
 ## 🔒 Security Architecture
 
-| Layer | Implementation |
+| Security Layer | Implementation Detail |
 |---|---|
-| **Authentication** | JWT access tokens (60 min) + refresh tokens (7 days) in `HttpOnly`, `Secure`, `SameSite` cookies |
-| **Token Rotation** | Refresh tokens are SHA-256 hashed before storage — old tokens invalidated on rotation |
-| **CSRF Protection** | Double-submit cookie: client reads `csrfToken` cookie → sends in `x-csrf-token` header → server validates with `crypto.timingSafeEqual` |
-| **Origin Enforcement** | Non-safe HTTP methods require a trusted `Origin` header matching `CLIENT_ORIGIN` |
-| **Rate Limiting** | Four tiers: General API (400/15min), Auth (40/15min), Upload (30/15min), Rating (60/15min) |
-| **Headers** | Helmet.js (CSP, X-Content-Type-Options, etc.) with `cross-origin` resource policy |
-| **Password Security** | bcrypt with 10 salt rounds, 12–128 character policy |
-| **Auth Anomaly Monitor** | Server-side counter logs spikes of 401/403/429 responses every 25 events |
+| **Authentication** | Dual-token mechanism: short-lived JWT access tokens (60m) + refresh tokens (7d) stored in `HttpOnly`, `SameSite`, `Secure` cookies. |
+| **Token Rotation** | Cryptographically hashed refresh tokens (`SHA-256`) verified in database upon rotation. Prevents replay attacks. |
+| **CSRF Defense** | Double-submit cookie strategy with server-side `crypto.timingSafeEqual` comparison on all mutation routes. |
+| **Input Sanitization** | `rehype-sanitize` AST filtering on client markdown, regex whitelisting for usernames (`^[a-z0-9_]{3,30}$`), and strict URL scheme enforcement (`https://`). |
+| **Rate Limiting** | Multi-tier rate limiting for Auth (40/15m), API (400/15m), Media Uploads (30/15m), and Rating Engine (60/15m). |
+| **Security Headers** | Helmet.js integration with strict CSP, `X-Content-Type-Options`, and origin verification against `CLIENT_ORIGIN`. |
 
 ---
 
-## 🛠 Technical Breakdown
+## 🛠 Tech Stack
 
-### Frontend (`client/`)
-| Layer | Technology |
-|---|---|
-| **Framework** | Next.js 16 (App Router, Turbopack-compatible) |
-| **Library** | React 19 |
-| **State Management** | Redux Toolkit (Auth slice, session persistence) |
-| **Data Fetching & Cache** | React Query (`@tanstack/react-query` v5) + Axios |
-| **Real-Time** | Socket.io Client (`socket.io-client` v4) |
-| **Styling** | Tailwind CSS 4 + PostCSS + Vanilla CSS custom tokens |
-| **Typography** | JetBrains Mono (Google Fonts) |
-| **Icons** | Font Awesome 7 (CDN) |
-| **Image Handling** | `browser-image-compression` (HTML5 pre-upload compression) |
-| **Routing Protection** | Next.js Middleware (cookie-based auth guard) |
+<div align="center">
 
-### Backend (`server/`)
-| Layer | Technology |
-|---|---|
-| **Framework** | Express 5 (Node.js, ES Modules) |
-| **Database** | MongoDB (Mongoose 9 ODM) |
-| **Authentication** | JWT Access/Refresh token rotation with SHA-256 hashed refresh tokens in HttpOnly cookies |
-| **CSRF Protection** | Double-submit cookie pattern with `crypto.timingSafeEqual` validation |
-| **Security** | Helmet headers, CORS with strict origin validation, `express-rate-limit` (API / Auth / Upload / Rating tiers) |
-| **Real-Time** | Socket.io v4 (JWT-authenticated WebSocket with multi-tab user tracking) |
-| **Media Storage** | Custom Cloudinary Multer storage engine (`dev.connect/avatars`, `dev.connect/banners`, `dev.connect/posts`, `dev.connect/temp`) |
-| **Background Jobs** | Temp asset cleanup (6-hour interval), post score recomputation (on engagement events) |
-| **Password Hashing** | bcrypt (10 salt rounds) |
+| Frontend (`client/`) | Backend (`server/`) | Infrastructure & Security |
+|:---:|:---:|:---:|
+| Next.js 16 (App Router) | Node.js (Express 5 ESM) | Cloudinary CDN Storage Engine |
+| React 19 + Redux Toolkit | MongoDB + Mongoose 9 ODM | Socket.io v4 WebSockets |
+| TanStack React Query v5 | JWT + SHA-256 Token Store | Helmet & Double-Submit CSRF |
+| Tailwind CSS 4 + PostCSS | Express Rate Limiter | Bcrypt Password Hashing |
+| Font Awesome 7 Icons | Multer File Streams | Browser Image Pre-compression |
 
-### Database Models (MongoDB Collections)
-
-| Model | Key Fields |
-|---|---|
-| **User** | `name`, `username` (unique, lowercase), `email` (unique, lowercase), `password` (bcrypt), `profilePicture`, `refreshToken` (SHA-256), `skills[]`, `interests[]` |
-| **Profile** | `userId` (ref User, unique), `bannerPicture`, `headline`, `bio`, `location`, `socialLinks`, `skills[]`, `currentPosition`, `pastWork[]`, `education[]` |
-| **Post** | `author` (ref User), `title`, `shortDescription`, `content` (Mixed — block-based), `media[]`, `links[]`, `techStack[]`, `likeCount`, `commentCount`, `totalPoints`, `averageRating`, `ratingCount`, `score` (precomputed), `isFeatured`, `isActive` |
-| **Comment** | `postId`, `author`, `body`, `parentComment` (self-ref for threading), `replyCount`, `likeCount`, `isDeleted` (soft delete) |
-| **Like** | `userId`, `targetId` (polymorphic), `targetType` (`"Post"` / `"Comment"`) — unique compound index |
-| **Rating** | `userId`, `postId`, `score` (1–10) — unique per user per post |
-| **Follow** | `followerId`, `followingId` — unique compound index |
-| **Message** | `senderId`, `receiverId`, `body` (max 2000 chars), `readAt` |
-| **Notification** | `recipientId`, `senderId`, `type` (`"FOLLOW"`), `isRead` |
+</div>
 
 ---
 
-## 📂 Project Structure
+## 📂 Repository Map
 
-```
-dev.connect/
-├── client/                             # Next.js 16 Frontend Application
-│   ├── public/                         # Static assets (logo, favicons)
+```text
+devConnect/
+├── client/                               # Next.js 16 Client (App Router)
 │   ├── src/
-│   │   ├── app/
-│   │   │   ├── layout.js              # Root HTML layout (JetBrains Mono, FA7)
-│   │   │   ├── page.js                # Landing page (unauthenticated)
-│   │   │   ├── providers.jsx          # Redux + React Query + Socket providers
-│   │   │   ├── auth/                  # Login / Signup page
-│   │   │   └── (dashboard)/           # Authenticated route group
-│   │   │       ├── layout.jsx         # Dashboard shell (Navbar)
-│   │   │       ├── feed/page.jsx      # Personalised feed
-│   │   │       ├── network/page.jsx   # Developer discovery grid
-│   │   │       ├── messages/page.jsx  # Messaging UI
-│   │   │       ├── notifications/page.jsx  # Notification centre
-│   │   │       ├── profile/
-│   │   │       │   ├── page.jsx       # My profile
-│   │   │       │   └── [userId]/page.jsx  # Public profile view
-│   │   │       └── posts/
-│   │   │           ├── page.jsx       # My posts management
-│   │   │           ├── create/        # Post editor (create)
-│   │   │           └── [postId]/      # Single post view / edit
-│   │   ├── features/                  # Domain-specific feature modules
-│   │   │   ├── auth/                  # Auth hooks & API
-│   │   │   ├── feed/                  # Feed API, hooks, components
-│   │   │   │   └── components/
-│   │   │   │       ├── PostCard.jsx         # Feed post card
-│   │   │   │       ├── PostEditor.jsx       # Block-based markdown editor
-│   │   │   │       ├── MarkdownPreview.jsx  # Custom markdown renderer
-│   │   │   │       ├── Comment.jsx          # Threaded comment tree
-│   │   │   │       ├── RatingButton.jsx     # 1–10 star rating widget
-│   │   │   │       ├── Like.jsx             # Like toggle button
-│   │   │   │       ├── EditorToolbar.jsx    # Inline formatting toolbar
-│   │   │   │       ├── CreatePostCard.jsx   # "Create post" CTA card
-│   │   │   │       └── FeedWrapper.jsx      # Feed layout wrapper
-│   │   │   ├── messages/              # Messaging hooks & components
-│   │   │   │   └── components/
-│   │   │   │       ├── MessagesLayout.jsx   # Split-pane chat layout
-│   │   │   │       ├── ConversationList.jsx # Sidebar conversation list
-│   │   │   │       ├── MessageList.jsx      # Message thread
-│   │   │   │       ├── MessageBubble.jsx    # Individual message bubble
-│   │   │   │       ├── MessageInput.jsx     # Chat input bar
-│   │   │   │       ├── ChatHeader.jsx       # Chat window header
-│   │   │   │       └── ChatUserProfileCard.jsx  # User info card
-│   │   │   ├── network/               # Network hooks & components
-│   │   │   │   └── components/
-│   │   │   │       ├── DeveloperCard.jsx    # Developer profile card
-│   │   │   │       ├── DeveloperGrid.jsx    # Responsive card grid
-│   │   │   │       ├── RecommendedDevelopers.jsx  # "Who to follow"
-│   │   │   │       ├── HeroSection.jsx      # Network page hero
-│   │   │   │       └── EmptyState.jsx       # No results placeholder
-│   │   │   └── profile/               # Profile hooks & components
-│   │   │       └── components/
-│   │   │           ├── ProfileLayout.jsx    # Profile page layout
-│   │   │           ├── ProfileHeader.jsx    # Banner, avatar, stats
-│   │   │           ├── ProfileSidebar.jsx   # Skills, links, education
-│   │   │           ├── FeaturedProjects.jsx # Top-3 pinned projects
-│   │   │           ├── EditProfileModal.jsx # Profile editor modal
-│   │   │           ├── FollowListModal.jsx  # Followers/following modal
-│   │   │           └── AllShowcases.jsx     # All user projects view
-│   │   ├── services/                  # API service layer
-│   │   │   ├── apiClient.js           # Axios instance (CSRF, token refresh, retry queue)
-│   │   │   ├── authService.js         # Login, signup, logout, CSRF, profile
-│   │   │   ├── feedService.js         # Personalised feed endpoint
-│   │   │   ├── postService.js         # CRUD posts, comments, likes, ratings
-│   │   │   ├── userService.js         # Profiles, avatars, banners, search
-│   │   │   ├── followService.js       # Follow / unfollow
-│   │   │   ├── messageService.js      # Conversations, send, delete
-│   │   │   └── notificationService.js # Notifications, unread count
-│   │   ├── shared/
-│   │   │   ├── components/
-│   │   │   │   ├── Navbar.jsx         # Global navigation bar with search
-│   │   │   │   └── Loader.jsx         # Loading spinner
-│   │   │   ├── context/
-│   │   │   │   └── SocketContext.jsx  # Socket.io React context provider
-│   │   │   ├── hooks/
-│   │   │   │   └── useFollowSystem.js # Reusable follow/unfollow hook
-│   │   │   └── lib/
-│   │   │       ├── techIcons.js       # Tech → Font Awesome icon mapping
-│   │   │       ├── socialLinks.js     # Social platform URL patterns
-│   │   │       ├── cloudinary.js      # Cloudinary URL helpers
-│   │   │       ├── compressImage.js   # Client-side image compression
-│   │   │       ├── imageHelpers.js    # Image dimension utilities
-│   │   │       └── axios.js           # Base Axios export
-│   │   ├── store/
-│   │   │   ├── index.js              # Redux store configuration
-│   │   │   └── authSlice.js          # Auth state (user, checkAuth thunk)
-│   │   ├── styles/
-│   │   │   └── globals.css           # Global CSS + design tokens
-│   │   └── middleware.js             # Next.js edge middleware (auth guard)
-│   └── tests/
-│       └── markdownParser.smoke.js   # Frontend markdown parser smoke tests
+│   │   ├── app/                          # Next.js pages & layouts
+│   │   │   ├── (dashboard)/              # Authenticated feeds, profiles, chat, notifications
+│   │   │   ├── auth/                     # Unified Login & Signup wizard
+│   │   │   ├── onboarding/               # 5-step profile customizer
+│   │   │   └── page.js                   # Landing page showcase
+│   │   ├── features/                     # Domain modules (auth, feed, messages, network, profile, onboarding)
+│   │   ├── services/                     # Central Axios client with CSRF & token refresh queue
+│   │   ├── shared/                       # Global hooks, navbar, tech icon registry, socket context
+│   │   └── store/                        # Redux toolkit store & auth slice
+│   └── tests/                            # Local unit & smoke test suites
 │
-├── server/                            # Node.js Express API Backend
+├── server/                               # Node.js Express 5 API Server
 │   ├── src/
-│   │   ├── app.js                    # Express entry (CORS, Helmet, CSRF, rate limits)
-│   │   ├── config/
-│   │   │   ├── cloudinary.js         # Cloudinary SDK + custom Multer storage engine
-│   │   │   └── socket.js            # Socket.io server (JWT auth middleware, multi-tab tracking)
-│   │   ├── middlewares/
-│   │   │   ├── verifyAccessToken.middleware.js  # JWT access token verification
-│   │   │   ├── csrf.middleware.js               # CSRF token issuing + validation
-│   │   │   ├── rateLimits.js                    # Rate limiters (API, Auth, Upload, Rating)
-│   │   │   ├── isPostAuthor.middleware.js       # Post ownership guard
-│   │   │   └── isCommentAuthor.middleware.js    # Comment ownership guard
-│   │   ├── modules/
-│   │   │   ├── auth/
-│   │   │   │   ├── auth.controller.js          # Signup, login, logout (bcrypt, JWT, sessions)
-│   │   │   │   ├── auth.routes.js              # POST /signup, /login, /logout, /refresh-token
-│   │   │   │   └── authRefresh.controller.js   # Refresh token rotation (SHA-256 verification)
-│   │   │   ├── user/
-│   │   │   │   ├── users.model.js              # User schema
-│   │   │   │   ├── profile.model.js            # Profile schema (education, work, social)
-│   │   │   │   ├── user.controller.js          # Profile CRUD, avatar/banner upload, search
-│   │   │   │   └── user.routes.js              # User & profile endpoints
-│   │   │   ├── post/
-│   │   │   │   ├── posts.model.js              # Post schema (ratings, score, media)
-│   │   │   │   ├── posts.controller.js         # CRUD, temp→post asset promotion, feature toggle
-│   │   │   │   ├── posts.routes.js             # Post endpoints (CRUD, like, rate, feature)
-│   │   │   │   └── score.worker.js             # Background post score recomputation
-│   │   │   ├── comment/
-│   │   │   │   ├── comments.model.js           # Threaded comment schema
-│   │   │   │   ├── comments.controller.js      # Add, reply, edit, soft-delete, paginated fetch
-│   │   │   │   └── comments.routes.js          # Nested under /posts/:postId/comments
-│   │   │   ├── like/
-│   │   │   │   ├── likes.model.js              # Polymorphic like schema (Post/Comment)
-│   │   │   │   └── likes.controller.js         # Toggle like with atomic counters
-│   │   │   ├── rating/
-│   │   │   │   ├── ratings.model.js            # 1–10 rating schema (unique per user/post)
-│   │   │   │   └── ratings.controller.js       # Rate, update, toggle-off with atomic Post update
-│   │   │   ├── feed/
-│   │   │   │   ├── feed.controller.js          # Personalised feed aggregation pipeline
-│   │   │   │   └── feed.routes.js              # GET /feed
-│   │   │   ├── follow/
-│   │   │   │   ├── follow.model.js             # Follow relationship schema
-│   │   │   │   ├── follow.controller.js        # Follow/unfollow with notification upsert
-│   │   │   │   └── follow.routes.js            # Follow endpoints
-│   │   │   ├── message/
-│   │   │   │   ├── messages.model.js           # Message schema (read receipts)
-│   │   │   │   ├── message.controller.js       # Conversations, send, delete, unread count
-│   │   │   │   └── message.routes.js           # Message endpoints
-│   │   │   └── notification/
-│   │   │       ├── notification.model.js       # Notification schema (FOLLOW type)
-│   │   │       ├── notification.controller.js  # Fetch, unread count, mark-read, dedup
-│   │   │       └── notification.routes.js      # Notification endpoints
-│   │   ├── routes/
-│   │   │   └── index.js              # Central API router (/api/*)
-│   │   └── utils/
-│   │       ├── asyncHandler.js       # Express async error wrapper
-│   │       ├── cookieOptions.js      # Cookie config (dev/prod-aware Secure, SameSite)
-│   │       ├── cloudinaryMarkdown.js # Extract & destroy Cloudinary assets from markdown
-│   │       └── cleanupTempAssets.js  # Periodic temp Cloudinary folder purge (24h stale)
-│   └── tests/
-│       └── cloudinaryMarkdown.test.js  # Cloudinary public-ID extraction tests
+│   │   ├── config/                       # Cloudinary engine, DB connection, Socket server
+│   │   ├── middlewares/                  # Auth verify, CSRF guards, role checks, rate limits
+│   │   ├── modules/                      # Domain micro-modules (auth, user, post, comment, like, rating, feed, follow, message)
+│   │   ├── routes/                       # Central API router (/api/*)
+│   │   └── utils/                        # AsyncHandler, cookie helpers, temp asset garbage collector
+│   └── tests/                            # Server unit tests
 │
-├── CODE_OF_CONDUCT.md
-├── LICENSE                            # MIT License
-└── README.md
+├── .gitignore                            # Root repository ignore rules
+└── README.md                             # Project documentation
 ```
 
 ---
 
-## 🔌 API Reference
-
-All endpoints are prefixed with `/api`.
-
-### Authentication
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| `GET` | `/auth/csrf-token` | — | Issue a CSRF token (returned in cookie + body) |
-| `POST` | `/auth/signup` | — | Register a new user |
-| `POST` | `/auth/login` | — | Log in with email & password |
-| `POST` | `/auth/logout` | — | Log out and clear all cookies |
-| `POST` | `/auth/refresh-token` | Cookie | Rotate access + refresh tokens |
-
-### Users & Profiles
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| `GET` | `/users/profiles/me` | Get current user's full profile |
-| `PATCH` | `/users/profiles/me` | Update profile (bio, education, work, etc.) |
-| `PATCH` | `/users/me` | Update account (name, email, username, skills) |
-| `PATCH` | `/users/profiles/me/avatar` | Upload profile picture |
-| `PATCH` | `/users/profiles/me/banner` | Upload banner image |
-| `GET` | `/users/profiles` | Get all profiles (paginated, searchable by `?q=`) |
-| `GET` | `/users/profile/:userId` | Get a public user's profile |
-| `GET` | `/users/search` | Search users by name/username (`?q=`) |
-
-### Posts
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| `GET` | `/posts` | Get all posts by current user |
-| `POST` | `/posts` | Create a new post (multipart) |
-| `GET` | `/posts/:postId` | Get a single post by ID |
-| `PATCH` | `/posts/:postId` | Edit a post (author only) |
-| `DELETE` | `/posts/:postId` | Delete a post and all related data |
-| `GET` | `/posts/user/:userId` | Get all posts by a specific user |
-| `POST` | `/posts/upload-asset` | Upload a temporary inline asset |
-| `PATCH` | `/posts/:postId/feature` | Toggle pin/unpin as featured |
-| `POST` | `/posts/:postId/like` | Toggle like on a post |
-| `GET` | `/posts/:postId/like` | Get all likes on a post |
-| `PATCH` | `/posts/:postId/rate` | Rate a post (1–10 scale) |
-
-### Comments
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| `GET` | `/posts/:postId/comments` | Get top-level comments (paginated) |
-| `POST` | `/posts/:postId/comments` | Add a top-level comment |
-| `PATCH` | `/posts/:postId/comments/:commentId` | Edit a comment (author only) |
-| `DELETE` | `/posts/:postId/comments/:commentId` | Soft-delete a comment |
-| `GET` | `/posts/:postId/comments/:commentId/replies` | Get replies to a comment |
-| `POST` | `/posts/:postId/comments/:commentId/replies` | Reply to a comment |
-| `POST` | `/posts/:postId/comments/:commentId/like` | Toggle like on a comment |
-
-### Feed
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| `GET` | `/feed` | Get personalised feed (paginated) |
-
-### Follows
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| `POST` | `/follows/:followingId` | Follow a user |
-| `DELETE` | `/follows/:followingId` | Unfollow a user |
-| `GET` | `/follows/:userId/followers` | Get a user's followers |
-| `GET` | `/follows/:userId/following` | Get who a user follows |
-
-### Messages
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| `GET` | `/messages/conversations` |List all conversations (paginated) |
-| `GET` | `/messages/unread-count` | Get unread chat count |
-| `GET` | `/messages/:peerId` | Get messages with a specific user |
-| `POST` | `/messages/:peerId` | Send a message to a user |
-| `DELETE` | `/messages/delete/:messageId` | Delete a sent message (≤15 min) |
-
-### Notifications
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| `GET` | `/notifications` | Get all notifications |
-| `GET` | `/notifications/unread-count`  | Get unread notification count |
-| `PATCH` | `/notifications/mark-read` | Mark all notifications as read |
-
-
----
-
-## ⚙️ Get Started
+## 🚀 Quickstart
 
 ### Prerequisites
-*   Node.js v18+
-*   MongoDB instance (local or Atlas)
-*   Cloudinary account (API credentials)
+* **Node.js**: `v18.0.0` or higher
+* **MongoDB**: Local daemon or MongoDB Atlas URI
+* **Cloudinary**: Free account credentials for media management
 
-### Installation
+### 1. Clone & Setup
+```bash
+git clone https://github.com/Sanjay067/DevConnect.git
+cd DevConnect
+```
 
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/Sanjay067/dev.connect.git
-    cd dev.connect
-    ```
+### 2. Configure Backend Environment
+Create `server/.env`:
+```env
+PORT=5000
+NODE_ENV=development
+CLIENT_ORIGIN=http://localhost:3000
+MONGO_URL=mongodb+srv://<username>:<password>@cluster.mongodb.net/devconnect
+JWT_ACCESS_TOKEN=your_jwt_access_secret_key_32_chars_min
+JWT_REFRESH_TOKEN=your_jwt_refresh_secret_key_32_chars_min
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+```
 
-2.  **Set up backend environment variables** — create `server/.env`:
-    ```env
-    PORT=5000
-    MONGO_URL=your_mongodb_connection_string
-    JWT_ACCESS_TOKEN=your_jwt_access_secret
-    JWT_REFRESH_TOKEN=your_jwt_refresh_secret
-    CLOUDINARY_CLOUD_NAME=your_cloudinary_name
-    CLOUDINARY_API_KEY=your_cloudinary_api_key
-    CLOUDINARY_API_SECRET=your_cloudinary_api_secret
-    CLIENT_ORIGIN=http://localhost:3000
-    NODE_ENV=development
-    ```
+### 3. Start Development Servers
 
-3.  **Start the Backend:**
-    ```bash
-    cd server
-    npm install
-    npm run dev        # nodemon hot-reload on :5000
-    ```
+**Backend**:
+```bash
+cd server
+npm install
+npm run dev
+```
 
-4.  **Start the Frontend:**
-    ```bash
-    cd client
-    npm install
-    npm run dev        # Next.js dev server on :3000
-    ```
+**Frontend** *(in a new terminal)*:
+```bash
+cd client
+npm install
+npm run dev
+```
 
-5.  **(Optional) Set the frontend API URL** — create `client/.env.local`:
-    ```env
-    NEXT_PUBLIC_API_URL=http://localhost:5000/api
-    ```
+Open [http://localhost:3000](http://localhost:3000) to view the application.
 
 ---
 
-## 🧪 Testing
+## 🧪 Running Tests
 
-### Server Tests
-Runs Cloudinary public-ID extraction unit tests:
+Unit tests validate edge cases, security regexes, rating calculations, and markdown sanitation:
+
 ```bash
+# Run client unit tests
+cd client
+npm test
+
+# Run server unit tests
 cd server
 npm test
 ```
 
-### Client Tests
-Runs markdown parser smoke tests:
-```bash
-cd client
-npm run test:smoke
-```
+---
+
+## 🔌 API Overview
+
+All API endpoints are mounted under `/api`.
+
+<details>
+<summary><b>Click to expand Endpoints Table</b></summary>
+
+<br/>
+
+| Domain | Method | Path | Description |
+|---|---|---|---|
+| **Auth** | `GET` | `/api/auth/csrf-token` | Issue CSRF token |
+| | `POST` | `/api/auth/signup` | Register new user |
+| | `POST` | `/api/auth/login` | Log in user |
+| | `POST` | `/api/auth/logout` | Log out and clear cookies |
+| | `POST` | `/api/auth/refresh-token` | Rotate JWT token pair |
+| **Users** | `GET` | `/api/users/profiles/me` | Fetch authenticated profile |
+| | `PATCH` | `/api/users/profiles/me` | Update bio, social links, work, education |
+| | `PATCH` | `/api/users/profiles/me/avatar` | Upload profile photo |
+| | `PATCH` | `/api/users/profiles/me/banner` | Upload banner image |
+| | `GET` | `/api/users/profiles` | Discover developers (`?q=`) |
+| **Posts** | `GET` | `/api/feed` | Personalised feed stream |
+| | `POST` | `/api/posts` | Create new post |
+| | `GET` | `/api/posts/:postId` | Get single post details |
+| | `PATCH` | `/api/posts/:postId/rate` | Rate 1–10 or un-rate |
+| | `POST` | `/api/posts/:postId/like` | Toggle post like |
+| | `POST` | `/api/posts/upload-asset` | Upload temporary editor asset |
+| **Comments** | `GET` | `/api/posts/:postId/comments` | Fetch threaded comments |
+| | `POST` | `/api/posts/:postId/comments` | Add new comment / reply |
+| | `DELETE` | `/api/posts/:postId/comments/:commentId` | Soft-delete comment |
+| **Messages**| `GET` | `/api/messages/conversations` | List conversation threads |
+| | `POST` | `/api/messages/:peerId` | Send direct message |
+| | `DELETE`| `/api/messages/delete/:messageId` | Delete message (≤ 15 min) |
+
+</details>
 
 ---
 
-## 🏗 Architecture Highlights
+## 🤝 Contributing
 
-*   **Monorepo**: Separate `client/` and `server/` packages — no workspace tooling required.
-*   **ES Modules**: Both client and server use `"type": "module"` — native ESM imports throughout.
-*   **Modular Backend**: Each domain (auth, user, post, comment, like, rating, follow, feed, message, notification) is a self-contained module with its own model, controller, and routes.
-*   **Atomic Operations**: Mongoose sessions + transactions for multi-document writes (signup, post delete, like/comment counters).
-*   **Background Workers**: Post score recomputation fires asynchronously (`updatePostScoreAsync`) after likes, comments, and ratings — never blocks the response.
-*   **Temp Asset Lifecycle**: Inline images are uploaded to `dev.connect/temp/` during editing, promoted to `dev.connect/posts/` on save, and stale temps purged every 6 hours.
-*   **Token Refresh Queue**: Client-side Axios interceptor queues concurrent 401-failed requests during token refresh — replays all on success.
-*   **Multi-Tab WebSocket**: Server maps each `userId → Set<socketId>` — real-time events reach all open tabs.
+Contributions are what make the open-source developer community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
 ---
 
-## 📄 License
+## 📄 License & Open Source
 
-This project is licensed under the [MIT License](LICENSE).
+This project is open source and licensed under the [MIT License](LICENSE). Anyone is welcome to contribute, collaborate, report issues, or build new features.
 
-**Copyright © 2026 Sanjay Kumar**

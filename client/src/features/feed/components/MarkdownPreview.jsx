@@ -1,26 +1,24 @@
 import React, { useMemo } from "react";
 import { useSelector } from "react-redux";
-import { renderMarkdown } from "../utils/markdownParser";
+import MarkdownRenderer from "./MarkdownRenderer";
 import { resolveProfilePicture } from "@/shared/lib/imageHelpers";
 
 function MarkdownPreview({ markdown, title, shortDescription, githubUrl, liveUrl }) {
     const currentUser = useSelector((state) => state.auth.user);
-
-    const renderedHtml = useMemo(() => renderMarkdown(markdown), [markdown]);
 
     // Extract @[tech] mentions for live badge preview
     const techStack = useMemo(() => {
         const results = [];
         const regex = /@\[([^\]]+)\]/g;
         let match;
-        while ((match = regex.exec(markdown)) !== null) {
+        while ((match = regex.exec(markdown || "")) !== null) {
             const name = match[1].trim();
             if (name && !results.includes(name)) results.push(name);
         }
         return results;
     }, [markdown]);
 
-    const hasContent = title || shortDescription || renderedHtml;
+    const hasContent = Boolean(title?.trim() || shortDescription?.trim() || markdown?.trim());
 
     if (!hasContent) {
         return (
@@ -93,11 +91,10 @@ function MarkdownPreview({ markdown, title, shortDescription, githubUrl, liveUrl
                 </div>
 
                 {/* Rendered markdown body */}
-                {renderedHtml && (
-                    <div
-                        className="px-5 pt-3 pb-2 text-sm text-zinc-300 leading-relaxed overflow-x-auto select-text"
-                        dangerouslySetInnerHTML={{ __html: renderedHtml }}
-                    />
+                {markdown?.trim() && (
+                    <div className="px-5 pt-3 pb-2 select-text">
+                        <MarkdownRenderer content={markdown} />
+                    </div>
                 )}
 
 

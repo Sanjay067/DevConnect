@@ -126,7 +126,7 @@ export default function RatingButton({ post, onRate, isOwnPost: isOwnPostProp })
           if (isOwnPost) return;
           setShowPopover((v) => !v);
         }}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold
+        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold whitespace-nowrap shrink-0
           transition-all duration-200
           ${isOwnPost
             ? "cursor-default border-zinc-800/80 bg-zinc-950/40 text-zinc-400"
@@ -135,38 +135,30 @@ export default function RatingButton({ post, onRate, isOwnPost: isOwnPostProp })
             : "cursor-pointer border-zinc-800 bg-zinc-950/60 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200"
           }`}
       >
-        <i className={`fa-solid fa-star text-sm transition-transform duration-300
+        <i className={`fa-solid fa-star text-xs transition-transform duration-300
           ${isAnimating ? "scale-125 rotate-12 text-amber-300"
             : userScore ? "text-amber-400 scale-110"
               : "text-zinc-500 hover:text-amber-400"}`}
         />
-        <span className={`font-extrabold tracking-tight transition-transform duration-300 inline-block
+        <span className={`font-extrabold tracking-tight transition-transform duration-300 whitespace-nowrap inline-flex items-baseline gap-0.5
           ${isAnimating ? "scale-110 text-amber-300" : ""}`}>
-          {formattedAvg}
-          <span className="text-[10px] font-medium opacity-60 ml-0.5">/ 10</span>
-        </span>
-        {/* Rating count — always rendered, fades in when ratings exist */}
-        <span
-          className={`text-[10px] text-zinc-600 font-medium hidden sm:inline
-            transition-opacity duration-200
-            ${hasRatings ? "opacity-100" : "opacity-0 pointer-events-none select-none"}`}
-          aria-hidden={!hasRatings}
-        >
-          · {ratingCount || 0}
+          <span>{formattedAvg}</span>
+          <span className="text-[10px] font-medium opacity-60">/10</span>
         </span>
 
-        {/* You badge — always rendered, fades in when user has rated */}
-        <span
-          className={`ml-0.5 text-[10px] font-extrabold bg-amber-400/20 text-amber-300
-            border border-amber-400/30 px-1.5 py-0.5 rounded-md
-            transition-all duration-200 whitespace-nowrap
-            ${userScore
-              ? "opacity-100 scale-100"
-              : "opacity-0 scale-95 pointer-events-none select-none"}`}
-          aria-hidden={!userScore}
-        >
-          You: {userScore ?? "–"}★
-        </span>
+        {/* Rating count */}
+        {hasRatings && (
+          <span className="text-[10px] text-zinc-500 font-medium whitespace-nowrap">
+            · {ratingCount}
+          </span>
+        )}
+
+        {/* You badge */}
+        {userScore && (
+          <span className="ml-0.5 text-[10px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30 px-1.5 py-0.5 rounded-md whitespace-nowrap">
+            You: {userScore}★
+          </span>
+        )}
       </button>
 
       {/* Score Popover */}

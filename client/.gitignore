@@ -12,6 +12,13 @@
 
 # testing
 /coverage
+tests/
+/tests/
+*.test.js
+*.smoke.js
+*.test.log
+test-results/
+.nyc_output/
 
 # next.js
 /.next/
