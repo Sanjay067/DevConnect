@@ -28,7 +28,7 @@
 
 ---
 
-## 💡 Why dev.connect?
+## Why dev.connect?
 
 Most developers build incredible software, only for their projects to gather dust in GitHub repositories or get lost in noisy generic feeds. 
 
@@ -46,35 +46,35 @@ No vanity metrics. No fluff. Just clean write-ups, architecture breakdowns, live
 
 ---
 
-## ✨ Feature Highlights
+## Feature Highlights
 
-### 📝 1. Deep Project Write-Ups & Asset Pipeline
+###  1. Deep Project Write-Ups & Asset Pipeline
 * **Block-based Markdown Editor**: Clean inline toolbar supporting code blocks, headers, bulleted specs, and blockquotes.
 * **Instant Clipboard / Drop Media**: Paste or drop screenshots directly into the editor — files upload automatically to Cloudinary temporary storage and are atomically promoted to permanent storage on post publish.
 * **Branded `@` Tech Tags**: Mention technologies using `@` (e.g. `@[React]`, `@[Docker]`, `@[Node.js]`) to render branded badges with verified Font Awesome 7 icons.
 
-### ⭐ 2. Transparent 1–10 Peer Rating Engine
+###  2. Transparent 1–10 Peer Rating Engine
 * **Honest Evaluation**: Score projects from 1 to 10 with instant atomic recalculations.
 * **Zero Self-Rating Bias**: Authors cannot rate their own creations.
 * **Toggleable & Dynamic**: Tap the same score to revoke a rating or switch scores with seamless delta-based counter updates.
 
-### 💼 3. Developer-First Living Portfolio
+###  3. Developer-First Living Portfolio
 * **Frictionless Onboarding**: Jumpstart your profile right away with custom avatars, banners, roles, locations, social links, and tech stacks.
 * **Auto-Pinned Top 3 Showcases**: Your profile automatically computes and pins your top 3 projects ranked by community rating score (`totalPoints`).
 * **Chronological Experience Timeline**: Education, company history, and past work with structured verification.
 
-### ⚡ 4. Real-Time Networking & WebSocket Chat
+###  4. Real-Time Networking & WebSocket Chat
 * **Direct Messaging**: 1-on-1 private messaging powered by JWT-authenticated Socket.io channels with multi-tab broadcast synchronization.
 * **15-Minute Message Grace Window**: Edit or revoke sent messages within a 15-minute window.
 * **Discovery Grid**: Discover fellow engineers, filter by shared tech stacks, and start collaborating in one click.
 
-### 🧠 5. Quality-Driven Feed Algorithm
+###  5. Quality-Driven Feed Algorithm
 The personalised feed algorithm calculates engagement and relevance dynamically:
 $$\text{Score} = 3 \cdot \ln(1 + \text{Points}) + 2 \cdot \text{AvgRating} + 3 \cdot \ln(1 + \text{Comments}) + \frac{1}{1 + \frac{\text{AgeHours}}{6}} + 5 \cdot |\text{Skills} \cap \text{TechStack}| + \text{FollowBoost}$$
 
 ---
 
-## 🔒 Security Architecture
+##  Security Architecture
 
 | Security Layer | Implementation Detail |
 |---|---|
@@ -87,7 +87,7 @@ $$\text{Score} = 3 \cdot \ln(1 + \text{Points}) + 2 \cdot \text{AvgRating} + 3 \
 
 ---
 
-## 🛠 Tech Stack
+##  Tech Stack
 
 <div align="center">
 
@@ -103,7 +103,7 @@ $$\text{Score} = 3 \cdot \ln(1 + \text{Points}) + 2 \cdot \text{AvgRating} + 3 \
 
 ---
 
-## 📂 Repository Map
+##  Repository Map
 
 ```text
 devConnect/
@@ -135,7 +135,7 @@ devConnect/
 
 ---
 
-## 🚀 Quickstart
+##  Quickstart
 
 ### Prerequisites
 * **Node.js**: `v18.0.0` or higher
@@ -182,7 +182,7 @@ Open [http://localhost:3000](http://localhost:3000) to view the application.
 
 ---
 
-## 🧪 Running Tests
+##  Running Tests
 
 Unit tests validate edge cases, security regexes, rating calculations, and markdown sanitation:
 
@@ -198,7 +198,7 @@ npm test
 
 ---
 
-## 🔌 API Overview
+##  API Overview
 
 All API endpoints are mounted under `/api`.
 
@@ -236,7 +236,7 @@ All API endpoints are mounted under `/api`.
 
 ---
 
-## 🤝 Contributing
+##  Contributing
 
 Contributions are what make the open-source developer community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
 
@@ -248,7 +248,7 @@ Contributions are what make the open-source developer community such an amazing 
 
 ---
 
-## 📄 License & Open Source
+##  License & Open Source
 
 This project is open source and licensed under the [MIT License](LICENSE). Anyone is welcome to contribute, collaborate, report issues, or build new features.
 
