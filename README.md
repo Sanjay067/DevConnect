@@ -38,9 +38,9 @@ No vanity metrics. No fluff. Just clean write-ups, architecture breakdowns, live
 
 ```
   ┌─────────────────┐       ┌─────────────────┐       ┌─────────────────┐
-  │   1. Document   │  ──▶  │   2. Get Rated  │  ──▶  │ 3. Living Proof │
-  │ Architecture &  │       │  1–10 Peer Star │       │ Top 3 Auto-Pin  │
-  │ Markdown Stacks │       │ Reviews (No-Bias)│       │ Portfolio Page  │
+  │   1. Document   │  ──▶    2. Get Rated     ──▶    3. Living Proof 
+  │ Architecture &  │       │  1–10 Peer Star │       │Top 3 Auto-Pin   │
+  │ Markdown Stacks │       │ Reviews (No-Bias)       │ Portfolio Page  │
   └─────────────────┘       └─────────────────┘       └─────────────────┘
 ```
 
@@ -63,8 +63,8 @@ No vanity metrics. No fluff. Just clean write-ups, architecture breakdowns, live
 * **Auto-Pinned Top 3 Showcases**: Your profile automatically computes and pins your top 3 projects ranked by community rating score (`totalPoints`).
 * **Chronological Experience Timeline**: Education, company history, and past work with structured verification.
 
-###  4. Real-Time Networking & WebSocket Chat
-* **Direct Messaging**: 1-on-1 private messaging powered by JWT-authenticated Socket.io channels with multi-tab broadcast synchronization.
+###  4. Real-Time Networking 
+* **Direct Messaging**: 
 * **15-Minute Message Grace Window**: Edit or revoke sent messages within a 15-minute window.
 * **Discovery Grid**: Discover fellow engineers, filter by shared tech stacks, and start collaborating in one click.
 
