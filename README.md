@@ -40,7 +40,7 @@ No vanity metrics. No fluff. Just clean write-ups, architecture breakdowns, live
   ┌─────────────────┐       ┌─────────────────┐       ┌─────────────────┐
   │   1. Document   │  ──▶    2. Get Rated     ──▶    3. Living Proof 
   │ Architecture &  │       │  1–10 Peer Star │       │Top 3 Auto-Pin   │
-  │ Markdown Stacks │       │ Reviews (No-Bias)       │ Portfolio Page  │
+  │ Markdown Stacks │       │ Reviews         |       │ Portfolio Page  │
   └─────────────────┘       └─────────────────┘       └─────────────────┘
 ```
 
